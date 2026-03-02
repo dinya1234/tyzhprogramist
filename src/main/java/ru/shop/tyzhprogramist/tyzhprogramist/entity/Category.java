@@ -1,10 +1,14 @@
 package ru.shop.tyzhprogramist.tyzhprogramist.entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Setter
+@Getter
 @Entity
 @Table(name = "categories")
 public class Category {
@@ -43,68 +47,5 @@ public class Category {
         this.slug = slug;
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getSlug() {
-        return slug;
-    }
-
-    public Category getParent() {
-        return parent;
-    }
-
-    public List<Category> getChildren() {
-        return children;
-    }
-
-    public String getImage() {
-        return image;
-    }
-
-    public Integer getOrder() {
-        return order;
-    }
-
-    public List<Product> getProducts() {
-        return products;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public void setSlug(String slug) {
-        this.slug = slug;
-    }
-
-    public void setParent(Category parent) {
-        this.parent = parent;
-    }
-
-    public void setChildren(List<Category> children) {
-        this.children = children;
-    }
-
-    public void setImage(String image) {
-        this.image = image;
-    }
-
-    public void setOrder(Integer order) {
-        this.order = order;
-    }
-
-    public void setProducts(List<Product> products) {
-        this.products = products;
-    }
 }
 

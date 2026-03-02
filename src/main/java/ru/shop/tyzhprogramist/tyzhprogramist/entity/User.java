@@ -1,9 +1,13 @@
 package ru.shop.tyzhprogramist.tyzhprogramist.entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
+@Setter
+@Getter
 @Entity
 @Table(name="users")
 public class User {
@@ -35,6 +39,10 @@ public class User {
     @Column(name = "notifications", nullable = false)
     private Boolean notifications = true;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false)
+    private UserRole role = UserRole.CLIENT;
+
     public User(){}
 
     public User (String username, String email , String password , String first_name , String last_name) {
@@ -44,78 +52,6 @@ public class User {
     this.username=username;
     this.last_name=last_name;
     this.password=password;
-    }
-
-    public Boolean getNotifications() {
-        return notifications;
-    }
-
-    public void setNotifications(Boolean notifications) {
-        this.notifications = notifications;
-    }
-
-    public String getAvatar() {
-        return avatar;
-    }
-
-    public void setAvatar(String avatar) {
-        this.avatar = avatar;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public LocalDateTime getDate_joined() {
-        return date_joined;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public String getFirst_name() {
-        return first_name;
-    }
-
-    public String getLast_name() {
-        return last_name;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public void setDate_joined(LocalDateTime date_joined) {
-        this.date_joined = date_joined;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public void setFirst_name(String first_name) {
-        this.first_name = first_name;
-    }
-
-    public void setLast_name(String last_name) {
-        this.last_name = last_name;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
     }
 
 }

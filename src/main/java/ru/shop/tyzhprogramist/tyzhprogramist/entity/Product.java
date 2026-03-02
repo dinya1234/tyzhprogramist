@@ -1,10 +1,13 @@
 package ru.shop.tyzhprogramist.tyzhprogramist.entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-
+@Getter
+@Setter
 @Entity
 @Table(name = "products")
 public class Product {
@@ -81,116 +84,6 @@ public class Product {
         this.rating = 0.0;
     }
 
-    public String getId() {
-        return id;
-    }
 
-    public Category getCategory() {
-        return category;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getSlug() {
-        return slug;
-    }
-
-    public String getShortDescription() {
-        return shortDescription;
-    }
-
-    public String getFullDescription() {
-        return fullDescription;
-    }
-
-    public BigDecimal getPrice() {
-        return price;
-    }
-
-    public BigDecimal getOldPrice() {
-        return oldPrice;
-    }
-
-    public Integer getQuantity() {
-        return quantity;
-    }
-
-    public Double getRating() {
-        return rating;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public Boolean getActive() {
-        return isActive;
-    }
-
-    public Boolean getNew() {
-        return isNew;
-    }
-
-    public Boolean getBestseller() {
-        return isBestseller;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public void setCategory(Category category) {
-        this.category = category;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public void setSlug(String slug) {
-        this.slug = slug;
-    }
-
-    public void setShortDescription(String shortDescription) {
-        this.shortDescription = shortDescription;
-    }
-
-    public void setFullDescription(String fullDescription) {
-        this.fullDescription = fullDescription;
-    }
-
-    public void setPrice(BigDecimal price) {
-        this.price = price;
-    }
-
-    public void setOldPrice(BigDecimal oldPrice) {
-        this.oldPrice = oldPrice;
-    }
-
-    public void setQuantity(Integer quantity) {
-        this.quantity = quantity;
-    }
-
-    public void setRating(Double rating) {
-        this.rating = rating;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public void setActive(Boolean active) {
-        isActive = active;
-    }
-
-    public void setNew(Boolean aNew) {
-        isNew = aNew;
-    }
-
-    public void setBestseller(Boolean bestseller) {
-        isBestseller = bestseller;
-    }
 }
 
