@@ -1,7 +1,6 @@
 package ru.shop.tyzhprogramist.tyzhprogramist.entity;
 
 import jakarta.persistence.*;
-import jakarta.persistence.Id;
 
 import java.time.LocalDateTime;
 
@@ -30,6 +29,11 @@ public class User {
     @Column(name = "date_joined", nullable = false)
     private LocalDateTime date_joined;
 
+    @Column(name="avatar")
+    private String avatar;
+
+    @Column(name = "notifications", nullable = false)
+    private Boolean notifications = true;
 
     public User(){}
 
@@ -40,6 +44,22 @@ public class User {
     this.username=username;
     this.last_name=last_name;
     this.password=password;
+    }
+
+    public Boolean getNotifications() {
+        return notifications;
+    }
+
+    public void setNotifications(Boolean notifications) {
+        this.notifications = notifications;
+    }
+
+    public String getAvatar() {
+        return avatar;
+    }
+
+    public void setAvatar(String avatar) {
+        this.avatar = avatar;
     }
 
     public Long getId() {
