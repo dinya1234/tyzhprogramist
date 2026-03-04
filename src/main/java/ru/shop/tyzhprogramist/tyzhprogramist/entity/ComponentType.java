@@ -25,5 +25,4 @@ public class ComponentType {
         this.name= name;
         this.order_step= order_step;
     }
-
 }
