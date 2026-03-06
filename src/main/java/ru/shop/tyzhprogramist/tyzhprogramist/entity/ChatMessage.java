@@ -15,24 +15,25 @@ public class ChatMessage {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "session_id", nullable = false)
     private ChatSession session;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "sender_type", nullable = false, length = 20)
-    private String senderType;  // "Пользователь" или "Консультант" добавить енум по идее
+    private SenderType senderType;
 
     @Column(name = "message", nullable = false)
     private String message;
 
     @Column(name = "timestamp", nullable = false)
-    private LocalDateTime timestamp;//время отправки соо
+    private LocalDateTime timestamp;
 
     public ChatMessage() {
         this.timestamp = LocalDateTime.now();
     }
 
-    public ChatMessage(ChatSession session, String senderType, String message) {
+    public ChatMessage(ChatSession session, SenderType senderType, String message) {
         this.session = session;
         this.senderType = senderType;
         this.message = message;

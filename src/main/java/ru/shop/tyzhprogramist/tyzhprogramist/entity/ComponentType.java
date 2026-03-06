@@ -16,7 +16,7 @@ public class ComponentType {
     @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "order_ step", nullable = false) //Порядок шагов в конфигураторе
+    @Column(name = "order_ step", nullable = false)
     private Integer order_step;
 
     public ComponentType(){}

@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.Setter;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Setter
 @Getter
@@ -16,7 +18,8 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
@@ -25,13 +28,13 @@ public class Order {
     private OrderStatus status;
 
     @Column(name = "delivery_method", nullable = false)
-    private String deliveryMethod;  // курьер, самовывоз, хз что надо будет обсудить с добавлением енумов
+    private String deliveryMethod;
 
     @Column(name = "delivery_address", nullable = false)
     private String deliveryAddress;
 
     @Column(name = "payment_method", nullable = false)
-    private String paymentMethod;   // карта онлайн, при получении, рассрочка тож самое что и с delivery_method
+    private String paymentMethod;
 
     @Column(name = "total_price", nullable = false, precision = 10, scale = 2)
     private BigDecimal totalPrice;
@@ -41,6 +44,9 @@ public class Order {
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
+
+    @OneToMany(mappedBy = "parentId", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<ProductItem> items = new ArrayList<>();
 
     public Order() {
         this.createdAt = LocalDateTime.now();
@@ -57,5 +63,16 @@ public class Order {
         this.comment = comment;
         this.status = OrderStatus.NEW;
         this.createdAt = LocalDateTime.now();
+    }
+
+
+    public void addItem(ProductItem item) {
+        items.add(item);
+        item.setParentId(this.id);
+    }
+
+    public void removeItem(ProductItem item) {
+        items.remove(item);
+        item.setParentId(null);
     }
 }

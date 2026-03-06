@@ -3,7 +3,6 @@ package ru.shop.tyzhprogramist.tyzhprogramist.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,7 +26,7 @@ public class Category {
     @JoinColumn(name = "parent_id")
     private Category parent;
 
-    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Category> children = new ArrayList<>();
 
     @Column(name = "image")
@@ -36,7 +35,8 @@ public class Category {
     @Column(name = "sort_order")
     private Integer order;
 
-    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
+
+    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Product> products = new ArrayList<>();
 
     public Category() {
@@ -47,5 +47,23 @@ public class Category {
         this.slug = slug;
     }
 
-}
+    public void addChild(Category child) {
+        children.add(child);
+        child.setParent(this);
+    }
 
+    public void removeChild(Category child) {
+        children.remove(child);
+        child.setParent(null);
+    }
+
+    public void addProduct(Product product) {
+        products.add(product);
+        product.setCategory(this);
+    }
+
+    public void removeProduct(Product product) {
+        products.remove(product);
+        product.setCategory(null);
+    }
+}

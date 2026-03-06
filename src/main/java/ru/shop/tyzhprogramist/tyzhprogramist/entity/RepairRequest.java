@@ -10,9 +10,7 @@ import java.time.LocalDateTime;
 @Getter
 @Entity
 @Table(name = "repair_requests")
-public class RepairRequest {//мейби добавить енум для статуса, но пока так. типо затычка, типо в доработке.
-    // можно добавить енум для deviceType тк у нас определенный тип товара в магазе есть вова ты пон короч
-
+public class RepairRequest {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

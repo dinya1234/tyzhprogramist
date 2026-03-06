@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Setter
 @Getter
@@ -15,25 +17,26 @@ public class ChatSession {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
-    private User user;  //хз почему может быть нулл надо пересмотреть это
+    private User user;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "consultant_id")
-    private User consultant;  //хз почему может быть нулл надо пересмотреть это
+    private User consultant;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
-    private String status;  // В ожидании, Активен, Завершен. добавить енум скорее всего
+    private ChatStatus status;
 
     @Column(name = "source_url")
-    private String sourceUrl;  // откуда пришел пользователь хз зачем к вове вопросы
+    private String sourceUrl;
 
     @Column(name = "context_content_type", length = 50)
-    private String contextContentType;  // "Product" или "PcBuild" хз как реализовать но пока так будет
+    private String contextContentType;
 
     @Column(name = "context_object_id")
-    private Long contextObjectId;  // ID товара или сборки
+    private Long contextObjectId;
 
     @Column(name = "started_at", nullable = false)
     private LocalDateTime startedAt;
@@ -41,16 +44,20 @@ public class ChatSession {
     @Column(name = "ended_at")
     private LocalDateTime endedAt;
 
+
+    @OneToMany(mappedBy = "session", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<ChatMessage> messages = new ArrayList<>();
+
     public ChatSession() {
         this.startedAt = LocalDateTime.now();
-        this.status = "В ожидании";
+        this.status = ChatStatus.PENDING;
     }
 
     public ChatSession(User user, String sourceUrl) {
         this.user = user;
         this.sourceUrl = sourceUrl;
         this.startedAt = LocalDateTime.now();
-        this.status = "В ожидании";
+        this.status = ChatStatus.PENDING;
     }
 
     public ChatSession(User user, String sourceUrl,
@@ -60,6 +67,16 @@ public class ChatSession {
         this.contextContentType = contextContentType;
         this.contextObjectId = contextObjectId;
         this.startedAt = LocalDateTime.now();
-        this.status = "В ожидании";
+        this.status = ChatStatus.PENDING;
+    }
+
+    public void addMessage(ChatMessage message) {
+        messages.add(message);
+        message.setSession(this);
+    }
+
+    public void removeMessage(ChatMessage message) {
+        messages.remove(message);
+        message.setSession(null);
     }
 }

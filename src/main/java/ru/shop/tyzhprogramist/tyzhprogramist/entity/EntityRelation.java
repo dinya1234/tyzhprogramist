@@ -21,7 +21,7 @@ public class EntityRelation {
 
     @ManyToOne
     @JoinColumn(name = "user_id")
-    private User user;  // Пользователь (только для сравнений)
+    private User user;
 
     @Column(name = "from_content_type", nullable = false, length = 50)
     private String fromContentType;
@@ -36,10 +36,10 @@ public class EntityRelation {
     private Long toObjectId;
 
     @Column(name = "is_compatible")
-    private Boolean isCompatible;  // только для compatibility (может быть null)
+    private Boolean isCompatible;
 
     @Column(name = "name", length = 200)
-    private String name;  // только для comparison
+    private String name;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;

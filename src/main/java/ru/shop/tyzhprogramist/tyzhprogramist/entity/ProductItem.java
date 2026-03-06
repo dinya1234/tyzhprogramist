@@ -15,7 +15,7 @@ public class ProductItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Enumerated(EnumType.STRING)//доделать/переделать пока хз как реализовывать мб так и оставим
+    @Enumerated(EnumType.STRING)
     @Column(name = "parent_type", nullable = false)
     private ParentType parentType;
 
