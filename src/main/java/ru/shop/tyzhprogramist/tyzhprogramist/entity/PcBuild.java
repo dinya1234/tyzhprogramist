@@ -42,7 +42,6 @@ public class PcBuild {
         this.viewsCount = 0;
         this.createdAt = LocalDateTime.now();
     }
-    //метод для увеличения просмотров (пока что так мб изменим)
     public void incrementViews() {
         this.viewsCount++;
     }
