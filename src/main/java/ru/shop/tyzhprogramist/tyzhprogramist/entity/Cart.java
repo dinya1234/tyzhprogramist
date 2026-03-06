@@ -19,7 +19,7 @@ public class Cart {
     @JoinColumn(name = "user_id")
     private User user;
 
-    @Column(name = "session_key", length = 255)//подумать над реализацией, но пока так
+    @Column(name = "session_key", length = 255)
     private String sessionKey;
 
     @Column(name = "created_at", nullable = false)
