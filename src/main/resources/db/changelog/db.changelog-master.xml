@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
+
+    <!-- Подключаем файлы из папки v1.0.0 -->
+    <include file="v1.0.0/v1.0.0-create-tables.sql" relativeToChangelogFile="true"/>
+    <include file="v1.0.0/v1.0.0-insert-data.sql" relativeToChangelogFile="true"/>
+
+</databaseChangeLog>
