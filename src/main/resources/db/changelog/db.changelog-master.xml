@@ -5,8 +5,34 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
 
-    <!-- Подключаем файлы из папки v1.0.0 -->
+    <!-- 1. Сначала создаем структуру таблиц -->
     <include file="v1.0.0/v1.0.0-create-tables.sql" relativeToChangelogFile="true"/>
-    <include file="v1.0.0/v1.0.0-insert-data.sql" relativeToChangelogFile="true"/>
 
+    <!-- 2. Затем вставляем базовые, независимые данные -->
+    <include file="v1.0.0/v1.0.0-insert-data/01-users-settings.sql" relativeToChangelogFile="true"/>
+    <include file="v1.0.0/v1.0.0-insert-data/02-categories-types.sql" relativeToChangelogFile="true"/>
+
+    <!-- 3. Комплектующие ПК -->
+    <include file="v1.0.0/v1.0.0-insert-data/03-processors.sql" relativeToChangelogFile="true"/>
+    <include file="v1.0.0/v1.0.0-insert-data/04-motherboards.sql" relativeToChangelogFile="true"/>
+    <include file="v1.0.0/v1.0.0-insert-data/05-ram.sql" relativeToChangelogFile="true"/>
+    <include file="v1.0.0/v1.0.0-insert-data/06-graphics-cards-nvidia.sql" relativeToChangelogFile="true"/>
+    <include file="v1.0.0/v1.0.0-insert-data/07-graphics-cards-amd.sql" relativeToChangelogFile="true"/>
+    <include file="v1.0.0/v1.0.0-insert-data/08-storage.sql" relativeToChangelogFile="true"/>
+    <include file="v1.0.0/v1.0.0-insert-data/09-power-supplies.sql" relativeToChangelogFile="true"/>
+    <include file="v1.0.0/v1.0.0-insert-data/10-cases.sql" relativeToChangelogFile="true"/>
+    <include file="v1.0.0/v1.0.0-insert-data/11-cooling.sql" relativeToChangelogFile="true"/>
+
+    <!-- 4. Периферия -->
+    <include file="v1.0.0/v1.0.0-insert-data/12-peripherals-keyboards-mice.sql" relativeToChangelogFile="true"/>
+    <include file="v1.0.0/v1.0.0-insert-data/13-peripherals-audio-video.sql" relativeToChangelogFile="true"/>
+    <include file="v1.0.0/v1.0.0-insert-data/14-peripherals-networking.sql" relativeToChangelogFile="true"/>
+
+    <!-- 5. Готовые ПК и Ноутбуки -->
+    <include file="v1.0.0/v1.0.0-insert-data/15-prebuilt-pcs.sql" relativeToChangelogFile="true"/>
+    <include file="v1.0.0/v1.0.0-insert-data/16-laptops-work.sql" relativeToChangelogFile="true"/>
+    <include file="v1.0.0/v1.0.0-insert-data/17-laptops-gaming.sql" relativeToChangelogFile="true"/>
+
+    <!-- 6. Связи между товарами -->
+    <include file="v1.0.0/v1.0.0-insert-data/18-product-relations.sql" relativeToChangelogFile="true"/>
 </databaseChangeLog>
