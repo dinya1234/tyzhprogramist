@@ -3,7 +3,7 @@
 -- ==================== USERS TABLE ====================
 --changeset tyzhprogramist:1
 CREATE TABLE users (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     username VARCHAR(255) NOT NULL UNIQUE,
     email VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
@@ -23,7 +23,7 @@ CREATE TABLE users (
 -- ==================== CATEGORIES TABLE ====================
 --changeset tyzhprogramist:2
 CREATE TABLE categories (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL UNIQUE,
     slug VARCHAR(255) NOT NULL UNIQUE,
     parent_id BIGINT,
@@ -35,7 +35,7 @@ CREATE TABLE categories (
 -- ==================== PRODUCTS TABLE ====================
 --changeset tyzhprogramist:3
 CREATE TABLE products (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     sku VARCHAR(255) NOT NULL UNIQUE,
     category_id BIGINT NOT NULL,
     name VARCHAR(255) NOT NULL,
@@ -45,7 +45,7 @@ CREATE TABLE products (
     price DECIMAL(10,2) NOT NULL,
     old_price DECIMAL(10,2),
     quantity INT NOT NULL,
-    rating DOUBLE,
+    rating DOUBLE PRECISION,
     created_at TIMESTAMP NOT NULL,
     is_active BOOLEAN NOT NULL,
     is_new BOOLEAN NOT NULL,
@@ -60,7 +60,7 @@ CREATE TABLE products (
 -- ==================== CARTS TABLE ====================
 --changeset tyzhprogramist:4
 CREATE TABLE carts (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     user_id BIGINT UNIQUE,
     session_key VARCHAR(255),
     created_at TIMESTAMP NOT NULL,
@@ -70,7 +70,7 @@ CREATE TABLE carts (
 -- ==================== CHAT SESSIONS TABLE ====================
 --changeset tyzhprogramist:5
 CREATE TABLE chat_sessions (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     user_id BIGINT,
     consultant_id BIGINT,
     status VARCHAR(20) NOT NULL,
@@ -86,7 +86,7 @@ CREATE TABLE chat_sessions (
 -- ==================== CHAT MESSAGES TABLE ====================
 --changeset tyzhprogramist:6
 CREATE TABLE chat_messages (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     session_id BIGINT NOT NULL,
     sender_type VARCHAR(20) NOT NULL,
     message TEXT NOT NULL,
@@ -97,7 +97,7 @@ CREATE TABLE chat_messages (
 -- ==================== COMPONENT TYPES TABLE ====================
 --changeset tyzhprogramist:7
 CREATE TABLE component_types (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     order_step INT NOT NULL
 );
@@ -105,7 +105,7 @@ CREATE TABLE component_types (
 -- ==================== ENTITY RELATIONS TABLE ====================
 --changeset tyzhprogramist:8
 CREATE TABLE entity_relations (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     relation_type VARCHAR(20) NOT NULL,
     user_id BIGINT,
     from_content_type VARCHAR(50) NOT NULL,
@@ -121,7 +121,7 @@ CREATE TABLE entity_relations (
 -- ==================== FILE ATTACHMENTS TABLE ====================
 --changeset tyzhprogramist:9
 CREATE TABLE file_attachments (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     content_type VARCHAR(100) NOT NULL,
     object_id BIGINT NOT NULL,
     file_path VARCHAR(500) NOT NULL,
@@ -136,7 +136,7 @@ CREATE TABLE file_attachments (
 -- ==================== ORDERS TABLE ====================
 --changeset tyzhprogramist:10
 CREATE TABLE orders (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     user_id BIGINT NOT NULL,
     status VARCHAR(20) NOT NULL,
     delivery_method VARCHAR(255) NOT NULL,
@@ -151,7 +151,7 @@ CREATE TABLE orders (
 -- ==================== PC BUILDS TABLE ====================
 --changeset tyzhprogramist:11
 CREATE TABLE pc_builds (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     user_id BIGINT NOT NULL,
     name VARCHAR(255) NOT NULL,
     is_public BOOLEAN NOT NULL,
@@ -163,7 +163,7 @@ CREATE TABLE pc_builds (
 -- ==================== PRODUCT FEEDBACK TABLE ====================
 --changeset tyzhprogramist:12
 CREATE TABLE product_feedback (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     product_id BIGINT NOT NULL,
     user_id BIGINT NOT NULL,
     feedback_type VARCHAR(20) NOT NULL,
@@ -179,7 +179,7 @@ CREATE TABLE product_feedback (
 -- ==================== PRODUCT ITEMS TABLE ====================
 --changeset tyzhprogramist:13
 CREATE TABLE product_items (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     parent_type VARCHAR(20) NOT NULL,
     parent_id BIGINT NOT NULL,
     product_id BIGINT NOT NULL,
@@ -191,7 +191,7 @@ CREATE TABLE product_items (
 -- ==================== REFRESH TOKENS TABLE ====================
 --changeset tyzhprogramist:14
 CREATE TABLE refresh_tokens (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     user_id BIGINT NOT NULL UNIQUE,
     token VARCHAR(512) NOT NULL UNIQUE,
     expiry_date TIMESTAMP NOT NULL,
@@ -202,7 +202,7 @@ CREATE TABLE refresh_tokens (
 -- ==================== REPAIR REQUESTS TABLE ====================
 --changeset tyzhprogramist:15
 CREATE TABLE repair_requests (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     user_id BIGINT NOT NULL,
     device_type VARCHAR(100) NOT NULL,
     problem_description VARCHAR(2000) NOT NULL,
@@ -217,7 +217,7 @@ CREATE TABLE repair_requests (
 -- ==================== SITE SETTINGS TABLE ====================
 --changeset tyzhprogramist:16
 CREATE TABLE site_settings (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     pickup_address VARCHAR(255) NOT NULL,
     pickup_phone VARCHAR(20) NOT NULL,
     pickup_working_hours VARCHAR(255) NOT NULL,

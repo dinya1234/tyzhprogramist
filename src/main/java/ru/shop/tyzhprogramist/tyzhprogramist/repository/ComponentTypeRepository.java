@@ -1,6 +1,6 @@
 package ru.shop.tyzhprogramist.tyzhprogramist.repository;
 
-import org.springframework.boot.data.autoconfigure.web.DataWebProperties;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -9,7 +9,6 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import ru.shop.tyzhprogramist.tyzhprogramist.entity.ComponentType;
 
-import java.awt.print.Pageable;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -21,41 +20,51 @@ public interface ComponentTypeRepository extends JpaRepository<ComponentType, Lo
 
     boolean existsByName(String name);
 
-    List<ComponentType> findAllByOrderByOrderStepAsc();
-    Optional<ComponentType> findByOrderStep(Integer orderStep);
-    List<ComponentType> findByOrderStepLessThanEqual(Integer orderStep);
-    List<ComponentType> findByOrderStepGreaterThan(Integer orderStep);
+    // ИСПРАВЛЕНО: Заменяем на JPQL запрос
+    @Query("SELECT ct FROM ComponentType ct ORDER BY ct.order_step ASC")
+    List<ComponentType> findAllOrdered();
 
-    @Query("SELECT ct FROM ComponentType ct WHERE ct.orderStep > :currentOrder ORDER BY ct.orderStep ASC")
-    List<ComponentType> findNextTypes(@Param("currentOrder") Integer currentOrder, Pageable pageable);
+    // ИСПРАВЛЕНО: Заменяем на JPQL запрос
+    @Query("SELECT ct FROM ComponentType ct WHERE ct.order_step = :orderStep")
+    Optional<ComponentType> findByOrderStep(@Param("orderStep") Integer orderStep);
 
+    // ИСПРАВЛЕНО: Заменяем на JPQL запрос
+    @Query("SELECT ct FROM ComponentType ct WHERE ct.order_step <= :orderStep")
+    List<ComponentType> findByOrderStepLessThanEqual(@Param("orderStep") Integer orderStep);
 
-    @Query("SELECT COALESCE(MAX(ct.orderStep), 0) FROM ComponentType ct")
+    // ИСПРАВЛЕНО: Заменяем на JPQL запрос
+    @Query("SELECT ct FROM ComponentType ct WHERE ct.order_step > :orderStep")
+    List<ComponentType> findByOrderStepGreaterThan(@Param("orderStep") Integer orderStep);
+
+    @Query("SELECT ct FROM ComponentType ct WHERE ct.order_step > :currentOrder ORDER BY ct.order_step ASC")
+    List<ComponentType> findNextTypes(@Param("currentOrder") Integer currentOrder);
+
+    @Query("SELECT COALESCE(MAX(ct.order_step), 0) FROM ComponentType ct")
     Integer getMaxOrderStep();
 
-    @Query("SELECT COALESCE(MIN(ct.orderStep), 0) FROM ComponentType ct")
+    @Query("SELECT COALESCE(MIN(ct.order_step), 0) FROM ComponentType ct")
     Integer getMinOrderStep();
 
-    @Query("SELECT ct FROM ComponentType ct WHERE ct.orderStep = (SELECT MIN(ct2.orderStep) FROM ComponentType ct2)")
+    @Query("SELECT ct FROM ComponentType ct WHERE ct.order_step = (SELECT MIN(ct2.order_step) FROM ComponentType ct2)")
     Optional<ComponentType> findFirstStep();
 
-    @Query("SELECT ct FROM ComponentType ct WHERE ct.orderStep = (SELECT MAX(ct2.orderStep) FROM ComponentType ct2)")
+    @Query("SELECT ct FROM ComponentType ct WHERE ct.order_step = (SELECT MAX(ct2.order_step) FROM ComponentType ct2)")
     Optional<ComponentType> findLastStep();
 
-    @Query("SELECT ct FROM ComponentType ct WHERE ct.orderStep > :currentOrder ORDER BY ct.orderStep ASC")
+    @Query("SELECT ct FROM ComponentType ct WHERE ct.order_step > :currentOrder ORDER BY ct.order_step ASC")
     List<ComponentType> findNextStep(@Param("currentOrder") Integer currentOrder, Pageable pageable);
 
-    @Query("SELECT ct FROM ComponentType ct WHERE ct.orderStep < :currentOrder ORDER BY ct.orderStep DESC")
-    List<ComponentType> findPreviousStep(@Param("currentOrder") Integer currentOrder, DataWebProperties.Pageable pageable);
+    @Query("SELECT ct FROM ComponentType ct WHERE ct.order_step < :currentOrder ORDER BY ct.order_step DESC")
+    List<ComponentType> findPreviousStep(@Param("currentOrder") Integer currentOrder, Pageable pageable);
 
     @Modifying
     @Transactional
-    @Query("UPDATE ComponentType ct SET ct.orderStep = :newOrder WHERE ct.id = :id")
+    @Query("UPDATE ComponentType ct SET ct.order_step = :newOrder WHERE ct.id = :id")
     int updateOrderStep(@Param("id") Long id, @Param("newOrder") Integer newOrder);
 
     @Modifying
     @Transactional
-    @Query("UPDATE ComponentType ct SET ct.orderStep = ct.orderStep + :delta WHERE ct.orderStep >= :startFrom")
+    @Query("UPDATE ComponentType ct SET ct.order_step = ct.order_step + :delta WHERE ct.order_step >= :startFrom")
     int shiftOrderSteps(@Param("startFrom") Integer startFrom, @Param("delta") Integer delta);
 
     @Modifying
@@ -74,33 +83,32 @@ public interface ComponentTypeRepository extends JpaRepository<ComponentType, Lo
             "WHERE ct.id = :id AND ct.name LIKE '%multiple%'")
     boolean isMultipleAllowed(@Param("id") Long id);
 
-    @Query("SELECT ct.name, COUNT(pbi) FROM ComponentType ct " +
-            "LEFT JOIN ProductItem pbi ON pbi.parentType = 'PcBuild' " +
-            "LEFT JOIN Product p ON pbi.product.id = p.id " +
-            "LEFT JOIN ComponentType ct2 ON ct2.id = :componentTypeId " + // Здесь нужна связь Product с ComponentType
+    @Query("SELECT ct.name, COUNT(p) FROM ComponentType ct " +
+            "LEFT JOIN Product p ON p.category.id IN " +
+            "(SELECT c.id FROM Category c WHERE c.name LIKE CONCAT('%', ct.name, '%')) " +
             "GROUP BY ct.id, ct.name " +
-            "ORDER BY COUNT(pbi) DESC")
+            "ORDER BY COUNT(p) DESC")
     List<Object[]> getComponentUsageStatistics();
 
     @Query("SELECT COUNT(ct) FROM ComponentType ct")
     long getTotalSteps();
 
-    @Query("SELECT MIN(ct.orderStep), MAX(ct.orderStep) FROM ComponentType ct")
+    @Query("SELECT MIN(ct.order_step), MAX(ct.order_step) FROM ComponentType ct")
     Object[] getOrderStepRange();
 
-    @Query("SELECT CASE WHEN ct.name IN ('CPU', 'MOTHERBOARD', 'RAM') THEN true ELSE false END " +
-            "FROM ComponentType ct WHERE ct.id = :id")
+    @Query("SELECT CASE WHEN ct.name IN ('Процессор', 'Материнская плата', 'Оперативная память') " +
+            "THEN true ELSE false END FROM ComponentType ct WHERE ct.id = :id")
     boolean isRequired(@Param("id") Long id);
 
     default List<ComponentType> findProcessorTypes() {
-        return findAllByOrderByOrderStepAsc().stream()
+        return findAllOrdered().stream()
                 .filter(ct -> ct.getName().toLowerCase().contains("процессор") ||
                         ct.getName().toLowerCase().contains("cpu"))
                 .collect(Collectors.toList());
     }
 
     default List<ComponentType> findMemoryTypes() {
-        return findAllByOrderByOrderStepAsc().stream()
+        return findAllOrdered().stream()
                 .filter(ct -> ct.getName().toLowerCase().contains("озу") ||
                         ct.getName().toLowerCase().contains("ram") ||
                         ct.getName().toLowerCase().contains("память"))
@@ -108,7 +116,7 @@ public interface ComponentTypeRepository extends JpaRepository<ComponentType, Lo
     }
 
     default List<ComponentType> findStorageTypes() {
-        return findAllByOrderByOrderStepAsc().stream()
+        return findAllOrdered().stream()
                 .filter(ct -> ct.getName().toLowerCase().contains("ssd") ||
                         ct.getName().toLowerCase().contains("hdd") ||
                         ct.getName().toLowerCase().contains("накопитель"))

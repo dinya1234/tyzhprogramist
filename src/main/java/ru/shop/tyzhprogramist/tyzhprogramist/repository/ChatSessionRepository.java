@@ -102,7 +102,7 @@ public interface ChatSessionRepository extends JpaRepository<ChatSession, Long> 
     List<ChatSession> findByStartedAtBetween(LocalDateTime startDate, LocalDateTime endDate);
     List<ChatSession> findByEndedAtBetween(LocalDateTime startDate, LocalDateTime endDate);
 
-    @Query("SELECT cs FROM ChatSession cs WHERE DATE(cs.startedAt) = CURRENT_DATE")
+    @Query("SELECT cs FROM ChatSession cs WHERE FUNCTION('DATE', cs.startedAt) = CURRENT_DATE")
     List<ChatSession> findTodaySessions();
 
     @Query("SELECT cs FROM ChatSession cs WHERE cs.status = 'ACTIVE' AND cs.startedAt < :threshold")
@@ -111,23 +111,32 @@ public interface ChatSessionRepository extends JpaRepository<ChatSession, Long> 
     @Query("SELECT cs.status, COUNT(cs) FROM ChatSession cs GROUP BY cs.status")
     List<Object[]> getStatusStatistics();
 
-    @Query("SELECT DATE(cs.startedAt), " +
-            "COUNT(cs), " +
+    // ИСПРАВЛЕНО: Используем nativeQuery для EXTRACT
+    @Query(value = "SELECT DATE(cs.started_at) as date, " +
+            "COUNT(*) as total, " +
             "SUM(CASE WHEN cs.status = 'CLOSED' THEN 1 ELSE 0 END) as completed, " +
-            "AVG(CASE WHEN cs.endedAt IS NOT NULL THEN EXTRACT(EPOCH FROM (cs.endedAt - cs.startedAt))/60 ELSE null END) as avgDuration " +
-            "FROM ChatSession cs " +
-            "WHERE cs.startedAt BETWEEN :startDate AND :endDate " +
-            "GROUP BY DATE(cs.startedAt) " +
-            "ORDER BY DATE(cs.startedAt)")
+            "AVG(CASE WHEN cs.ended_at IS NOT NULL " +
+            "THEN EXTRACT(EPOCH FROM (cs.ended_at - cs.started_at)) / 60 " +
+            "ELSE NULL END) as avgDuration " +
+            "FROM chat_sessions cs " +
+            "WHERE cs.started_at BETWEEN :startDate AND :endDate " +
+            "GROUP BY DATE(cs.started_at) " +
+            "ORDER BY DATE(cs.started_at)",
+            nativeQuery = true)
     List<Object[]> getDailyStatistics(@Param("startDate") LocalDateTime startDate,
                                       @Param("endDate") LocalDateTime endDate);
 
-    @Query("SELECT cs.consultant.id, u.username, COUNT(cs), AVG(CASE WHEN cs.endedAt IS NOT NULL THEN EXTRACT(EPOCH FROM (cs.endedAt - cs.startedAt))/60 ELSE null END) as avgDuration " +
-            "FROM ChatSession cs " +
-            "JOIN User u ON cs.consultant.id = u.id " +
-            "WHERE cs.consultant IS NOT NULL AND cs.status = 'CLOSED' " +
-            "GROUP BY cs.consultant.id, u.username " +
-            "ORDER BY COUNT(cs) DESC")
+    // ИСПРАВЛЕНО: Используем nativeQuery для статистики консультантов
+    @Query(value = "SELECT cs.consultant_id, u.username, COUNT(*), " +
+            "AVG(CASE WHEN cs.ended_at IS NOT NULL " +
+            "THEN EXTRACT(EPOCH FROM (cs.ended_at - cs.started_at)) / 60 " +
+            "ELSE NULL END) as avgDuration " +
+            "FROM chat_sessions cs " +
+            "JOIN users u ON cs.consultant_id = u.id " +
+            "WHERE cs.consultant_id IS NOT NULL AND cs.status = 'CLOSED' " +
+            "GROUP BY cs.consultant_id, u.username " +
+            "ORDER BY COUNT(*) DESC",
+            nativeQuery = true)
     List<Object[]> getConsultantStatistics();
 
     @Query("SELECT SUBSTRING(cs.sourceUrl, 1, 50) as urlSource, COUNT(cs) " +
@@ -139,10 +148,14 @@ public interface ChatSessionRepository extends JpaRepository<ChatSession, Long> 
     @Query("SELECT cs.contextContentType, COUNT(cs) FROM ChatSession cs WHERE cs.contextContentType IS NOT NULL GROUP BY cs.contextContentType")
     List<Object[]> getContextStatistics();
 
-    @Query("SELECT AVG(EXTRACT(EPOCH FROM (cs.endedAt - cs.startedAt))/60) FROM ChatSession cs WHERE cs.endedAt IS NOT NULL")
+    // ИСПРАВЛЕНО: Используем nativeQuery для средней длительности
+    @Query(value = "SELECT AVG(EXTRACT(EPOCH FROM (ended_at - started_at)) / 60) FROM chat_sessions WHERE ended_at IS NOT NULL",
+            nativeQuery = true)
     Double getAverageSessionDuration();
 
-    @Query("SELECT MAX(EXTRACT(EPOCH FROM (cs.endedAt - cs.startedAt))/60) FROM ChatSession cs WHERE cs.endedAt IS NOT NULL")
+    // ИСПРАВЛЕНО: Используем nativeQuery для максимальной длительности
+    @Query(value = "SELECT MAX(EXTRACT(EPOCH FROM (ended_at - started_at)) / 60) FROM chat_sessions WHERE ended_at IS NOT NULL",
+            nativeQuery = true)
     Double getMaxSessionDuration();
 
     @Query("SELECT cs FROM ChatSession cs WHERE cs.user IS NULL")

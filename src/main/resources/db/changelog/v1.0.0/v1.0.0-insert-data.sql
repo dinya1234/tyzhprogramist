@@ -2,11 +2,11 @@
 
 -- ==================== INSERT DEFAULT DATA ====================
 --changeset tyzhprogramist:20
--- Insert default admin user (password: admin123 - CHANGE IT!)
+-- Insert default admin user (password: admin123 - нужно захешировать!)
 INSERT INTO users (username, email, password, first_name, last_name, role, date_joined, notifications, is_active, email_verified)
 VALUES ('admin', 'admin@example.com', '$2a$10$YourHashedPasswordHere', 'Admin', 'User', 'ADMIN', NOW(), TRUE, TRUE, FALSE);
 
--- Insert default moderator user (password: moderator123 - CHANGE IT!)
+-- Insert default moderator user (password: moderator123 - нужно захешировать!)
 INSERT INTO users (username, email, password, first_name, last_name, role, date_joined, notifications, is_active, email_verified)
 VALUES ('moderator', 'moderator@example.com', '$2a$10$YourHashedPasswordHere', 'Moderator', 'User', 'MODERATOR', NOW(), TRUE, TRUE, FALSE);
 
