@@ -957,3 +957,409 @@ INSERT INTO frequently_bought_together (product_id, related_product_id)
 SELECT p1.id, p2.id
 FROM products p1, products p2
 WHERE p1.sku = 'CPU-001' AND p2.sku = 'SSD-001';
+
+
+--changeset tyzhprogramist:23
+-- ==================== ПЕРИФЕРИЯ И АКСЕССУАРЫ ====================
+-- Insert new peripheral categories
+INSERT INTO categories (name, slug, sort_order) VALUES
+('Клавиатуры', 'keyboards', 9),
+('Мыши', 'mice', 10),
+('Коврики для мыши', 'mouse-pads', 11),
+('Веб-камеры', 'webcams', 12),
+('Наушники и гарнитуры', 'headphones', 13),
+('Колонки', 'speakers', 14),
+('Сетевое оборудование', 'networking', 15);
+
+-- ==================== КЛАВИАТУРЫ ====================
+-- Механические клавиатуры
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'KB-MECH-001', id, 'Logitech G Pro X Mechanical', 'logitech-g-pro-x-mech', 'Механическая клавиатура Logitech G Pro X, Hot-Swap переключатели, RGB', 14500.00, 8, NOW(), TRUE, TRUE, TRUE, 24
+FROM categories WHERE slug = 'keyboards';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'KB-MECH-002', id, 'Razer BlackWidow V4', 'razer-blackwidow-v4', 'Механическая клавиатура Razer BlackWidow V4, Green Switches, RGB', 16500.00, 6, NOW(), TRUE, TRUE, FALSE, 24
+FROM categories WHERE slug = 'keyboards';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'KB-MECH-003', id, 'Corsair K70 RGB PRO', 'corsair-k70-rgb-pro', 'Механическая клавиатура Corsair K70 RGB PRO, Cherry MX Red, RGB', 15500.00, 7, NOW(), TRUE, FALSE, TRUE, 24
+FROM categories WHERE slug = 'keyboards';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'KB-MECH-004', id, 'Keychron K8 Pro', 'keychron-k8-pro', 'Механическая клавиатура Keychron K8 Pro, Gateron G Pro, QMK/VIA, Bluetooth', 9500.00, 5, NOW(), TRUE, TRUE, FALSE, 12
+FROM categories WHERE slug = 'keyboards';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'KB-MECH-005', id, 'Ducky One 3 Mini', 'ducky-one-3-mini', 'Механическая клавиатура Ducky One 3 Mini 60%, Cherry MX Speed Silver', 11500.00, 4, NOW(), TRUE, FALSE, FALSE, 24
+FROM categories WHERE slug = 'keyboards';
+
+-- Мембранные клавиатуры
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'KB-MEM-001', id, 'Logitech MK270', 'logitech-mk270', 'Комплект клавиатуры и мыши Logitech MK270, беспроводной', 3500.00, 20, NOW(), TRUE, FALSE, TRUE, 12
+FROM categories WHERE slug = 'keyboards';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'KB-MEM-002', id, 'Logitech K380', 'logitech-k380', 'Компактная Bluetooth клавиатура Logitech K380, мультидевайс', 4200.00, 12, NOW(), TRUE, TRUE, FALSE, 12
+FROM categories WHERE slug = 'keyboards';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'KB-MEM-003', id, 'Logitech MX Keys', 'logitech-mx-keys', 'Беспроводная клавиатура Logitech MX Keys, подсветка, для работы', 9500.00, 8, NOW(), TRUE, FALSE, TRUE, 24
+FROM categories WHERE slug = 'keyboards';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'KB-MEM-004', id, 'Microsoft Ergonomic', 'microsoft-ergonomic', 'Эргономичная клавиатура Microsoft Ergonomic, USB', 6800.00, 6, NOW(), TRUE, FALSE, FALSE, 12
+FROM categories WHERE slug = 'keyboards';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'KB-MEM-005', id, 'Apple Magic Keyboard', 'apple-magic-keyboard', 'Apple Magic Keyboard, беспроводная, для Mac', 10500.00, 7, NOW(), TRUE, FALSE, FALSE, 12
+FROM categories WHERE slug = 'keyboards';
+
+-- ==================== МЫШИ ====================
+-- Игровые мыши
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'MOUSE-GAME-001', id, 'Logitech G PRO X Superlight', 'logitech-g-pro-x-superlight', 'Игровая мышь Logitech G PRO X Superlight, 25000 DPI, 63g, беспроводная', 13500.00, 10, NOW(), TRUE, TRUE, TRUE, 24
+FROM categories WHERE slug = 'mice';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'MOUSE-GAME-002', id, 'Razer DeathAdder V3 Pro', 'razer-deathadder-v3-pro', 'Игровая мышь Razer DeathAdder V3 Pro, 30000 DPI, беспроводная', 12500.00, 8, NOW(), TRUE, TRUE, FALSE, 24
+FROM categories WHERE slug = 'mice';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'MOUSE-GAME-003', id, 'Razer Viper V2 Pro', 'razer-viper-v2-pro', 'Игровая мышь Razer Viper V2 Pro, 30000 DPI, 58g, беспроводная', 12500.00, 7, NOW(), TRUE, FALSE, FALSE, 24
+FROM categories WHERE slug = 'mice';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'MOUSE-GAME-004', id, 'Logitech G502 X PLUS', 'logitech-g502-x-plus', 'Игровая мышь Logitech G502 X PLUS, LIGHTFORCE, беспроводная, RGB', 11500.00, 9, NOW(), TRUE, TRUE, TRUE, 24
+FROM categories WHERE slug = 'mice';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'MOUSE-GAME-005', id, 'SteelSeries Aerox 5', 'steelseries-aerox-5', 'Игровая мышь SteelSeries Aerox 5 Wireless, 18000 DPI, ультралегкая', 9500.00, 6, NOW(), TRUE, FALSE, FALSE, 12
+FROM categories WHERE slug = 'mice';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'MOUSE-GAME-006', id, 'Zowie EC2-C', 'zowie-ec2-c', 'Игровая мышь Zowie EC2-C, 3200 DPI, проводная, для киберспорта', 6800.00, 5, NOW(), TRUE, FALSE, FALSE, 12
+FROM categories WHERE slug = 'mice';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'MOUSE-GAME-007', id, 'Corsair Sabre RGB Pro', 'corsair-sabre-rgb-pro', 'Игровая мышь Corsair Sabre RGB Pro, проводная, 18000 DPI', 5500.00, 8, NOW(), TRUE, FALSE, FALSE, 24
+FROM categories WHERE slug = 'mice';
+
+-- Офисные мыши
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'MOUSE-OFFICE-001', id, 'Logitech MX Master 3S', 'logitech-mx-master-3s', 'Беспроводная мышь Logitech MX Master 3S, 8000 DPI, для работы', 9500.00, 12, NOW(), TRUE, TRUE, TRUE, 24
+FROM categories WHERE slug = 'mice';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'MOUSE-OFFICE-002', id, 'Logitech MX Anywhere 3S', 'logitech-mx-anywhere-3s', 'Компактная мышь Logitech MX Anywhere 3S, беспроводная', 7500.00, 10, NOW(), TRUE, TRUE, FALSE, 24
+FROM categories WHERE slug = 'mice';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'MOUSE-OFFICE-003', id, 'Logitech M185', 'logitech-m185', 'Беспроводная мышь Logitech M185, компактная', 1200.00, 30, NOW(), TRUE, FALSE, TRUE, 12
+FROM categories WHERE slug = 'mice';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'MOUSE-OFFICE-004', id, 'Microsoft Bluetooth Mouse', 'microsoft-bluetooth-mouse', 'Microsoft Bluetooth Mouse, эргономичная', 2800.00, 15, NOW(), TRUE, FALSE, FALSE, 12
+FROM categories WHERE slug = 'mice';
+
+-- ==================== КОВРИКИ ДЛЯ МЫШИ ====================
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'PAD-001', id, 'Razer Strider XXL', 'razer-strider-xxl', 'Игровой коврик Razer Strider, размер XXL, 940x410x3мм', 3500.00, 15, NOW(), TRUE, TRUE, TRUE, 12
+FROM categories WHERE slug = 'mouse-pads';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'PAD-002', id, 'Logitech G840', 'logitech-g840', 'Игровой коврик Logitech G840, размер XL, 900x400x3мм', 4500.00, 12, NOW(), TRUE, FALSE, FALSE, 24
+FROM categories WHERE slug = 'mouse-pads';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'PAD-003', id, 'SteelSeries QcK Heavy', 'steelseries-qck-heavy', 'Игровой коврик SteelSeries QcK Heavy, размер L, 450x400x6мм', 2800.00, 20, NOW(), TRUE, FALSE, TRUE, 12
+FROM categories WHERE slug = 'mouse-pads';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'PAD-004', id, 'SteelSeries QcK Prism', 'steelseries-qck-prism', 'Игровой коврик SteelSeries QcK Prism с подсветкой, XL', 5800.00, 8, NOW(), TRUE, TRUE, FALSE, 12
+FROM categories WHERE slug = 'mouse-pads';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'PAD-005', id, 'Corsair MM350', 'corsair-mm350', 'Игровой коврик Corsair MM350 Champion Series, XL', 3200.00, 10, NOW(), TRUE, FALSE, FALSE, 24
+FROM categories WHERE slug = 'mouse-pads';
+
+-- ==================== ВЕБ-КАМЕРЫ ====================
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'WEBCAM-001', id, 'Logitech StreamCam', 'logitech-streamcam', 'Веб-камера Logitech StreamCam, 1080p 60fps, USB-C', 11500.00, 8, NOW(), TRUE, TRUE, TRUE, 24
+FROM categories WHERE slug = 'webcams';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'WEBCAM-002', id, 'Logitech C920', 'logitech-c920', 'Веб-камера Logitech C920 HD Pro, 1080p', 6500.00, 15, NOW(), TRUE, FALSE, TRUE, 24
+FROM categories WHERE slug = 'webcams';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'WEBCAM-003', id, 'Logitech BRIO 4K', 'logitech-brio-4k', 'Веб-камера Logitech BRIO 4K, 4K Ultra HD, HDR', 18500.00, 5, NOW(), TRUE, FALSE, FALSE, 24
+FROM categories WHERE slug = 'webcams';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'WEBCAM-004', id, 'Razer Kiyo Pro', 'razer-kiyo-pro', 'Веб-камера Razer Kiyo Pro, 1080p 60fps, HDR', 12500.00, 6, NOW(), TRUE, TRUE, FALSE, 12
+FROM categories WHERE slug = 'webcams';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'WEBCAM-005', id, 'AverMedia Live Streamer 313', 'avermedia-live-streamer-313', 'Веб-камера AverMedia Live Streamer 313, 1080p 60fps', 7500.00, 7, NOW(), TRUE, FALSE, FALSE, 12
+FROM categories WHERE slug = 'webcams';
+
+-- ==================== НАУШНИКИ И ГАРНИТУРЫ ====================
+-- Проводные
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'HP-WIRED-001', id, 'HyperX Cloud II', 'hyperx-cloud-ii', 'Игровая гарнитура HyperX Cloud II, 7.1 виртуальный звук', 6500.00, 15, NOW(), TRUE, FALSE, TRUE, 12
+FROM categories WHERE slug = 'headphones';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'HP-WIRED-002', id, 'HyperX Cloud Alpha', 'hyperx-cloud-alpha', 'Игровая гарнитура HyperX Cloud Alpha, двойные камеры', 7500.00, 12, NOW(), TRUE, FALSE, FALSE, 12
+FROM categories WHERE slug = 'headphones';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'HP-WIRED-003', id, 'SteelSeries Arctis 5', 'steelseries-arctis-5', 'Игровая гарнитура SteelSeries Arctis 5, RGB, DTS', 8500.00, 10, NOW(), TRUE, FALSE, TRUE, 24
+FROM categories WHERE slug = 'headphones';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'HP-WIRED-004', id, 'Logitech G PRO X', 'logitech-g-pro-x', 'Игровая гарнитура Logitech G PRO X, с микрофоном', 9500.00, 8, NOW(), TRUE, TRUE, FALSE, 24
+FROM categories WHERE slug = 'headphones';
+
+-- Беспроводные
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'HP-WLESS-001', id, 'Logitech G PRO X Wireless', 'logitech-g-pro-x-wireless', 'Беспроводная гарнитура Logitech G PRO X, Lightspeed', 14500.00, 6, NOW(), TRUE, TRUE, TRUE, 24
+FROM categories WHERE slug = 'headphones';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'HP-WLESS-002', id, 'SteelSeries Arctis 7+', 'steelseries-arctis-7-plus', 'Беспроводная гарнитура SteelSeries Arctis 7+, 30ч работы', 11500.00, 8, NOW(), TRUE, FALSE, FALSE, 24
+FROM categories WHERE slug = 'headphones';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'HP-WLESS-003', id, 'Sony WH-1000XM4', 'sony-wh-1000xm4', 'Беспроводные наушники Sony WH-1000XM4, шумоподавление', 22500.00, 7, NOW(), TRUE, FALSE, TRUE, 12
+FROM categories WHERE slug = 'headphones';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'HP-WLESS-004', id, 'Sony WH-1000XM5', 'sony-wh-1000xm5', 'Беспроводные наушники Sony WH-1000XM5, шумоподавление', 28500.00, 5, NOW(), TRUE, TRUE, FALSE, 12
+FROM categories WHERE slug = 'headphones';
+
+-- ==================== КОЛОНКИ ====================
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'SPK-001', id, 'Logitech Z333', 'logitech-z333', 'Акустическая система Logitech Z333, 2.1, 40Вт', 5500.00, 12, NOW(), TRUE, FALSE, TRUE, 24
+FROM categories WHERE slug = 'speakers';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'SPK-002', id, 'Logitech Z623', 'logitech-z623', 'Акустическая система Logitech Z623, 2.1, 200Вт, THX', 13500.00, 8, NOW(), TRUE, FALSE, FALSE, 24
+FROM categories WHERE slug = 'speakers';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'SPK-003', id, 'Edifier R1280DB', 'edifier-r1280db', 'Активные колонки Edifier R1280DB, 2.0, 42Вт, Bluetooth', 11500.00, 10, NOW(), TRUE, TRUE, TRUE, 12
+FROM categories WHERE slug = 'speakers';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'SPK-004', id, 'Edifier S350DB', 'edifier-s350db', 'Акустическая система Edifier S350DB, 2.1, 150Вт', 18500.00, 5, NOW(), TRUE, FALSE, FALSE, 12
+FROM categories WHERE slug = 'speakers';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'SPK-005', id, 'JBL Charge 5', 'jbl-charge-5', 'Портативная колонка JBL Charge 5, Bluetooth', 11500.00, 10, NOW(), TRUE, FALSE, FALSE, 12
+FROM categories WHERE slug = 'speakers';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'SPK-006', id, 'JBL Flip 6', 'jbl-flip-6', 'Портативная колонка JBL Flip 6, Bluetooth', 8500.00, 12, NOW(), TRUE, TRUE, TRUE, 12
+FROM categories WHERE slug = 'speakers';
+
+-- ==================== СЕТЕВОЕ ОБОРУДОВАНИЕ ====================
+-- Роутеры
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'NET-RTR-001', id, 'TP-Link Archer AX73', 'tp-link-archer-ax73', 'Wi-Fi роутер TP-Link Archer AX73, AX5400, гигабитный', 7500.00, 12, NOW(), TRUE, FALSE, TRUE, 24
+FROM categories WHERE slug = 'networking';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'NET-RTR-002', id, 'TP-Link Archer AX11000', 'tp-link-archer-ax11000', 'Wi-Fi роутер TP-Link Archer AX11000, три-диапазонный', 23500.00, 4, NOW(), TRUE, FALSE, FALSE, 24
+FROM categories WHERE slug = 'networking';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'NET-RTR-003', id, 'ASUS RT-AX82U', 'asus-rt-ax82u', 'Wi-Fi роутер ASUS RT-AX82U, AX5400, RGB', 12500.00, 8, NOW(), TRUE, TRUE, TRUE, 24
+FROM categories WHERE slug = 'networking';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'NET-RTR-004', id, 'ASUS ROG Rapture GT-AX11000', 'asus-rog-rapture-gt-ax11000', 'Игровой роутер ASUS ROG Rapture GT-AX11000', 32500.00, 3, NOW(), TRUE, FALSE, FALSE, 24
+FROM categories WHERE slug = 'networking';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'NET-RTR-005', id, 'MikroTik hAP ac2', 'mikrotik-hap-ac2', 'Роутер MikroTik hAP ac2, гигабитный', 5500.00, 10, NOW(), TRUE, FALSE, FALSE, 12
+FROM categories WHERE slug = 'networking';
+
+-- Сетевые карты и адаптеры
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'NET-ADP-001', id, 'TP-Link Archer TX50E', 'tp-link-archer-tx50e', 'PCIe адаптер TP-Link Archer TX50E, Wi-Fi 6, Bluetooth 5.0', 4200.00, 10, NOW(), TRUE, TRUE, TRUE, 24
+FROM categories WHERE slug = 'networking';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'NET-ADP-002', id, 'ASUS PCE-AX58BT', 'asus-pce-ax58bt', 'PCIe адаптер ASUS PCE-AX58BT, Wi-Fi 6, Bluetooth 5.0', 4800.00, 8, NOW(), TRUE, FALSE, FALSE, 24
+FROM categories WHERE slug = 'networking';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'NET-ADP-003', id, 'TP-Link Archer T3U', 'tp-link-archer-t3u', 'USB адаптер TP-Link Archer T3U, Wi-Fi AC1300', 1500.00, 20, NOW(), TRUE, FALSE, FALSE, 12
+FROM categories WHERE slug = 'networking';
+
+-- Коммутаторы
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'NET-SW-001', id, 'TP-Link TL-SG105', 'tp-link-tl-sg105', 'Коммутатор TP-Link TL-SG105, 5 портов гигабитный', 1500.00, 15, NOW(), TRUE, FALSE, TRUE, 12
+FROM categories WHERE slug = 'networking';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'NET-SW-002', id, 'TP-Link TL-SG108', 'tp-link-tl-sg108', 'Коммутатор TP-Link TL-SG108, 8 портов гигабитный', 2200.00, 12, NOW(), TRUE, FALSE, FALSE, 12
+FROM categories WHERE slug = 'networking';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months)
+SELECT 'NET-SW-003', id, 'MikroTik CRS112-8P-4S-IN', 'mikrotik-crs112-8p-4s-in', 'Коммутатор MikroTik CRS112-8P-4S-IN, 8 портов PoE', 11500.00, 5, NOW(), TRUE, FALSE, FALSE, 12
+FROM categories WHERE slug = 'networking';
+
+--changeset tyzhprogramist:24
+-- ==================== ГОТОВЫЕ ПК И НОУТБУКИ ====================
+-- Insert new categories for PCs and Laptops
+INSERT INTO categories (name, slug, sort_order) VALUES
+('Готовые ПК', 'prebuilt-pcs', 16),
+('Игровые ПК', 'gaming-pcs', 17),
+('Офисные ПК', 'office-pcs', 18),
+('Ноутбуки', 'laptops', 19),
+('Игровые ноутбуки', 'gaming-laptops', 20),
+('Ноутбуки для работы', 'work-laptops', 21);
+
+-- ==================== ГОТОВЫЕ ПК ====================
+-- Офисные ПК
+INSERT INTO products (sku, category_id, name, slug, short_description, price, old_price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months, rating)
+SELECT 'PC-OFFICE-001', id, 'Компьютер Office Basic', 'pc-office-basic', 'ПК для офиса и дома: Intel Celeron G6900, 8GB DDR4, SSD 256GB, без ОС', 24500.00, 26500.00, 10, NOW(), TRUE, FALSE, FALSE, 12, 4.2
+FROM categories WHERE slug = 'office-pcs';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, old_price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months, rating)
+SELECT 'PC-OFFICE-002', id, 'Компьютер Office Standard', 'pc-office-standard', 'ПК для работы: Intel Core i3-12100, 16GB DDR4, SSD 480GB, Windows 11 Pro', 38500.00, 41500.00, 8, NOW(), TRUE, TRUE, TRUE, 24, 4.5
+FROM categories WHERE slug = 'office-pcs';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, old_price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months, rating)
+SELECT 'PC-OFFICE-003', id, 'Компьютер Office Premium', 'pc-office-premium', 'ПК для бизнеса: Intel Core i5-12400, 16GB DDR4, SSD 512GB + HDD 1TB, Windows 11 Pro', 52500.00, 56500.00, 5, NOW(), TRUE, FALSE, FALSE, 24, 4.7
+FROM categories WHERE slug = 'office-pcs';
+
+-- Игровые ПК (Начальный уровень)
+INSERT INTO products (sku, category_id, name, slug, short_description, price, old_price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months, rating)
+SELECT 'PC-GAME-001', id, 'Игровой ПК Starter', 'gaming-pc-starter', 'Начальный игровой ПК: Intel Core i3-12100F, GTX 1650 4GB, 16GB DDR4, SSD 480GB', 52500.00, 56500.00, 7, NOW(), TRUE, FALSE, TRUE, 24, 4.3
+FROM categories WHERE slug = 'gaming-pcs';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, old_price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months, rating)
+SELECT 'PC-GAME-002', id, 'Игровой ПК Essential', 'gaming-pc-essential', 'Игровой ПК: Intel Core i5-12400F, RTX 3050 8GB, 16GB DDR4, SSD 512GB', 68500.00, 72500.00, 6, NOW(), TRUE, TRUE, FALSE, 24, 4.6
+FROM categories WHERE slug = 'gaming-pcs';
+
+-- Игровые ПК (Средний уровень)
+INSERT INTO products (sku, category_id, name, slug, short_description, price, old_price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months, rating)
+SELECT 'PC-GAME-003', id, 'Игровой ПК Mid Gaming', 'gaming-pc-mid', 'Средний игровой ПК: Intel Core i5-13400F, RTX 4060 8GB, 16GB DDR5, SSD 1TB', 89500.00, 94500.00, 5, NOW(), TRUE, FALSE, TRUE, 24, 4.8
+FROM categories WHERE slug = 'gaming-pcs';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, old_price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months, rating)
+SELECT 'PC-GAME-004', id, 'Игровой ПК Pro', 'gaming-pc-pro', 'Профессиональный игровой ПК: Intel Core i5-13600K, RTX 4070 12GB, 32GB DDR5, SSD 1TB NVMe', 129500.00, 137500.00, 4, NOW(), TRUE, TRUE, TRUE, 36, 4.9
+FROM categories WHERE slug = 'gaming-pcs';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, old_price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months, rating)
+SELECT 'PC-GAME-005', id, 'Игровой ПК Ultra', 'gaming-pc-ultra', 'Мощный игровой ПК: Intel Core i7-13700K, RTX 4070 Ti 12GB, 32GB DDR5, SSD 2TB NVMe', 159500.00, 169500.00, 3, NOW(), TRUE, FALSE, FALSE, 36, 4.7
+FROM categories WHERE slug = 'gaming-pcs';
+
+-- Игровые ПК (Высокий уровень)
+INSERT INTO products (sku, category_id, name, slug, short_description, price, old_price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months, rating)
+SELECT 'PC-GAME-006', id, 'Игровой ПК Elite', 'gaming-pc-elite', 'Элитный игровой ПК: Intel Core i7-14700K, RTX 4080 16GB, 64GB DDR5, SSD 2TB NVMe', 219500.00, 235000.00, 2, NOW(), TRUE, TRUE, TRUE, 36, 5.0
+FROM categories WHERE slug = 'gaming-pcs';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, old_price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months, rating)
+SELECT 'PC-GAME-007', id, 'Игровой ПК Ultimate', 'gaming-pc-ultimate', 'Топовый игровой ПК: Intel Core i9-14900K, RTX 4090 24GB, 64GB DDR5, SSD 4TB NVMe', 329500.00, 349500.00, 1, NOW(), TRUE, TRUE, TRUE, 36, 5.0
+FROM categories WHERE slug = 'gaming-pcs';
+
+-- ПК на AMD
+INSERT INTO products (sku, category_id, name, slug, short_description, price, old_price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months, rating)
+SELECT 'PC-GAME-008', id, 'Игровой ПК AMD Ryzen', 'gaming-pc-amd-ryzen', 'Игровой ПК на AMD: Ryzen 5 7500F, RX 7700 XT 12GB, 32GB DDR5, SSD 1TB NVMe', 109500.00, 115500.00, 4, NOW(), TRUE, FALSE, FALSE, 24, 4.6
+FROM categories WHERE slug = 'gaming-pcs';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, old_price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months, rating)
+SELECT 'PC-GAME-009', id, 'Игровой ПК AMD X3D', 'gaming-pc-amd-x3d', 'Игровой ПК: Ryzen 7 7800X3D, RX 7800 XT 16GB, 32GB DDR5, SSD 2TB NVMe', 149500.00, 159500.00, 3, NOW(), TRUE, TRUE, TRUE, 36, 4.8
+FROM categories WHERE slug = 'gaming-pcs';
+
+-- ==================== НОУТБУКИ ====================
+-- Ноутбуки для работы и учебы
+INSERT INTO products (sku, category_id, name, slug, short_description, price, old_price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months, rating)
+SELECT 'LAP-WORK-001', id, 'Ноутбук Acer Aspire 3', 'acer-aspire-3', 'Ноутбук Acer Aspire 3: Intel Celeron N4500, 4GB, 128GB SSD, 15.6" HD', 26500.00, 28500.00, 12, NOW(), TRUE, FALSE, FALSE, 12, 4.0
+FROM categories WHERE slug = 'work-laptops';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, old_price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months, rating)
+SELECT 'LAP-WORK-002', id, 'Ноутбук HP 255 G9', 'hp-255-g9', 'Ноутбук HP 255 G9: AMD Ryzen 3 3250U, 8GB, 256GB SSD, 15.6" FHD', 38500.00, 41500.00, 10, NOW(), TRUE, FALSE, TRUE, 12, 4.3
+FROM categories WHERE slug = 'work-laptops';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, old_price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months, rating)
+SELECT 'LAP-WORK-003', id, 'Ноутбук Lenovo IdeaPad 3', 'lenovo-ideapad-3', 'Ноутбук Lenovo IdeaPad 3: Intel Core i3-1215U, 8GB, 512GB SSD, 15.6" FHD', 44500.00, 47500.00, 8, NOW(), TRUE, TRUE, FALSE, 12, 4.5
+FROM categories WHERE slug = 'work-laptops';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, old_price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months, rating)
+SELECT 'LAP-WORK-004', id, 'Ноутбук ASUS Vivobook 15', 'asus-vivobook-15', 'Ноутбук ASUS Vivobook 15: Intel Core i5-1235U, 16GB, 512GB SSD, 15.6" FHD', 58500.00, 62500.00, 7, NOW(), TRUE, FALSE, TRUE, 24, 4.6
+FROM categories WHERE slug = 'work-laptops';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, old_price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months, rating)
+SELECT 'LAP-WORK-005', id, 'Ноутбук Dell Inspiron 15', 'dell-inspiron-15', 'Ноутбук Dell Inspiron 15: Intel Core i7-1255U, 16GB, 1TB SSD, 15.6" FHD', 78500.00, 83500.00, 5, NOW(), TRUE, FALSE, FALSE, 24, 4.7
+FROM categories WHERE slug = 'work-laptops';
+
+-- Ультрабуки и премиум
+INSERT INTO products (sku, category_id, name, slug, short_description, price, old_price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months, rating)
+SELECT 'LAP-ULTRA-001', id, 'Ноутбук Apple MacBook Air 13" M1', 'macbook-air-m1-13', 'Ноутбук Apple MacBook Air 13": M1, 8GB, 256GB SSD, Retina', 89900.00, 94900.00, 8, NOW(), TRUE, FALSE, TRUE, 12, 4.9
+FROM categories WHERE slug = 'laptops';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, old_price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months, rating)
+SELECT 'LAP-ULTRA-002', id, 'Ноутбук Apple MacBook Air 15" M2', 'macbook-air-m2-15', 'Ноутбук Apple MacBook Air 15": M2, 8GB, 512GB SSD, Retina', 129900.00, 135900.00, 5, NOW(), TRUE, TRUE, TRUE, 12, 5.0
+FROM categories WHERE slug = 'laptops';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, old_price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months, rating)
+SELECT 'LAP-ULTRA-003', id, 'Ноутбук Apple MacBook Pro 14" M3', 'macbook-pro-m3-14', 'Ноутбук Apple MacBook Pro 14": M3 Pro, 18GB, 512GB SSD', 179900.00, 189900.00, 4, NOW(), TRUE, TRUE, FALSE, 12, 5.0
+FROM categories WHERE slug = 'laptops';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, old_price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months, rating)
+SELECT 'LAP-ULTRA-004', id, 'Ноутбук ASUS ZenBook 14', 'asus-zenbook-14', 'Ноутбук ASUS ZenBook 14: Intel Core i7-1360P, 16GB, 1TB SSD, OLED', 89500.00, 94500.00, 6, NOW(), TRUE, FALSE, FALSE, 24, 4.8
+FROM categories WHERE slug = 'laptops';
+
+-- ==================== ИГРОВЫЕ НОУТБУКИ ====================
+-- Начальный уровень
+INSERT INTO products (sku, category_id, name, slug, short_description, price, old_price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months, rating)
+SELECT 'LAP-GAME-001', id, 'Ноутбук игровой Acer Nitro 5', 'acer-nitro-5', 'Игровой ноутбук Acer Nitro 5: Intel Core i5-12450H, RTX 3050 4GB, 8GB, 512GB SSD, 15.6" 144Hz', 69900.00, 74900.00, 7, NOW(), TRUE, FALSE, TRUE, 12, 4.4
+FROM categories WHERE slug = 'gaming-laptops';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, old_price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months, rating)
+SELECT 'LAP-GAME-002', id, 'Ноутбук игровой ASUS TUF F15', 'asus-tuf-f15', 'Игровой ноутбук ASUS TUF F15: Intel Core i5-12500H, RTX 3050 Ti 4GB, 16GB, 512GB SSD, 15.6" 144Hz', 74900.00, 79900.00, 6, NOW(), TRUE, FALSE, FALSE, 24, 4.5
+FROM categories WHERE slug = 'gaming-laptops';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, old_price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months, rating)
+SELECT 'LAP-GAME-003', id, 'Ноутбук игровой Lenovo LOQ', 'lenovo-loq', 'Игровой ноутбук Lenovo LOQ: Intel Core i5-13420H, RTX 3050 6GB, 16GB, 512GB SSD, 15.6" 144Hz', 74900.00, 79500.00, 6, NOW(), TRUE, TRUE, TRUE, 24, 4.6
+FROM categories WHERE slug = 'gaming-laptops';
+
+-- Средний уровень
+INSERT INTO products (sku, category_id, name, slug, short_description, price, old_price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months, rating)
+SELECT 'LAP-GAME-004', id, 'Ноутбук игровой ASUS ROG Strix G16', 'asus-rog-strix-g16', 'Игровой ноутбук ASUS ROG Strix G16: Intel Core i7-13650HX, RTX 4060 8GB, 16GB, 1TB SSD, 16" 165Hz', 109900.00, 115900.00, 5, NOW(), TRUE, FALSE, TRUE, 24, 4.7
+FROM categories WHERE slug = 'gaming-laptops';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, old_price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months, rating)
+SELECT 'LAP-GAME-005', id, 'Ноутбук игровой MSI Katana 15', 'msi-katana-15', 'Игровой ноутбук MSI Katana 15: Intel Core i7-13620H, RTX 4070 8GB, 16GB, 1TB SSD, 15.6" 144Hz', 114900.00, 121900.00, 4, NOW(), TRUE, TRUE, FALSE, 24, 4.6
+FROM categories WHERE slug = 'gaming-laptops';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, old_price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months, rating)
+SELECT 'LAP-GAME-006', id, 'Ноутбук игровой Lenovo Legion 5', 'lenovo-legion-5', 'Игровой ноутбук Lenovo Legion 5: AMD Ryzen 7 7745HX, RTX 4060 8GB, 16GB, 1TB SSD, 16" 165Hz', 114900.00, 121900.00, 5, NOW(), TRUE, FALSE, TRUE, 24, 4.8
+FROM categories WHERE slug = 'gaming-laptops';
+
+-- Высокий уровень
+INSERT INTO products (sku, category_id, name, slug, short_description, price, old_price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months, rating)
+SELECT 'LAP-GAME-007', id, 'Ноутбук игровой ASUS ROG Strix SCAR 16', 'asus-rog-scar-16', 'Игровой ноутбук ASUS ROG Strix SCAR 16: Intel Core i9-14900HX, RTX 4080 12GB, 32GB, 2TB SSD, MiniLED 240Hz', 239900.00, 249900.00, 3, NOW(), TRUE, TRUE, TRUE, 36, 5.0
+FROM categories WHERE slug = 'gaming-laptops';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, old_price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months, rating)
+SELECT 'LAP-GAME-008', id, 'Ноутбук игровой MSI Titan 18 HX', 'msi-titan-18', 'Игровой ноутбук MSI Titan 18 HX: Intel Core i9-14900HX, RTX 4090 16GB, 64GB, 4TB SSD, 18" 4K MiniLED', 399900.00, 419900.00, 1, NOW(), TRUE, TRUE, TRUE, 36, 5.0
+FROM categories WHERE slug = 'gaming-laptops';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, old_price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months, rating)
+SELECT 'LAP-GAME-009', id, 'Ноутбук игровой Razer Blade 16', 'razer-blade-16', 'Игровой ноутбук Razer Blade 16: Intel Core i9-14900HX, RTX 4090 16GB, 32GB, 2TB SSD, 16" Dual Mode MiniLED', 319900.00, 335900.00, 2, NOW(), TRUE, TRUE, FALSE, 36, 4.9
+FROM categories WHERE slug = 'gaming-laptops';
+
+-- Ноутбуки на AMD
+INSERT INTO products (sku, category_id, name, slug, short_description, price, old_price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months, rating)
+SELECT 'LAP-GAME-010', id, 'Ноутбук игровой ASUS TUF A16', 'asus-tuf-a16', 'Игровой ноутбук ASUS TUF A16: AMD Ryzen 7 7735HS, RX 7600S 8GB, 16GB, 1TB SSD, 16" 165Hz', 84900.00, 89500.00, 5, NOW(), TRUE, FALSE, FALSE, 24, 4.5
+FROM categories WHERE slug = 'gaming-laptops';
+
+INSERT INTO products (sku, category_id, name, slug, short_description, price, old_price, quantity, created_at, is_active, is_new, is_bestseller, warranty_months, rating)
+SELECT 'LAP-GAME-011', id, 'Ноутбук игровой Lenovo Legion Pro 7', 'lenovo-legion-pro-7', 'Игровой ноутбук Lenovo Legion Pro 7: AMD Ryzen 9 7945HX, RTX 4080 12GB, 32GB, 2TB SSD, 16" 240Hz', 199900.00, 209900.00, 3, NOW(), TRUE, TRUE, TRUE, 36, 4.8
+FROM categories WHERE slug = 'gaming-laptops';
