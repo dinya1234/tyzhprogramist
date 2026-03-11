@@ -19,13 +19,13 @@ import java.util.List;
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
-
     List<Order> findByUser(User user);
     Page<Order> findByUser(User user, Pageable pageable);
     Page<Order> findByUserId(Long userId, Pageable pageable);
 
     @Query("SELECT o FROM Order o WHERE o.user.id = :userId AND o.createdAt >= :since ORDER BY o.createdAt DESC")
     List<Order> findUserRecentOrders(@Param("userId") Long userId, @Param("since") LocalDateTime since);
+
     List<Order> findByStatus(OrderStatus status);
     Page<Order> findByStatus(OrderStatus status, Pageable pageable);
     List<Order> findByUserAndStatus(User user, OrderStatus status);
@@ -44,11 +44,12 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     List<Order> findByCreatedAtAfter(LocalDateTime date);
     List<Order> findByCreatedAtBefore(LocalDateTime date);
 
-    @Query("SELECT o FROM Order o WHERE DATE(o.createdAt) = CURRENT_DATE")
+    @Query("SELECT o FROM Order o WHERE CAST(o.createdAt AS date) = CURRENT_DATE")
     List<Order> findTodayOrders();
 
-    @Query("SELECT o FROM Order o WHERE YEAR(o.createdAt) = YEAR(CURRENT_DATE) AND MONTH(o.createdAt) = MONTH(CURRENT_DATE)")
+    @Query("SELECT o FROM Order o WHERE EXTRACT(YEAR FROM o.createdAt) = EXTRACT(YEAR FROM CURRENT_DATE) AND EXTRACT(MONTH FROM o.createdAt) = EXTRACT(MONTH FROM CURRENT_DATE)")
     List<Order> findCurrentMonthOrders();
+
     List<Order> findByTotalPriceGreaterThanEqual(BigDecimal minPrice);
     List<Order> findByTotalPriceBetween(BigDecimal minPrice, BigDecimal maxPrice);
     List<Order> findByDeliveryMethod(String deliveryMethod);
@@ -60,6 +61,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     @Query("SELECT o FROM Order o WHERE LOWER(o.deliveryAddress) LIKE LOWER(CONCAT('%', :address, '%'))")
     List<Order> searchByDeliveryAddress(@Param("address") String address);
+
     long countByUser(User user);
     long countByUserAndStatus(User user, OrderStatus status);
     long countByStatus(OrderStatus status);
@@ -77,9 +79,9 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @Query("SELECT o.status, COUNT(o), COALESCE(SUM(o.totalPrice), 0) FROM Order o GROUP BY o.status")
     List<Object[]> getOrderStatusStatistics();
 
-    @Query("SELECT DATE(o.createdAt), COUNT(o), COALESCE(SUM(o.totalPrice), 0) " +
+    @Query("SELECT FUNCTION('DATE', o.createdAt), COUNT(o), COALESCE(SUM(o.totalPrice), 0) " +
             "FROM Order o WHERE o.createdAt BETWEEN :startDate AND :endDate " +
-            "GROUP BY DATE(o.createdAt) ORDER BY DATE(o.createdAt)")
+            "GROUP BY FUNCTION('DATE', o.createdAt) ORDER BY FUNCTION('DATE', o.createdAt)")
     List<Object[]> getDailyStatistics(@Param("startDate") LocalDateTime startDate,
                                       @Param("endDate") LocalDateTime endDate);
 
@@ -148,14 +150,14 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                                                    @Param("startDate") LocalDateTime startDate,
                                                    @Param("endDate") LocalDateTime endDate);
 
-    @Query("SELECT DATE(o.createdAt), " +
+    @Query("SELECT FUNCTION('DATE', o.createdAt), " +
             "COUNT(o), " +
             "COALESCE(SUM(o.totalPrice), 0), " +
             "COALESCE(SUM(CASE WHEN o.status = 'CANCELLED' THEN 1 ELSE 0 END), 0) " +
             "FROM Order o " +
             "WHERE o.createdAt BETWEEN :startDate AND :endDate " +
-            "GROUP BY DATE(o.createdAt) " +
-            "ORDER BY DATE(o.createdAt)")
+            "GROUP BY FUNCTION('DATE', o.createdAt) " +
+            "ORDER BY FUNCTION('DATE', o.createdAt)")
     List<Object[]> getSalesReport(@Param("startDate") LocalDateTime startDate,
                                   @Param("endDate") LocalDateTime endDate);
 
@@ -167,11 +169,12 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     boolean existsByUser(User user);
     boolean existsByUserAndStatus(User user, OrderStatus status);
 
-    @Query("SELECT COUNT(o) FROM Order o WHERE DATE(o.createdAt) = CURRENT_DATE")
+    @Query("SELECT COUNT(o) FROM Order o WHERE CAST(o.createdAt AS date) = CURRENT_DATE")
     long getTodayOrderCount();
 
-    @Query("SELECT COALESCE(SUM(o.totalPrice), 0) FROM Order o WHERE DATE(o.createdAt) = CURRENT_DATE AND o.status != 'CANCELLED'")
+    @Query("SELECT COALESCE(SUM(o.totalPrice), 0) FROM Order o WHERE CAST(o.createdAt AS date) = CURRENT_DATE AND o.status != 'CANCELLED'")
     BigDecimal getTodayRevenue();
+
     Page<Order> findAllByOrderByCreatedAtDesc(Pageable pageable);
     Page<Order> findByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
     Page<Order> findByStatusOrderByCreatedAtDesc(OrderStatus status, Pageable pageable);

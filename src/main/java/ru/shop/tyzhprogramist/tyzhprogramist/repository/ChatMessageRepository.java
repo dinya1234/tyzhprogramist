@@ -31,6 +31,7 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
 
     @Query("SELECT cm FROM ChatMessage cm WHERE cm.session.id = :sessionId ORDER BY cm.timestamp DESC")
     List<ChatMessage> findLastMessage(@Param("sessionId") Long sessionId, Pageable pageable);
+
     List<ChatMessage> findBySessionAndSenderTypeOrderByTimestampAsc(ChatSession session, SenderType senderType);
 
     @Query("SELECT cm FROM ChatMessage cm WHERE cm.session.id = :sessionId AND cm.senderType = :senderType ORDER BY cm.timestamp ASC")
@@ -114,8 +115,9 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
             "GROUP BY messageLength")
     List<Object[]> getMessageLengthStatistics();
 
-    @Query("SELECT HOUR(cm.timestamp), COUNT(cm) FROM ChatMessage cm " +
-            "GROUP BY HOUR(cm.timestamp) ORDER BY HOUR(cm.timestamp)")
+    // ИСПРАВЛЕНО: Используем EXTRACT для часа
+    @Query("SELECT EXTRACT(HOUR FROM cm.timestamp), COUNT(cm) FROM ChatMessage cm " +
+            "GROUP BY EXTRACT(HOUR FROM cm.timestamp) ORDER BY EXTRACT(HOUR FROM cm.timestamp)")
     List<Object[]> getHourlyActivity();
 
     @Query("SELECT s.user.id, s.user.username, COUNT(cm) as msgCount " +
@@ -125,17 +127,20 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
             "ORDER BY msgCount DESC")
     List<Object[]> getMostActiveUsers(Pageable pageable);
 
-    @Query("SELECT AVG(cm2.timestamp - cm1.timestamp) " +
-            "FROM ChatMessage cm1, ChatMessage cm2 " +
-            "WHERE cm1.session.id = cm2.session.id " +
-            "AND cm1.senderType = 'USER' " +
-            "AND cm2.senderType = 'CONSULTANT' " +
+    // ИСПРАВЛЕНО: Используем nativeQuery для сложного запроса с вычислением времени
+    @Query(value = "SELECT AVG(EXTRACT(EPOCH FROM (cm2.timestamp - cm1.timestamp))) " +
+            "FROM chat_messages cm1 " +
+            "JOIN chat_messages cm2 ON cm1.session_id = cm2.session_id " +
+            "WHERE cm1.sender_type = 'USER' " +
+            "AND cm2.sender_type = 'CONSULTANT' " +
             "AND cm2.timestamp > cm1.timestamp " +
-            "AND NOT EXISTS (SELECT cm3 FROM ChatMessage cm3 " +
-            "                WHERE cm3.session.id = cm1.session.id " +
-            "                AND cm3.senderType = 'CONSULTANT' " +
-            "                AND cm3.timestamp > cm1.timestamp " +
-            "                AND cm3.timestamp < cm2.timestamp)")
+            "AND NOT EXISTS (" +
+            "    SELECT 1 FROM chat_messages cm3 " +
+            "    WHERE cm3.session_id = cm1.session_id " +
+            "    AND cm3.sender_type = 'CONSULTANT' " +
+            "    AND cm3.timestamp > cm1.timestamp " +
+            "    AND cm3.timestamp < cm2.timestamp" +
+            ")", nativeQuery = true)
     Double getAverageResponseTime();
 
     @Query("SELECT cm FROM ChatMessage cm " +
@@ -195,6 +200,7 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
             "AND cm.senderType = 'USER' " +
             "ORDER BY cm.timestamp DESC")
     List<ChatMessage> findMessagesWithKeyword(@Param("keyword") String keyword, Pageable pageable);
+
     Page<ChatMessage> findAllByOrderByTimestampDesc(Pageable pageable);
     Page<ChatMessage> findBySessionIdOrderByTimestampDesc(Long sessionId, Pageable pageable);
 }
