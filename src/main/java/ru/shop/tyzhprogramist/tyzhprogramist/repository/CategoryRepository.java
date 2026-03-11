@@ -31,7 +31,7 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     @Query("SELECT c FROM Category c LEFT JOIN FETCH c.children WHERE c.parent IS NULL ORDER BY c.order ASC")
     List<Category> findAllRootCategoriesWithChildren();
 
-    @Query("WITH RECURSIVE category_path AS (" +
+    @Query(value = "WITH RECURSIVE category_path AS (" +
             "    SELECT id, name, slug, parent_id, 1 as level " +
             "    FROM categories WHERE id = :categoryId " +
             "    UNION ALL " +
@@ -39,10 +39,10 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
             "    FROM categories c " +
             "    INNER JOIN category_path cp ON c.id = cp.parent_id" +
             ") " +
-            "SELECT * FROM category_path ORDER BY level DESC")
+            "SELECT * FROM category_path ORDER BY level DESC", nativeQuery = true)
     List<Object[]> findCategoryPath(@Param("categoryId") Long categoryId);
 
-    @Query("WITH RECURSIVE category_tree AS (" +
+    @Query(value = "WITH RECURSIVE category_tree AS (" +
             "    SELECT id, name, parent_id " +
             "    FROM categories WHERE id = :categoryId " +
             "    UNION ALL " +
@@ -50,7 +50,7 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
             "    FROM categories c " +
             "    INNER JOIN category_tree ct ON c.parent_id = ct.id" +
             ") " +
-            "SELECT * FROM category_tree WHERE id != :categoryId")
+            "SELECT * FROM category_tree WHERE id != :categoryId", nativeQuery = true)
     List<Category> findAllDescendants(@Param("categoryId") Long categoryId);
 
     @Query("SELECT DISTINCT c FROM Category c " +
@@ -64,6 +64,7 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
 
     @Query("SELECT c FROM Category c WHERE c.children IS EMPTY ORDER BY c.order ASC")
     List<Category> findLeafCategories();
+
     List<Category> findByNameContainingIgnoreCaseOrderByNameAsc(String name);
 
     @Query("SELECT c, COUNT(p) as productCount FROM Category c " +
@@ -81,10 +82,10 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
 
     @Query("SELECT DISTINCT c FROM Category c " +
             "JOIN c.products p " +
-            "WHERE LOWER(p.brand) = LOWER(:brand)")
-    List<Category> findCategoriesByBrand(@Param("brand") String brand);
+            "WHERE LOWER(p.name) LIKE LOWER(CONCAT('%', :searchTerm, '%'))")
+    List<Category> findCategoriesByProductName(@Param("searchTerm") String searchTerm);
 
-    @Query("WITH RECURSIVE category_breadcrumbs AS (" +
+    @Query(value = "WITH RECURSIVE category_breadcrumbs AS (" +
             "    SELECT id, name, slug, parent_id, 0 as level " +
             "    FROM categories WHERE id = :categoryId " +
             "    UNION ALL " +
@@ -92,7 +93,7 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
             "    FROM categories c " +
             "    INNER JOIN category_breadcrumbs cb ON c.id = cb.parent_id" +
             ") " +
-            "SELECT id, name, slug FROM category_breadcrumbs ORDER BY level DESC")
+            "SELECT id, name, slug FROM category_breadcrumbs ORDER BY level DESC", nativeQuery = true)
     List<Object[]> findBreadcrumbs(@Param("categoryId") Long categoryId);
 
     @Query("SELECT COALESCE(MAX(c.order), -1) FROM Category c " +
@@ -117,7 +118,7 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
             "WHERE (SELECT COUNT(cat) FROM Category cat WHERE cat.id = c.parent.id) = :level")
     List<Category> findByLevel(@Param("level") int level);
 
-    @Query("WITH RECURSIVE category_depth AS (" +
+    @Query(value = "WITH RECURSIVE category_depth AS (" +
             "    SELECT id, parent_id, 1 as depth " +
             "    FROM categories WHERE parent_id IS NULL " +
             "    UNION ALL " +
@@ -125,7 +126,7 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
             "    FROM categories c " +
             "    INNER JOIN category_depth cd ON c.parent_id = cd.id" +
             ") " +
-            "SELECT MAX(depth) FROM category_depth")
+            "SELECT MAX(depth) FROM category_depth", nativeQuery = true)
     Integer getMaxDepth();
 
     @Query("SELECT c1 FROM Category c1, Category c2 " +
@@ -134,6 +135,7 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
 
     @Query("SELECT c FROM Category c WHERE c.products IS EMPTY")
     List<Category> findEmptyCategories();
+
     Page<Category> findAllByOrderByOrderAsc(Pageable pageable);
 
     @Query("SELECT c FROM Category c " +

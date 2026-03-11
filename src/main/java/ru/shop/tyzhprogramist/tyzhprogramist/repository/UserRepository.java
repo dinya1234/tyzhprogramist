@@ -23,13 +23,16 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("SELECT u FROM User u WHERE u.username = :login OR u.email = :login")
     Optional<User> findByUsernameOrEmail(@Param("login") String login);
+
     boolean existsByUsername(String username);
     boolean existsByEmail(String email);
+
     List<User> findByRole(UserRole role);
     Page<User> findByRole(UserRole role, Pageable pageable);
 
     @Query("SELECT u FROM User u WHERE u.role IN ('ADMIN', 'CONSULTANT') AND u.isActive = true")
     List<User> findAvailableConsultants();
+
     List<User> findByIsActiveTrue();
     List<User> findByIsActiveFalse();
 
@@ -38,6 +41,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("SELECT u FROM User u WHERE u.lastActivity < :date OR u.lastActivity IS NULL")
     List<User> findInactiveUsers(@Param("date") LocalDateTime date);
+
     List<User> findByEmailVerifiedFalse();
     List<User> findByConsentToChatDataTrue();
     List<User> findByNotificationsTrue();
@@ -66,16 +70,17 @@ public interface UserRepository extends JpaRepository<User, Long> {
             "LOWER(u.username) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
             "LOWER(u.email) LIKE LOWER(CONCAT('%', :searchTerm, '%'))")
     Page<User> searchUsers(@Param("searchTerm") String searchTerm, Pageable pageable);
-    Optional<User> findByPhone(String phone);
 
+    Optional<User> findByPhone(String phone);
 
     @Query("SELECT COUNT(u) FROM User u WHERE u.dateJoined BETWEEN :startDate AND :endDate")
     long countNewUsersBetween(@Param("startDate") LocalDateTime startDate,
                               @Param("endDate") LocalDateTime endDate);
 
-    @Query("SELECT DATE(u.dateJoined), COUNT(u) FROM User u " +
-            "GROUP BY DATE(u.dateJoined) " +
-            "ORDER BY DATE(u.dateJoined) DESC")
+    // ИСПРАВЛЕНО: Используем FUNCTION для DATE
+    @Query("SELECT FUNCTION('DATE', u.dateJoined), COUNT(u) FROM User u " +
+            "GROUP BY FUNCTION('DATE', u.dateJoined) " +
+            "ORDER BY FUNCTION('DATE', u.dateJoined) DESC")
     List<Object[]> getRegistrationStatistics();
 
     @Query("SELECT u.role, COUNT(u) FROM User u GROUP BY u.role")
@@ -134,6 +139,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
             "ORDER BY o.createdAt DESC")
     List<User> findAllWithLastOrder();
 
-    @Query("SELECT COUNT(u) FROM User u WHERE DATE(u.lastActivity) = CURRENT_DATE")
+    @Query("SELECT COUNT(u) FROM User u WHERE CAST(u.lastActivity AS date) = CURRENT_DATE")
     long countActiveToday();
 }

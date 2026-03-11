@@ -3,165 +3,126 @@ package ru.shop.tyzhprogramist.tyzhprogramist.repository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
-import ru.shop.tyzhprogramist.tyzhprogramist.entity.Category;
 import ru.shop.tyzhprogramist.tyzhprogramist.entity.Product;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 @Repository
-public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpecificationExecutor<Product> {
+public interface ProductRepository extends JpaRepository<Product, Long> {
 
-    Optional<Product> findBySku(String sku);
     Optional<Product> findBySlug(String slug);
-    Optional<Product> findByName(String name);
+    Optional<Product> findBySku(String sku);
 
-    boolean existsBySku(String sku);
     boolean existsBySlug(String slug);
+    boolean existsBySku(String sku);
 
-    Page<Product> findByCategory(Category category, Pageable pageable);
-    Page<Product> findByCategoryAndIsActiveTrue(Category category, Pageable pageable);
+    Page<Product> findByCategoryId(Long categoryId, Pageable pageable);
 
-    @Query("SELECT p FROM Product p WHERE p.category.id IN (" +
-            "WITH RECURSIVE category_tree AS (" +
-            "    SELECT id FROM categories WHERE id = :categoryId " +
-            "    UNION ALL " +
-            "    SELECT c.id FROM categories c " +
-            "    INNER JOIN category_tree ct ON c.parent_id = ct.id" +
-            ") SELECT id FROM category_tree)")
-    Page<Product> findByCategoryWithDescendants(@Param("categoryId") Long categoryId, Pageable pageable);
+    Page<Product> findByCategoryIdAndIsActiveTrue(Long categoryId, Pageable pageable);
 
-    long countByCategory(Category category);
-    long countByCategoryAndIsActiveTrue(Category category);
+    @Query("SELECT p FROM Product p WHERE p.isActive = true AND p.quantity > 0")
+    Page<Product> findAllAvailable(Pageable pageable);
 
-    Page<Product> findByIsActiveTrue(Pageable pageable);
-    List<Product> findByIsActiveFalse();
-    Page<Product> findByIsNewTrue(Pageable pageable);
-    Page<Product> findByIsBestsellerTrue(Pageable pageable);
+    @Query("SELECT p FROM Product p WHERE p.isNew = true AND p.isActive = true")
+    List<Product> findNewProducts(Pageable pageable);
 
-    @Query("SELECT p FROM Product p WHERE p.oldPrice IS NOT NULL AND p.oldPrice > p.price")
-    Page<Product> findDiscountedProducts(Pageable pageable);
+    @Query("SELECT p FROM Product p WHERE p.isBestseller = true AND p.isActive = true")
+    List<Product> findBestsellers(Pageable pageable);
 
-    @Query("SELECT p FROM Product p WHERE p.quantity < :threshold AND p.isActive = true")
-    List<Product> findLowStockProducts(@Param("threshold") Integer threshold);
-
-    @Query("SELECT p FROM Product p WHERE p.quantity = 0")
-    List<Product> findOutOfStockProducts();
-    Page<Product> findByPriceBetween(BigDecimal minPrice, BigDecimal maxPrice, Pageable pageable);
-    Page<Product> findByPriceLessThanEqual(BigDecimal price, Pageable pageable);
-    Page<Product> findByPriceGreaterThanEqual(BigDecimal price, Pageable pageable);
-    Page<Product> findByRatingGreaterThanEqual(Double minRating, Pageable pageable);
-    Page<Product> findByRatingBetween(Double minRating, Double maxRating, Pageable pageable);
-
-    @Query("SELECT p FROM Product p WHERE SIZE(p.feedbacks) >= :minReviews ORDER BY p.rating DESC")
-    List<Product> findTopRated(@Param("minReviews") int minReviews, Pageable pageable);
-
-    @Query("SELECT p FROM Product p WHERE p.createdAt >= :since")
-    Page<Product> findRecentlyAdded(@Param("since") LocalDateTime since, Pageable pageable);
-    List<Product> findByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate);
-    Page<Product> findByOrderByViewsCountDesc(Pageable pageable);
-    Page<Product> findByOrderByPurchaseCountDesc(Pageable pageable);
-    @Query("SELECT p FROM Product p WHERE p.category = :category ORDER BY p.purchaseCount DESC")
-    List<Product> findPopularInCategory(@Param("category") Category category, Pageable pageable);
-
-    @Query("SELECT p.relatedProducts FROM Product p WHERE p.id = :productId")
-    Set<Product> findRelatedProducts(@Param("productId") Long productId);
-
-    @Query("SELECT p.frequentlyBoughtWith FROM Product p WHERE p.id = :productId")
-    Set<Product> findFrequentlyBoughtWith(@Param("productId") Long productId);
-
-    @Query("SELECT p FROM Product p WHERE p.category.id IN (" +
-            "    SELECT p2.category.id FROM Product p2 WHERE p2.id IN :productIds" +
-            ") AND p.id NOT IN :productIds ORDER BY p.purchaseCount DESC")
-    List<Product> findRecommendations(@Param("productIds") List<Long> productIds, Pageable pageable);
-
-    Page<Product> findByNameContainingIgnoreCase(String name, Pageable pageable);
+    @Query("SELECT p FROM Product p WHERE p.category.slug = :categorySlug AND p.isActive = true")
+    Page<Product> findByCategorySlug(@Param("categorySlug") String categorySlug, Pageable pageable);
 
     @Query("SELECT p FROM Product p WHERE " +
             "LOWER(p.name) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
             "LOWER(p.shortDescription) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
-            "LOWER(p.fullDescription) LIKE LOWER(CONCAT('%', :searchTerm, '%'))")
+            "LOWER(p.sku) LIKE LOWER(CONCAT('%', :searchTerm, '%'))")
     Page<Product> searchProducts(@Param("searchTerm") String searchTerm, Pageable pageable);
 
-    List<Product> findByWarrantyMonthsGreaterThanEqual(Integer warrantyMonths);
-    Page<Product> findByWeightLessThanEqual(BigDecimal maxWeight, Pageable pageable);
+    @Query("SELECT p FROM Product p WHERE p.price BETWEEN :minPrice AND :maxPrice AND p.isActive = true")
+    Page<Product> findByPriceRange(@Param("minPrice") BigDecimal minPrice,
+                                   @Param("maxPrice") BigDecimal maxPrice,
+                                   Pageable pageable);
 
-    @Query("SELECT MIN(p.price), MAX(p.price) FROM Product p WHERE p.category.id = :categoryId")
-    Object[] getPriceRangeByCategory(@Param("categoryId") Long categoryId);
+    @Query("SELECT p FROM Product p WHERE p.isActive = true ORDER BY p.price ASC")
+    Page<Product> findAllSortedByPriceAsc(Pageable pageable);
 
-    @Query("SELECT AVG(p.price) FROM Product p WHERE p.category.id = :categoryId")
-    BigDecimal getAveragePriceByCategory(@Param("categoryId") Long categoryId);
+    @Query("SELECT p FROM Product p WHERE p.isActive = true ORDER BY p.price DESC")
+    Page<Product> findAllSortedByPriceDesc(Pageable pageable);
 
-    @Query("SELECT " +
-            "COUNT(p) as totalProducts, " +
-            "SUM(CASE WHEN p.isActive = true THEN 1 ELSE 0 END) as activeProducts, " +
-            "SUM(CASE WHEN p.quantity = 0 THEN 1 ELSE 0 END) as outOfStock, " +
-            "SUM(CASE WHEN p.oldPrice IS NOT NULL AND p.oldPrice > p.price THEN 1 ELSE 0 END) as discounted, " +
-            "AVG(p.rating) as averageRating " +
-            "FROM Product p")
-    Object[] getProductStatistics();
+    @Query("SELECT p FROM Product p WHERE p.isActive = true ORDER BY p.rating DESC")
+    Page<Product> findAllSortedByRating(Pageable pageable);
 
-    @Query("SELECT DATE(o.createdAt), SUM(pi.quantity), SUM(pi.price * pi.quantity) " +
-            "FROM Order o " +
-            "JOIN ProductItem pi ON pi.parentType = 'Order' AND pi.parentId = o.id " +
-            "WHERE pi.product.id = :productId " +
-            "AND o.createdAt BETWEEN :startDate AND :endDate " +
-            "GROUP BY DATE(o.createdAt)")
-    List<Object[]> getSalesStatistics(@Param("productId") Long productId,
-                                      @Param("startDate") LocalDateTime startDate,
-                                      @Param("endDate") LocalDateTime endDate);
+    @Query("SELECT p FROM Product p WHERE p.isActive = true ORDER BY p.createdAt DESC")
+    Page<Product> findAllNewest(Pageable pageable);
 
-    @Modifying
-    @Transactional
-    @Query("UPDATE Product p SET p.price = :newPrice WHERE p.id = :productId")
-    int updatePrice(@Param("productId") Long productId, @Param("newPrice") BigDecimal newPrice);
+    @Query("SELECT p FROM Product p WHERE p.quantity < :threshold AND p.isActive = true")
+    List<Product> findLowStockProducts(@Param("threshold") Integer threshold);
 
-    @Modifying
-    @Transactional
-    @Query("UPDATE Product p SET p.quantity = p.quantity - :quantity WHERE p.id = :productId AND p.quantity >= :quantity")
-    int decreaseQuantity(@Param("productId") Long productId, @Param("quantity") Integer quantity);
+    @Query("SELECT p FROM Product p WHERE p.quantity = 0 AND p.isActive = true")
+    List<Product> findOutOfStockProducts();
 
-    @Modifying
-    @Transactional
-    @Query("UPDATE Product p SET p.quantity = p.quantity + :quantity WHERE p.id = :productId")
-    int increaseQuantity(@Param("productId") Long productId, @Param("quantity") Integer quantity);
+    @Query(value = "SELECT p.* FROM products p " +
+            "WHERE p.category_id IN (" +
+            "    WITH RECURSIVE category_tree AS (" +
+            "        SELECT id FROM categories WHERE id = :categoryId " +
+            "        UNION ALL " +
+            "        SELECT c.id FROM categories c " +
+            "        INNER JOIN category_tree ct ON c.parent_id = ct.id" +
+            "    ) SELECT id FROM category_tree" +
+            ") ORDER BY p.created_at DESC",
+            nativeQuery = true)
+    List<Product> findByCategoryWithDescendants(@Param("categoryId") Long categoryId);
 
-    @Modifying
-    @Transactional
-    @Query("UPDATE Product p SET p.rating = (" +
-            "    SELECT AVG(pf.rating) FROM ProductFeedback pf " +
-            "    WHERE pf.product.id = :productId AND pf.rating IS NOT NULL" +
-            ") WHERE p.id = :productId")
-    int updateRating(@Param("productId") Long productId);
+    @Query(value = "SELECT p.* FROM products p " +
+            "WHERE p.category_id IN (" +
+            "    WITH RECURSIVE category_tree AS (" +
+            "        SELECT id FROM categories WHERE id = :categoryId " +
+            "        UNION ALL " +
+            "        SELECT c.id FROM categories c " +
+            "        INNER JOIN category_tree ct ON c.parent_id = ct.id" +
+            "    ) SELECT id FROM category_tree" +
+            ") ORDER BY p.created_at DESC",
+            countQuery = "SELECT COUNT(*) FROM products p " +
+                    "WHERE p.category_id IN (" +
+                    "    WITH RECURSIVE category_tree AS (" +
+                    "        SELECT id FROM categories WHERE id = :categoryId " +
+                    "        UNION ALL " +
+                    "        SELECT c.id FROM categories c " +
+                    "        INNER JOIN category_tree ct ON c.parent_id = ct.id" +
+                    "    ) SELECT id FROM category_tree" +
+                    ")",
+            nativeQuery = true)
+    Page<Product> findByCategoryWithDescendants(@Param("categoryId") Long categoryId, Pageable pageable);
 
-    @Modifying
-    @Transactional
-    @Query("UPDATE Product p SET p.isNew = false WHERE p.createdAt < :date")
-    int resetNewStatus(@Param("date") LocalDateTime date);
+    @Query("SELECT p FROM Product p JOIN p.relatedProducts r WHERE r.id = :productId")
+    List<Product> findRelatedProducts(@Param("productId") Long productId);
 
-    List<Product> findByIdIn(List<Long> ids);
-    List<Product> findBySkuIn(List<String> skus);
+    @Query("SELECT p FROM Product p JOIN p.frequentlyBoughtWith f WHERE f.id = :productId")
+    List<Product> findFrequentlyBoughtTogether(@Param("productId") Long productId);
 
-    @Query("SELECT DISTINCT pf.product.id FROM ProductFeedback pf " +
-            "WHERE pf.createdAt > :since")
-    List<Long> findProductsWithNewFeedback(@Param("since") LocalDateTime since);
+    @Query(value = "SELECT p.* FROM products p " +
+            "JOIN frequently_bought_together fbt ON p.id = fbt.related_product_id " +
+            "WHERE fbt.product_id = :productId",
+            nativeQuery = true)
+    List<Product> findFrequentlyBoughtTogetherNative(@Param("productId") Long productId);
 
-    @Modifying
-    @Transactional
-    @Query("DELETE FROM Product p WHERE p.isActive = false AND p.purchaseCount = 0 AND p.createdAt < :date")
-    int deleteOldInactiveProducts(@Param("date") LocalDateTime date);
+    @Query("SELECT AVG(p.rating) FROM Product p WHERE p.category.id = :categoryId")
+    Double getAverageRatingByCategory(@Param("categoryId") Long categoryId);
 
-    @Modifying
-    @Transactional
-    @Query("UPDATE Product p SET p.isActive = false WHERE p.quantity = 0 AND p.isActive = true")
-    int deactivateOutOfStockProducts();
+    @Query("SELECT p.category.name, COUNT(p), AVG(p.price) FROM Product p GROUP BY p.category.name")
+    List<Object[]> getProductStatisticsByCategory();
+
+    @Query("SELECT p FROM Product p WHERE p.price > (SELECT AVG(p2.price) FROM Product p2)")
+    List<Product> findProductsAboveAveragePrice();
+
+    @Query("SELECT p FROM Product p WHERE p.viewsCount > 0 ORDER BY p.viewsCount DESC")
+    List<Product> findMostViewed(Pageable pageable);
+
+    @Query("SELECT p FROM Product p WHERE p.purchaseCount > 0 ORDER BY p.purchaseCount DESC")
+    List<Product> findMostPurchased(Pageable pageable);
 }

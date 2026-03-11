@@ -24,6 +24,7 @@ public interface RepairRequestRepository extends JpaRepository<RepairRequest, Lo
 
     @Query("SELECT r FROM RepairRequest r WHERE r.user.id = :userId AND r.createdAt >= :since ORDER BY r.createdAt DESC")
     List<RepairRequest> findUserRecentRequests(@Param("userId") Long userId, @Param("since") LocalDateTime since);
+
     List<RepairRequest> findByStatus(String status);
     Page<RepairRequest> findByStatus(String status, Pageable pageable);
     List<RepairRequest> findByUserAndStatus(User user, String status);
@@ -50,11 +51,12 @@ public interface RepairRequestRepository extends JpaRepository<RepairRequest, Lo
     List<RepairRequest> findByCreatedAtAfter(LocalDateTime date);
     List<RepairRequest> findByCreatedAtBefore(LocalDateTime date);
 
-    @Query("SELECT r FROM RepairRequest r WHERE DATE(r.createdAt) = CURRENT_DATE")
+    @Query("SELECT r FROM RepairRequest r WHERE CAST(r.createdAt AS date) = CURRENT_DATE")
     List<RepairRequest> findTodayRequests();
 
-    @Query("SELECT r FROM RepairRequest r WHERE YEAR(r.createdAt) = YEAR(CURRENT_DATE) AND MONTH(r.createdAt) = MONTH(CURRENT_DATE)")
+    @Query("SELECT r FROM RepairRequest r WHERE EXTRACT(YEAR FROM r.createdAt) = EXTRACT(YEAR FROM CURRENT_DATE) AND EXTRACT(MONTH FROM r.createdAt) = EXTRACT(MONTH FROM CURRENT_DATE)")
     List<RepairRequest> findCurrentMonthRequests();
+
     List<RepairRequest> findByEstimatedPriceGreaterThanEqual(BigDecimal minPrice);
     List<RepairRequest> findByFinalPriceBetween(BigDecimal minPrice, BigDecimal maxPrice);
 
@@ -72,9 +74,9 @@ public interface RepairRequestRepository extends JpaRepository<RepairRequest, Lo
     @Query("SELECT r.status, COUNT(r), COALESCE(SUM(r.finalPrice), 0) FROM RepairRequest r GROUP BY r.status")
     List<Object[]> getStatusStatistics();
 
-    @Query("SELECT DATE(r.createdAt), COUNT(r), COALESCE(SUM(r.finalPrice), 0) " +
+    @Query("SELECT FUNCTION('DATE', r.createdAt), COUNT(r), COALESCE(SUM(r.finalPrice), 0) " +
             "FROM RepairRequest r WHERE r.createdAt BETWEEN :startDate AND :endDate " +
-            "GROUP BY DATE(r.createdAt) ORDER BY DATE(r.createdAt)")
+            "GROUP BY FUNCTION('DATE', r.createdAt) ORDER BY FUNCTION('DATE', r.createdAt)")
     List<Object[]> getDailyStatistics(@Param("startDate") LocalDateTime startDate,
                                       @Param("endDate") LocalDateTime endDate);
 
@@ -130,14 +132,14 @@ public interface RepairRequestRepository extends JpaRepository<RepairRequest, Lo
     @Query("SELECT r FROM RepairRequest r WHERE LOWER(r.masterComment) LIKE LOWER(CONCAT('%', :searchTerm, '%'))")
     List<RepairRequest> searchByMasterComment(@Param("searchTerm") String searchTerm);
 
-    @Query("SELECT DATE(r.createdAt), " +
+    @Query("SELECT FUNCTION('DATE', r.createdAt), " +
             "COUNT(r), " +
             "SUM(CASE WHEN r.status = 'Выдан' THEN 1 ELSE 0 END) as completed, " +
             "COALESCE(SUM(r.finalPrice), 0) as revenue " +
             "FROM RepairRequest r " +
             "WHERE r.createdAt BETWEEN :startDate AND :endDate " +
-            "GROUP BY DATE(r.createdAt) " +
-            "ORDER BY DATE(r.createdAt)")
+            "GROUP BY FUNCTION('DATE', r.createdAt) " +
+            "ORDER BY FUNCTION('DATE', r.createdAt)")
     List<Object[]> getRepairReport(@Param("startDate") LocalDateTime startDate,
                                    @Param("endDate") LocalDateTime endDate);
 
@@ -147,8 +149,8 @@ public interface RepairRequestRepository extends JpaRepository<RepairRequest, Lo
             "ORDER BY problemCount DESC")
     List<Object[]> getMostCommonProblems(Pageable pageable);
 
-    @Query(value = "SELECT r.status, AVG(EXTRACT(EPOCH FROM (r.updated_at - r.created_at))/86400) " +
-            "FROM repair_requests r WHERE r.updated_at IS NOT NULL GROUP BY r.status", nativeQuery = true)
+    @Query(value = "SELECT r.status, AVG(EXTRACT(EPOCH FROM (COALESCE(r.updated_at, r.created_at) - r.created_at))/86400) " +
+            "FROM repair_requests r GROUP BY r.status", nativeQuery = true)
     List<Object[]> getAverageRepairTimeByStatus();
 
     @Modifying

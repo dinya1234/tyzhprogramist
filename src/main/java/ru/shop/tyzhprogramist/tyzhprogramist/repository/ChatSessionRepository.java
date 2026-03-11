@@ -111,7 +111,6 @@ public interface ChatSessionRepository extends JpaRepository<ChatSession, Long> 
     @Query("SELECT cs.status, COUNT(cs) FROM ChatSession cs GROUP BY cs.status")
     List<Object[]> getStatusStatistics();
 
-    // ИСПРАВЛЕНО: Используем nativeQuery для EXTRACT
     @Query(value = "SELECT DATE(cs.started_at) as date, " +
             "COUNT(*) as total, " +
             "SUM(CASE WHEN cs.status = 'CLOSED' THEN 1 ELSE 0 END) as completed, " +
@@ -126,7 +125,6 @@ public interface ChatSessionRepository extends JpaRepository<ChatSession, Long> 
     List<Object[]> getDailyStatistics(@Param("startDate") LocalDateTime startDate,
                                       @Param("endDate") LocalDateTime endDate);
 
-    // ИСПРАВЛЕНО: Используем nativeQuery для статистики консультантов
     @Query(value = "SELECT cs.consultant_id, u.username, COUNT(*), " +
             "AVG(CASE WHEN cs.ended_at IS NOT NULL " +
             "THEN EXTRACT(EPOCH FROM (cs.ended_at - cs.started_at)) / 60 " +
@@ -148,12 +146,10 @@ public interface ChatSessionRepository extends JpaRepository<ChatSession, Long> 
     @Query("SELECT cs.contextContentType, COUNT(cs) FROM ChatSession cs WHERE cs.contextContentType IS NOT NULL GROUP BY cs.contextContentType")
     List<Object[]> getContextStatistics();
 
-    // ИСПРАВЛЕНО: Используем nativeQuery для средней длительности
     @Query(value = "SELECT AVG(EXTRACT(EPOCH FROM (ended_at - started_at)) / 60) FROM chat_sessions WHERE ended_at IS NOT NULL",
             nativeQuery = true)
     Double getAverageSessionDuration();
 
-    // ИСПРАВЛЕНО: Используем nativeQuery для максимальной длительности
     @Query(value = "SELECT MAX(EXTRACT(EPOCH FROM (ended_at - started_at)) / 60) FROM chat_sessions WHERE ended_at IS NOT NULL",
             nativeQuery = true)
     Double getMaxSessionDuration();

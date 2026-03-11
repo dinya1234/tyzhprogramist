@@ -20,19 +20,15 @@ public interface ComponentTypeRepository extends JpaRepository<ComponentType, Lo
 
     boolean existsByName(String name);
 
-    // ИСПРАВЛЕНО: Заменяем на JPQL запрос
     @Query("SELECT ct FROM ComponentType ct ORDER BY ct.order_step ASC")
     List<ComponentType> findAllOrdered();
 
-    // ИСПРАВЛЕНО: Заменяем на JPQL запрос
     @Query("SELECT ct FROM ComponentType ct WHERE ct.order_step = :orderStep")
     Optional<ComponentType> findByOrderStep(@Param("orderStep") Integer orderStep);
 
-    // ИСПРАВЛЕНО: Заменяем на JPQL запрос
     @Query("SELECT ct FROM ComponentType ct WHERE ct.order_step <= :orderStep")
     List<ComponentType> findByOrderStepLessThanEqual(@Param("orderStep") Integer orderStep);
 
-    // ИСПРАВЛЕНО: Заменяем на JPQL запрос
     @Query("SELECT ct FROM ComponentType ct WHERE ct.order_step > :orderStep")
     List<ComponentType> findByOrderStepGreaterThan(@Param("orderStep") Integer orderStep);
 
