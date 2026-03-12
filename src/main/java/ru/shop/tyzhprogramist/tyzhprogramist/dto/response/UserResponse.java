@@ -17,4 +17,5 @@ public record UserResponse(
         Boolean emailVerified,
         LocalDateTime dateJoined,
         LocalDateTime lastActivity
-) {}
+) {
+}
