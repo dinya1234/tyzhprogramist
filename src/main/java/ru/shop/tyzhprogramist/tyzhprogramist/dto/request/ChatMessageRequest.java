@@ -2,17 +2,16 @@ package ru.shop.tyzhprogramist.tyzhprogramist.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
-import ru.shop.tyzhprogramist.tyzhprogramist.entity.SenderType;
+import jakarta.validation.constraints.Size;
+import lombok.Data;
 
-public record ChatMessageRequest(
+@Data
+public class ChatMessageRequest {
 
-        @NotNull
-        @Positive(message = "айди сессии не может быть отрицательным")
-        Long sessionId,
-        @NotBlank
-        String message,
-        @NotNull
-        SenderType senderType
-) {
+    @NotNull
+    private Long sessionId;
+
+    @NotBlank
+    @Size(max = 5000)
+    private String message;
 }

@@ -1,17 +1,22 @@
 package ru.shop.tyzhprogramist.tyzhprogramist.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import lombok.Data;
 
-public record CreateOrderRequest(
+@Data
+public class CreateOrderRequest {
 
-        @NotBlank(message = "выбор вариант получения не должен быть пустым")
-        String deliveryMethod,
+    @NotBlank
+    private String deliveryMethod;
 
-        @NotBlank(message = "адрес доставки или адрес магазина для самовывоза не может быть пустым")
-        String deliveryAddress,
+    @NotBlank
+    @Size(max = 500)
+    private String deliveryAddress;
 
-        @NotBlank(message = "обязательно нужно заполнить вариант оплаты")
-        String paymentMethod,
+    @NotBlank
+    private String paymentMethod;
 
-        String comment
-) { }
+    @Size(max = 1000)
+    private String comment;
+}

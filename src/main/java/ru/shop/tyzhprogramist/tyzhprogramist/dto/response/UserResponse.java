@@ -1,52 +1,39 @@
 package ru.shop.tyzhprogramist.tyzhprogramist.dto.response;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.Builder;
+import lombok.Data;
 import ru.shop.tyzhprogramist.tyzhprogramist.entity.User;
 import ru.shop.tyzhprogramist.tyzhprogramist.entity.UserRole;
 import java.time.LocalDateTime;
 
-@Builder
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public record UserResponse(
-        Long id,
-        String username,
-        String email,
-        String firstName,
-        String lastName,
-        String phone,
-        String avatar,
-        UserRole role,
-        Boolean isActive,
-        Boolean emailVerified,
-        Boolean consentToChatData,
-        Boolean notificationsEnabled,
+@Data
+public class UserResponse {
+    private Long id;
+    private String username;
+    private String email;
+    private String firstName;
+    private String lastName;
+    private String phone;
+    private String avatar;
+    private UserRole role;
+    private Boolean isActive;
+    private Boolean emailVerified;
+    private LocalDateTime dateJoined;
 
-        @JsonFormat(pattern = "dd.MM.yyyy HH:mm")
-        LocalDateTime dateJoined,
-
-        @JsonFormat(pattern = "dd.MM.yyyy HH:mm")
-        LocalDateTime lastActivity
-) {
     public static UserResponse from(User user) {
         if (user == null) return null;
 
-        return UserResponse.builder()
-                .id(user.getId())
-                .username(user.getUsername())
-                .email(user.getEmail())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .phone(user.getPhone())
-                .avatar(user.getAvatar())
-                .role(user.getRole())
-                .isActive(user.getIsActive())
-                .emailVerified(user.getEmailVerified())
-                .consentToChatData(user.getConsentToChatData())
-                .notificationsEnabled(user.getNotifications())
-                .dateJoined(user.getDateJoined())
-                .lastActivity(user.getLastActivity())
-                .build();
+        UserResponse response = new UserResponse();
+        response.setId(user.getId());
+        response.setUsername(user.getUsername());
+        response.setEmail(user.getEmail());
+        response.setFirstName(user.getFirstName());
+        response.setLastName(user.getLastName());
+        response.setPhone(user.getPhone());
+        response.setAvatar(user.getAvatar());
+        response.setRole(user.getRole());
+        response.setIsActive(user.getIsActive());
+        response.setEmailVerified(user.getEmailVerified());
+        response.setDateJoined(user.getDateJoined());
+        return response;
     }
 }

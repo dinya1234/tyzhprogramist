@@ -1,14 +1,14 @@
 package ru.shop.tyzhprogramist.tyzhprogramist.dto.response;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.Builder;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
-@Builder
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public record AuthResponse(
-        String accessToken,
-        String refreshToken,
-        String tokenType,
-        Long expiresIn,
-        UserResponse user
-) {}
+@Data
+@AllArgsConstructor
+public class AuthResponse {
+    private String accessToken;
+    private String refreshToken;
+    private String tokenType = "Bearer";
+    private Long expiresIn;
+    private UserResponse user;
+}

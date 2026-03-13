@@ -1,11 +1,15 @@
 package ru.shop.tyzhprogramist.tyzhprogramist.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import lombok.Data;
 
-public record CreatePcBuildRequest(
+@Data
+public class CreatePcBuildRequest {
 
-        @NotBlank(message = "имя не может быть пустым")
-        String name,
+    @NotBlank
+    @Size(min = 3, max = 100)
+    private String name;
 
-        Boolean isPublic
-) { }
+    private Boolean isPublic = false;
+}
