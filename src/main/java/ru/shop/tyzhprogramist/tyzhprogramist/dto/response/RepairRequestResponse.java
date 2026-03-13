@@ -1,41 +1,46 @@
 package ru.shop.tyzhprogramist.tyzhprogramist.dto.response;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.Builder;
+import lombok.Data;
 import ru.shop.tyzhprogramist.tyzhprogramist.entity.RepairRequest;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-@Builder
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public record RepairRequestResponse(
-        Long id,
-        String deviceType,
-        String problemDescription,
-        String status,
-        String masterComment,
-        BigDecimal estimatedPrice,
-        BigDecimal finalPrice,
 
-        @JsonFormat(pattern = "dd.MM.yyyy HH:mm")
-        LocalDateTime createdAt,
+@Data
+public class RepairRequestResponse {
+    private Long id;
+    private String deviceType;
+    private String problemDescription;
+    private String status;
+    private String masterComment;
+    private BigDecimal estimatedPrice;
+    private BigDecimal finalPrice;
+    private LocalDateTime createdAt;
 
-        String userName
-) {
+
+    private Long userId;
+    private String userName;
+    private String userPhone;
+
     public static RepairRequestResponse from(RepairRequest request) {
         if (request == null) return null;
 
-        return RepairRequestResponse.builder()
-                .id(request.getId())
-                .deviceType(request.getDeviceType())
-                .problemDescription(request.getProblemDescription())
-                .status(request.getStatus())
-                .masterComment(request.getMasterComment())
-                .estimatedPrice(request.getEstimatedPrice())
-                .finalPrice(request.getFinalPrice())
-                .createdAt(request.getCreatedAt())
-                .userName(request.getUser() != null ? request.getUser().getUsername() : null)
-                .build();
+        RepairRequestResponse response = new RepairRequestResponse();
+        response.setId(request.getId());
+        response.setDeviceType(request.getDeviceType());
+        response.setProblemDescription(request.getProblemDescription());
+        response.setStatus(request.getStatus());
+        response.setMasterComment(request.getMasterComment());
+        response.setEstimatedPrice(request.getEstimatedPrice());
+        response.setFinalPrice(request.getFinalPrice());
+        response.setCreatedAt(request.getCreatedAt());
+
+        if (request.getUser() != null) {
+            response.setUserId(request.getUser().getId());
+            response.setUserName(request.getUser().getUsername());
+            response.setUserPhone(request.getUser().getPhone());
+        }
+
+        return response;
     }
 }

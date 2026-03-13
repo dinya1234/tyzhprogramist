@@ -18,6 +18,7 @@ public class UserResponse {
     private Boolean isActive;
     private Boolean emailVerified;
     private LocalDateTime dateJoined;
+    private LocalDateTime lastActivity;
 
     public static UserResponse from(User user) {
         if (user == null) return null;
@@ -34,6 +35,7 @@ public class UserResponse {
         response.setIsActive(user.getIsActive());
         response.setEmailVerified(user.getEmailVerified());
         response.setDateJoined(user.getDateJoined());
+        response.setLastActivity(user.getLastActivity());
         return response;
     }
 }

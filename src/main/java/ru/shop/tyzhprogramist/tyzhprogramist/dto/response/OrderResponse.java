@@ -1,47 +1,51 @@
 package ru.shop.tyzhprogramist.tyzhprogramist.dto.response;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.Builder;
+import lombok.Data;
 import ru.shop.tyzhprogramist.tyzhprogramist.entity.Order;
 import ru.shop.tyzhprogramist.tyzhprogramist.entity.OrderStatus;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
-@Builder
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public record OrderResponse(
-        Long id,
-        String orderNumber,
-        OrderStatus status,
-        String deliveryMethod,
-        String deliveryAddress,
-        String paymentMethod,
-        BigDecimal totalPrice,
-        String comment,
+@Data
+public class OrderResponse {
+    private Long id;
+    private String orderNumber;
+    private OrderStatus status;
+    private String deliveryMethod;
+    private String deliveryAddress;
+    private String paymentMethod;
+    private BigDecimal totalPrice;
+    private String comment;
+    private LocalDateTime createdAt;
 
-        @JsonFormat(pattern = "dd.MM.yyyy HH:mm")
-        LocalDateTime createdAt,
+    private Long userId;
+    private String userName;
+    private String userEmail;
 
-        UserResponse user,
-        List<OrderItemResponse> items
-) {
-    public static OrderResponse from(Order order, List<OrderItemResponse> items) {
+    private List<OrderItemResponse> items = new ArrayList<>();
+
+    public static OrderResponse from(Order order) {
         if (order == null) return null;
 
-        return OrderResponse.builder()
-                .id(order.getId())
-                .orderNumber("ORD-" + order.getId())
-                .status(order.getStatus())
-                .deliveryMethod(order.getDeliveryMethod())
-                .deliveryAddress(order.getDeliveryAddress())
-                .paymentMethod(order.getPaymentMethod())
-                .totalPrice(order.getTotalPrice())
-                .comment(order.getComment())
-                .createdAt(order.getCreatedAt())
-                .user(UserResponse.from(order.getUser()))
-                .items(items)
-                .build();
+        OrderResponse response = new OrderResponse();
+        response.setId(order.getId());
+        response.setOrderNumber("ORD-" + order.getId());
+        response.setStatus(order.getStatus());
+        response.setDeliveryMethod(order.getDeliveryMethod());
+        response.setDeliveryAddress(order.getDeliveryAddress());
+        response.setPaymentMethod(order.getPaymentMethod());
+        response.setTotalPrice(order.getTotalPrice());
+        response.setComment(order.getComment());
+        response.setCreatedAt(order.getCreatedAt());
+
+        if (order.getUser() != null) {
+            response.setUserId(order.getUser().getId());
+            response.setUserName(order.getUser().getUsername());
+            response.setUserEmail(order.getUser().getEmail());
+        }
+
+        return response;
     }
 }

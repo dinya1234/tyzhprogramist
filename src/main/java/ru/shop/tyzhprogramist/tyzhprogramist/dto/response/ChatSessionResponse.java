@@ -1,40 +1,44 @@
 package ru.shop.tyzhprogramist.tyzhprogramist.dto.response;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.Builder;
+import lombok.Data;
 import ru.shop.tyzhprogramist.tyzhprogramist.entity.ChatSession;
 import ru.shop.tyzhprogramist.tyzhprogramist.entity.ChatStatus;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
-@Builder
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public record ChatSessionResponse(
-        Long id,
-        ChatStatus status,
+@Data
+public class ChatSessionResponse {
+    private Long id;
+    private ChatStatus status;
+    private LocalDateTime startedAt;
+    private LocalDateTime endedAt;
 
-        @JsonFormat(pattern = "dd.MM.yyyy HH:mm")
-        LocalDateTime startedAt,
+    private String userName;
+    private String userEmail;
 
-        @JsonFormat(pattern = "dd.MM.yyyy HH:mm")
-        LocalDateTime endedAt,
+    private String consultantName;
 
-        String userName,
-        String consultantName,
-        List<ChatMessageResponse> messages
-) {
-    public static ChatSessionResponse from(ChatSession session, List<ChatMessageResponse> messages) {
+    private List<ChatMessageResponse> messages = new ArrayList<>();
+
+    public static ChatSessionResponse from(ChatSession session) {
         if (session == null) return null;
 
-        return ChatSessionResponse.builder()
-                .id(session.getId())
-                .status(session.getStatus())
-                .startedAt(session.getStartedAt())
-                .endedAt(session.getEndedAt())
-                .userName(session.getUser() != null ? session.getUser().getUsername() : "Гость")
-                .consultantName(session.getConsultant() != null ? session.getConsultant().getUsername() : null)
-                .messages(messages)
-                .build();
+        ChatSessionResponse response = new ChatSessionResponse();
+        response.setId(session.getId());
+        response.setStatus(session.getStatus());
+        response.setStartedAt(session.getStartedAt());
+        response.setEndedAt(session.getEndedAt());
+
+        if (session.getUser() != null) {
+            response.setUserName(session.getUser().getUsername());
+            response.setUserEmail(session.getUser().getEmail());
+        }
+
+        if (session.getConsultant() != null) {
+            response.setConsultantName(session.getConsultant().getUsername());
+        }
+
+        return response;
     }
 }

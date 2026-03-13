@@ -1,36 +1,26 @@
 package ru.shop.tyzhprogramist.tyzhprogramist.dto.response;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.Builder;
+import lombok.Data;
 import ru.shop.tyzhprogramist.tyzhprogramist.entity.SiteSettings;
 import java.math.BigDecimal;
 
-@Builder
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public record SiteSettingsResponse(
-        String pickupAddress,
-        String pickupPhone,
-        String pickupWorkingHours,
-        BigDecimal deliveryCost,
-        BigDecimal freeDeliveryThreshold,
-        Boolean isFullyConfigured
-) {
+@Data
+public class SiteSettingsResponse {
+    private String pickupAddress;
+    private String pickupPhone;
+    private String pickupWorkingHours;
+    private BigDecimal deliveryCost;
+    private BigDecimal freeDeliveryThreshold;
+
     public static SiteSettingsResponse from(SiteSettings settings) {
         if (settings == null) return null;
 
-        return SiteSettingsResponse.builder()
-                .pickupAddress(settings.getPickupAddress())
-                .pickupPhone(settings.getPickupPhone())
-                .pickupWorkingHours(settings.getPickupWorkingHours())
-                .deliveryCost(settings.getDeliveryCost())
-                .freeDeliveryThreshold(settings.getFreeDeliveryThreshold())
-                .isFullyConfigured(
-                        settings.getPickupAddress() != null &&
-                                settings.getPickupPhone() != null &&
-                                settings.getPickupWorkingHours() != null &&
-                                settings.getDeliveryCost() != null &&
-                                settings.getFreeDeliveryThreshold() != null
-                )
-                .build();
+        SiteSettingsResponse response = new SiteSettingsResponse();
+        response.setPickupAddress(settings.getPickupAddress());
+        response.setPickupPhone(settings.getPickupPhone());
+        response.setPickupWorkingHours(settings.getPickupWorkingHours());
+        response.setDeliveryCost(settings.getDeliveryCost());
+        response.setFreeDeliveryThreshold(settings.getFreeDeliveryThreshold());
+        return response;
     }
 }

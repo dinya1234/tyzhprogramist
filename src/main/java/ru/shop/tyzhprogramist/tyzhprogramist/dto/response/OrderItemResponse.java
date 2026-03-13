@@ -1,33 +1,31 @@
 package ru.shop.tyzhprogramist.tyzhprogramist.dto.response;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.Builder;
+import lombok.Data;
 import ru.shop.tyzhprogramist.tyzhprogramist.entity.ProductItem;
 import ru.shop.tyzhprogramist.tyzhprogramist.entity.Product;
 import java.math.BigDecimal;
 
-@Builder
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public record OrderItemResponse(
-        Long id,
-        Long productId,
-        String productName,
-        String productSlug,
-        BigDecimal price,
-        Integer quantity,
-        BigDecimal totalPrice
-) {
+@Data
+public class OrderItemResponse {
+    private Long id;
+    private Long productId;
+    private String productName;
+    private String productSlug;
+    private BigDecimal price;
+    private Integer quantity;
+    private BigDecimal totalPrice;
+
     public static OrderItemResponse from(ProductItem item, Product product) {
         if (item == null) return null;
 
-        return OrderItemResponse.builder()
-                .id(item.getId())
-                .productId(product.getId())
-                .productName(product.getName())
-                .productSlug(product.getSlug())
-                .price(item.getPrice())
-                .quantity(item.getQuantity())
-                .totalPrice(item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
-                .build();
+        OrderItemResponse response = new OrderItemResponse();
+        response.setId(item.getId());
+        response.setProductId(product.getId());
+        response.setProductName(product.getName());
+        response.setProductSlug(product.getSlug());
+        response.setPrice(item.getPrice());
+        response.setQuantity(item.getQuantity());
+        response.setTotalPrice(item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
+        return response;
     }
 }

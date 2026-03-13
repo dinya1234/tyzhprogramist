@@ -1,37 +1,33 @@
 package ru.shop.tyzhprogramist.tyzhprogramist.dto.response;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.Builder;
+import lombok.Data;
 import ru.shop.tyzhprogramist.tyzhprogramist.entity.FileAttachment;
 import java.time.LocalDateTime;
 
-@Builder
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public record FileAttachmentResponse(
-        Long id,
-        String filePath,
-        String originalFilename,
-        Long fileSize,
-        String mimeType,
-        Boolean isMain,
-        Integer sortOrder,
 
-        @JsonFormat(pattern = "dd.MM.yyyy HH:mm")
-        LocalDateTime uploadedAt
-) {
+@Data
+public class FileAttachmentResponse {
+    private Long id;
+    private String filePath;
+    private String originalFilename;
+    private Long fileSize;
+    private String mimeType;
+    private Boolean isMain;
+    private Integer sortOrder;
+    private LocalDateTime uploadedAt;
+
     public static FileAttachmentResponse from(FileAttachment file) {
         if (file == null) return null;
 
-        return FileAttachmentResponse.builder()
-                .id(file.getId())
-                .filePath(file.getFilePath())
-                .originalFilename(file.getOriginalFilename())
-                .fileSize(file.getFileSize())
-                .mimeType(file.getMimeType())
-                .isMain(file.getIsMain())
-                .sortOrder(file.getSortOrder())
-                .uploadedAt(file.getUploadedAt())
-                .build();
+        FileAttachmentResponse response = new FileAttachmentResponse();
+        response.setId(file.getId());
+        response.setFilePath(file.getFilePath());
+        response.setOriginalFilename(file.getOriginalFilename());
+        response.setFileSize(file.getFileSize());
+        response.setMimeType(file.getMimeType());
+        response.setIsMain(file.getIsMain());
+        response.setSortOrder(file.getSortOrder());
+        response.setUploadedAt(file.getUploadedAt());
+        return response;
     }
 }
