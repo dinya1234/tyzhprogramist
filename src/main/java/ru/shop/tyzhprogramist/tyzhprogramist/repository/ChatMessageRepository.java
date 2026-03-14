@@ -115,7 +115,6 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
             "GROUP BY messageLength")
     List<Object[]> getMessageLengthStatistics();
 
-    // ИСПРАВЛЕНО: Используем EXTRACT для часа
     @Query("SELECT EXTRACT(HOUR FROM cm.timestamp), COUNT(cm) FROM ChatMessage cm " +
             "GROUP BY EXTRACT(HOUR FROM cm.timestamp) ORDER BY EXTRACT(HOUR FROM cm.timestamp)")
     List<Object[]> getHourlyActivity();
@@ -127,7 +126,6 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
             "ORDER BY msgCount DESC")
     List<Object[]> getMostActiveUsers(Pageable pageable);
 
-    // ИСПРАВЛЕНО: Используем nativeQuery для сложного запроса с вычислением времени
     @Query(value = "SELECT AVG(EXTRACT(EPOCH FROM (cm2.timestamp - cm1.timestamp))) " +
             "FROM chat_messages cm1 " +
             "JOIN chat_messages cm2 ON cm1.session_id = cm2.session_id " +

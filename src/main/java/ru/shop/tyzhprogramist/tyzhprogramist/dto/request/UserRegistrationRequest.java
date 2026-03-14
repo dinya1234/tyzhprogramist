@@ -12,7 +12,6 @@ public class UserRegistrationRequest{
 
     @NotBlank
     @Email
-    @Size
     private String email;
 
     @NotBlank
