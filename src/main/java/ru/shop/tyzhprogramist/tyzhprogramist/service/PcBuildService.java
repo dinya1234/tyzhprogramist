@@ -157,8 +157,11 @@ public class PcBuildService {
 
     @Transactional
     public PcBuild makePublic(Long buildId) {
-        pcBuildRepository.makePublic(buildId);
-        log.info("Сборка {} стала публичной", buildId);
+        int updated = pcBuildRepository.makePublic(buildId);
+        if (updated > 0) {
+            log.info("Сборка {} стала публичной", buildId);
+            return pcBuildRepository.findById(buildId).orElseThrow(() -> new NotFoundException("Сборка ПК не найдена с id: " + buildId));
+        }
         return getById(buildId);
     }
 
