@@ -15,7 +15,6 @@ import ru.shop.tyzhprogramist.tyzhprogramist.entity.User;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface ProductFeedbackRepository extends JpaRepository<ProductFeedback, Long> {
