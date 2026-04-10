@@ -56,7 +56,7 @@ public class CartController {
     }
 
     @GetMapping
-    @PreAuthorize("isAuthenticated() or true") // доступен и авторизованным, и гостям
+    @PreAuthorize("isAuthenticated() or true")
     public ResponseEntity<CartResponse> getCart(HttpServletRequest request) {
         Long userId = getCurrentUserId();
         String sessionKey = getSessionKey(request);

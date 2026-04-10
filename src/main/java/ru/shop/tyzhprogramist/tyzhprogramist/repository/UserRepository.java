@@ -77,7 +77,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     long countNewUsersBetween(@Param("startDate") LocalDateTime startDate,
                               @Param("endDate") LocalDateTime endDate);
 
-    // ИСПРАВЛЕНО: Используем FUNCTION для DATE
     @Query("SELECT FUNCTION('DATE', u.dateJoined), COUNT(u) FROM User u " +
             "GROUP BY FUNCTION('DATE', u.dateJoined) " +
             "ORDER BY FUNCTION('DATE', u.dateJoined) DESC")
