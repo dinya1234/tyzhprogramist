@@ -66,6 +66,10 @@ public class ChatService {
 
         return savedSession;
     }
+    @Transactional(readOnly = true)
+    public Page<ChatSession> getAllSessions(Pageable pageable) {
+        return chatSessionRepository.findAll(pageable);
+    }
 
     @Transactional
     public ChatSession createSessionWithContext(User user, String sourceUrl,

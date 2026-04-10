@@ -535,6 +535,15 @@ public class PcBuildService {
     public List<PcBuild> getRecentlyUpdated(int limit) {
         return pcBuildRepository.findRecentlyUpdated(PageRequest.of(0, limit));
     }
+    @Transactional(readOnly = true)
+    public Page<PcBuild> getAllBuilds(Pageable pageable) {
+        return pcBuildRepository.findAll(pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<PcBuildResponse> getAllBuildResponses(Pageable pageable) {
+        return pcBuildRepository.findAll(pageable).map(this::buildPcBuildResponse);
+    }
 
     @Transactional(readOnly = true)
     public String exportBuildAsText(Long buildId) {
