@@ -38,15 +38,17 @@ public class CategoryController {
     }
 
     @GetMapping
-    public ResponseEntity<PageResponse<Category>> getAllCategories(
+    public ResponseEntity<PageResponse<CategoryResponse>> getAllCategories(
             @PageableDefault(size = 50, sort = "order", direction = Sort.Direction.ASC) Pageable pageable) {
         Page<Category> page = categoryService.getAllCategories(pageable);
-        return ResponseEntity.ok(PageResponse.from(page));
+        Page<CategoryResponse> responsePage = page.map(CategoryResponse::from);
+        return ResponseEntity.ok(PageResponse.from(responsePage));
     }
 
     @GetMapping("/{slug}")
-    public ResponseEntity<Category> getCategoryBySlug(@PathVariable String slug) {
-        return ResponseEntity.ok(categoryService.getBySlug(slug));
+    public ResponseEntity<CategoryResponse> getCategoryBySlug(@PathVariable String slug) {
+        Category category = categoryService.getBySlug(slug);
+        return ResponseEntity.ok(CategoryResponse.from(category));
     }
 
     @GetMapping("/{id}/breadcrumbs")
@@ -54,27 +56,22 @@ public class CategoryController {
         return ResponseEntity.ok(categoryService.getBreadcrumbs(id));
     }
 
-    @GetMapping("/with-products")
-    public ResponseEntity<List<Map<String, Object>>> getCategoriesWithProductCount() {
-        return ResponseEntity.ok(categoryService.getCategoriesWithProductCount());
-    }
-
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Category> createCategory(
+    public ResponseEntity<CategoryResponse> createCategory(
             @RequestParam @NotBlank String name,
             @RequestParam @NotBlank String slug,
             @RequestParam(required = false) Long parentId,
             @RequestParam(required = false) String image,
             @RequestParam(required = false) Integer order) {
         Category category = categoryService.createCategory(name, slug, parentId, image, order);
-        return ResponseEntity.status(HttpStatus.CREATED).body(category);
+        return ResponseEntity.status(HttpStatus.CREATED).body(CategoryResponse.from(category));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Category> updateCategory(
+    public ResponseEntity<CategoryResponse> updateCategory(
             @PathVariable Long id,
             @RequestParam @NotBlank String name,
             @RequestParam @NotBlank String slug,
@@ -82,7 +79,7 @@ public class CategoryController {
             @RequestParam(required = false) String image,
             @RequestParam(required = false) Integer order) {
         Category category = categoryService.updateCategory(id, name, slug, parentId, image, order);
-        return ResponseEntity.ok(category);
+        return ResponseEntity.ok(CategoryResponse.from(category));
     }
 
     @DeleteMapping("/{id}")
@@ -91,11 +88,5 @@ public class CategoryController {
     public ResponseEntity<Void> deleteCategory(@PathVariable Long id) {
         categoryService.deleteCategory(id);
         return ResponseEntity.noContent().build();
-    }
-
-    @GetMapping("/statistics")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<Object[]>> getCategoryStatistics() {
-        return ResponseEntity.ok(categoryService.getCategoryStatistics());
     }
 }

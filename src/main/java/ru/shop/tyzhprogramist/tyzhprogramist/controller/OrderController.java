@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.*;
 import ru.shop.tyzhprogramist.tyzhprogramist.dto.request.CreateOrderRequest;
 import ru.shop.tyzhprogramist.tyzhprogramist.dto.response.OrderResponse;
 import ru.shop.tyzhprogramist.tyzhprogramist.dto.response.PageResponse;
-import ru.shop.tyzhprogramist.tyzhprogramist.entity.Order;
 import ru.shop.tyzhprogramist.tyzhprogramist.entity.OrderStatus;
 import ru.shop.tyzhprogramist.tyzhprogramist.security.SecurityUser;
 import ru.shop.tyzhprogramist.tyzhprogramist.service.OrderService;
@@ -41,9 +40,9 @@ public class OrderController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<OrderResponse> createOrder(@Valid @RequestBody CreateOrderRequest request) {
         Long userId = getCurrentUserId();
-        Order order = orderService.createOrderFromCart(userService.getById(userId), request);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(orderService.getOrderResponseById(order.getId()));
+                .body(orderService.getOrderResponseById(
+                        orderService.createOrderFromCart(userService.getById(userId), request).getId()));
     }
 
     @GetMapping("/me")
@@ -70,12 +69,11 @@ public class OrderController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<OrderResponse> cancelMyOrder(@PathVariable Long orderId) {
         Long userId = getCurrentUserId();
-        Order order = orderService.getById(orderId);
+        var order = orderService.getById(orderId);
         if (!order.getUser().getId().equals(userId)) {
             return ResponseEntity.notFound().build();
         }
-        Order cancelled = orderService.cancelOrder(orderId);
-        return ResponseEntity.ok(orderService.getOrderResponseById(cancelled.getId()));
+        return ResponseEntity.ok(orderService.getOrderResponseById(orderService.cancelOrder(orderId).getId()));
     }
 
     @GetMapping
@@ -94,32 +92,9 @@ public class OrderController {
 
     @PutMapping("/{orderId}/status")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<OrderResponse> updateStatus(
-            @PathVariable Long orderId,
-            @RequestParam OrderStatus status) {
-        Order order = orderService.updateOrderStatus(orderId, status);
-        return ResponseEntity.ok(orderService.getOrderResponseById(order.getId()));
-    }
-
-    @PutMapping("/{orderId}/paid")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<OrderResponse> markAsPaid(@PathVariable Long orderId) {
-        Order order = orderService.markAsPaid(orderId);
-        return ResponseEntity.ok(orderService.getOrderResponseById(order.getId()));
-    }
-
-    @PutMapping("/{orderId}/shipped")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<OrderResponse> markAsShipped(@PathVariable Long orderId) {
-        Order order = orderService.markAsShipped(orderId);
-        return ResponseEntity.ok(orderService.getOrderResponseById(order.getId()));
-    }
-
-    @PutMapping("/{orderId}/delivered")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<OrderResponse> markAsDelivered(@PathVariable Long orderId) {
-        Order order = orderService.markAsDelivered(orderId);
-        return ResponseEntity.ok(orderService.getOrderResponseById(order.getId()));
+    public ResponseEntity<OrderResponse> updateStatus(@PathVariable Long orderId, @RequestParam OrderStatus status) {
+        return ResponseEntity.ok(orderService.getOrderResponseById(
+                orderService.updateOrderStatus(orderId, status).getId()));
     }
 
     @GetMapping("/status/{status}")
@@ -129,11 +104,5 @@ public class OrderController {
             @PageableDefault(size = 20) Pageable pageable) {
         Page<OrderResponse> page = orderService.getOrderResponsesByStatus(status, pageable);
         return ResponseEntity.ok(PageResponse.from(page));
-    }
-
-    @GetMapping("/statistics")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Object> getOrderStatistics() {
-        return ResponseEntity.ok(orderService.getOrderStatistics());
     }
 }

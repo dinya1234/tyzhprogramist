@@ -16,7 +16,6 @@ import ru.shop.tyzhprogramist.tyzhprogramist.dto.request.CreateRepairRequest;
 import ru.shop.tyzhprogramist.tyzhprogramist.dto.response.PageResponse;
 import ru.shop.tyzhprogramist.tyzhprogramist.dto.response.RepairRequestResponse;
 import ru.shop.tyzhprogramist.tyzhprogramist.entity.RepairRequest;
-import ru.shop.tyzhprogramist.tyzhprogramist.entity.User;
 import ru.shop.tyzhprogramist.tyzhprogramist.security.SecurityUser;
 import ru.shop.tyzhprogramist.tyzhprogramist.service.RepairRequestService;
 import ru.shop.tyzhprogramist.tyzhprogramist.service.UserService;
@@ -43,8 +42,8 @@ public class RepairRequestController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<RepairRequestResponse> createRequest(@Valid @RequestBody CreateRepairRequest request) {
         Long userId = getCurrentUserId();
-        User user = userService.getById(userId);
-        RepairRequest repairRequest = repairRequestService.create(user, request);
+        var user = userService.getById(userId);
+        var repairRequest = repairRequestService.create(user, request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(repairRequestService.getResponseById(repairRequest.getId()));
     }
@@ -62,7 +61,7 @@ public class RepairRequestController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<RepairRequestResponse> getMyRequest(@PathVariable Long id) {
         Long userId = getCurrentUserId();
-        RepairRequestResponse response = repairRequestService.getResponseById(id);
+        var response = repairRequestService.getResponseById(id);
         if (!response.getUserId().equals(userId)) {
             return ResponseEntity.notFound().build();
         }
@@ -73,7 +72,7 @@ public class RepairRequestController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<RepairRequestResponse> cancelMyRequest(@PathVariable Long id) {
         Long userId = getCurrentUserId();
-        RepairRequest cancelled = repairRequestService.cancelByUser(id, userId);
+        var cancelled = repairRequestService.cancelByUser(id, userId);
         return ResponseEntity.ok(repairRequestService.getResponseById(cancelled.getId()));
     }
 
@@ -93,58 +92,50 @@ public class RepairRequestController {
 
     @PutMapping("/{id}/status")
     @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
-    public ResponseEntity<RepairRequestResponse> updateStatus(
-            @PathVariable Long id,
-            @RequestParam String status) {
-        RepairRequest request = repairRequestService.updateStatus(id, status);
+    public ResponseEntity<RepairRequestResponse> updateStatus(@PathVariable Long id, @RequestParam String status) {
+        var request = repairRequestService.updateStatus(id, status);
         return ResponseEntity.ok(repairRequestService.getResponseById(request.getId()));
     }
 
     @PutMapping("/{id}/diagnostics")
     @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
     public ResponseEntity<RepairRequestResponse> setDiagnostics(@PathVariable Long id) {
-        RepairRequest request = repairRequestService.setDiagnostics(id);
+        var request = repairRequestService.setDiagnostics(id);
         return ResponseEntity.ok(repairRequestService.getResponseById(request.getId()));
     }
 
     @PutMapping("/{id}/repair")
     @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
     public ResponseEntity<RepairRequestResponse> startRepair(@PathVariable Long id) {
-        RepairRequest request = repairRequestService.setRepairInProgress(id);
+        var request = repairRequestService.setRepairInProgress(id);
         return ResponseEntity.ok(repairRequestService.getResponseById(request.getId()));
     }
 
     @PutMapping("/{id}/complete")
     @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
-    public ResponseEntity<RepairRequestResponse> completeRepair(
-            @PathVariable Long id,
-            @RequestParam BigDecimal finalPrice) {
-        RepairRequest request = repairRequestService.completeRepair(id, finalPrice);
+    public ResponseEntity<RepairRequestResponse> completeRepair(@PathVariable Long id, @RequestParam BigDecimal finalPrice) {
+        var request = repairRequestService.completeRepair(id, finalPrice);
         return ResponseEntity.ok(repairRequestService.getResponseById(request.getId()));
     }
 
     @PutMapping("/{id}/issue")
     @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
     public ResponseEntity<RepairRequestResponse> markAsIssued(@PathVariable Long id) {
-        RepairRequest request = repairRequestService.markAsIssued(id);
+        var request = repairRequestService.markAsIssued(id);
         return ResponseEntity.ok(repairRequestService.getResponseById(request.getId()));
     }
 
     @PutMapping("/{id}/comment")
     @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
-    public ResponseEntity<RepairRequestResponse> addComment(
-            @PathVariable Long id,
-            @RequestParam String comment) {
-        RepairRequest request = repairRequestService.updateMasterComment(id, comment);
+    public ResponseEntity<RepairRequestResponse> addComment(@PathVariable Long id, @RequestParam String comment) {
+        var request = repairRequestService.updateMasterComment(id, comment);
         return ResponseEntity.ok(repairRequestService.getResponseById(request.getId()));
     }
 
     @PutMapping("/{id}/estimated-price")
     @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
-    public ResponseEntity<RepairRequestResponse> updateEstimatedPrice(
-            @PathVariable Long id,
-            @RequestParam BigDecimal price) {
-        RepairRequest request = repairRequestService.updateEstimatedPrice(id, price);
+    public ResponseEntity<RepairRequestResponse> updateEstimatedPrice(@PathVariable Long id, @RequestParam BigDecimal price) {
+        var request = repairRequestService.updateEstimatedPrice(id, price);
         return ResponseEntity.ok(repairRequestService.getResponseById(request.getId()));
     }
 
@@ -154,7 +145,8 @@ public class RepairRequestController {
             @PathVariable String status,
             @PageableDefault(size = 20) Pageable pageable) {
         Page<RepairRequest> page = repairRequestService.findByStatus(status, pageable);
-        return ResponseEntity.ok(PageResponse.from(repairRequestService.toResponsePage(page)));
+        Page<RepairRequestResponse> responsePage = repairRequestService.toResponsePage(page);
+        return ResponseEntity.ok(PageResponse.from(responsePage));
     }
 
     @GetMapping("/statistics")

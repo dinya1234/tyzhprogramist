@@ -28,6 +28,7 @@ public class FileAttachmentController {
             @PathVariable String contentType,
             @PathVariable Long objectId) {
         List<FileAttachment> attachments = fileAttachmentService.saveFiles(files, contentType, objectId);
+        log.info("Загружено {} файлов для {}-{}", attachments.size(), contentType, objectId);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(attachments.stream()
                         .map(FileAttachmentResponse::from)
@@ -41,8 +42,8 @@ public class FileAttachmentController {
             @PathVariable String contentType,
             @PathVariable Long objectId) {
         FileAttachment attachment = fileAttachmentService.saveFile(file, contentType, objectId);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(FileAttachmentResponse.from(attachment));
+        log.info("Загружен файл {} для {}-{}", attachment.getOriginalFilename(), contentType, objectId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(FileAttachmentResponse.from(attachment));
     }
 
     @GetMapping("/{contentType}/{objectId}")
@@ -103,6 +104,7 @@ public class FileAttachmentController {
             @RequestParam String contentType,
             @RequestParam Long objectId) {
         FileAttachment file = fileAttachmentService.setAsMain(fileId, contentType, objectId);
+        log.info("Файл {} установлен как главный для {}-{}", fileId, contentType, objectId);
         return ResponseEntity.ok(FileAttachmentResponse.from(file));
     }
 
@@ -113,6 +115,7 @@ public class FileAttachmentController {
             @RequestParam String contentType,
             @RequestParam Long objectId) {
         fileAttachmentService.updateSortOrder(fileIds, contentType, objectId);
+        log.info("Изменен порядок файлов для {}-{}", contentType, objectId);
         return ResponseEntity.ok().build();
     }
 
@@ -121,6 +124,7 @@ public class FileAttachmentController {
     @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
     public ResponseEntity<Void> deleteFile(@PathVariable Long fileId) {
         fileAttachmentService.deleteFile(fileId);
+        log.info("Удален файл {}", fileId);
         return ResponseEntity.noContent().build();
     }
 
@@ -131,6 +135,7 @@ public class FileAttachmentController {
             @PathVariable String contentType,
             @PathVariable Long objectId) {
         fileAttachmentService.deleteAllFilesForEntity(contentType, objectId);
+        log.info("Удалены все файлы для {}-{}", contentType, objectId);
         return ResponseEntity.noContent().build();
     }
 
@@ -142,13 +147,14 @@ public class FileAttachmentController {
             @RequestParam String targetType,
             @RequestParam Long targetId) {
         List<FileAttachment> copied = fileAttachmentService.copyFiles(sourceType, sourceId, targetType, targetId);
+        log.info("Скопировано {} файлов из {}-{} в {}-{}", copied.size(), sourceType, sourceId, targetType, targetId);
         return ResponseEntity.ok(copied.stream()
                 .map(FileAttachmentResponse::from)
                 .toList());
     }
 
     @GetMapping("/search")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<FileAttachmentResponse>> searchByFilename(@RequestParam String filename) {
         List<FileAttachment> files = fileAttachmentService.searchByFilename(filename);
         return ResponseEntity.ok(files.stream()
@@ -157,7 +163,7 @@ public class FileAttachmentController {
     }
 
     @GetMapping("/by-mime-type")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<FileAttachmentResponse>> findByMimeType(@RequestParam String mimeType) {
         List<FileAttachment> files = fileAttachmentService.findByMimeType(mimeType);
         return ResponseEntity.ok(files.stream()
@@ -166,7 +172,7 @@ public class FileAttachmentController {
     }
 
     @GetMapping("/recent")
-    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<FileAttachmentResponse>> getRecentlyUploaded(@RequestParam(defaultValue = "7") int days) {
         List<FileAttachment> files = fileAttachmentService.findRecentlyUploaded(days);
         return ResponseEntity.ok(files.stream()
@@ -187,6 +193,7 @@ public class FileAttachmentController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Integer> deleteOrphanedFiles(@RequestParam(defaultValue = "30") int daysOld) {
         int deleted = fileAttachmentService.deleteOrphanedFiles(daysOld);
+        log.info("Удалено {} файлов-сирот", deleted);
         return ResponseEntity.ok(deleted);
     }
 
@@ -216,6 +223,7 @@ public class FileAttachmentController {
             @PathVariable Long productId,
             @RequestParam List<MultipartFile> files) {
         List<FileAttachment> attachments = fileAttachmentService.saveFiles(files, "Product", productId);
+        log.info("Загружено {} изображений для товара {}", attachments.size(), productId);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(attachments.stream()
                         .map(FileAttachmentResponse::from)

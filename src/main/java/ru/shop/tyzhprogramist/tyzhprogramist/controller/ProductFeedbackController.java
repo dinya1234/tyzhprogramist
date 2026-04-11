@@ -16,11 +16,11 @@ import ru.shop.tyzhprogramist.tyzhprogramist.dto.request.CreateFeedbackRequest;
 import ru.shop.tyzhprogramist.tyzhprogramist.dto.response.PageResponse;
 import ru.shop.tyzhprogramist.tyzhprogramist.dto.response.ProductFeedbackResponse;
 import ru.shop.tyzhprogramist.tyzhprogramist.entity.ProductFeedback;
-import ru.shop.tyzhprogramist.tyzhprogramist.entity.User;
 import ru.shop.tyzhprogramist.tyzhprogramist.security.SecurityUser;
 import ru.shop.tyzhprogramist.tyzhprogramist.service.ProductFeedbackService;
 import ru.shop.tyzhprogramist.tyzhprogramist.service.UserService;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -39,12 +39,15 @@ public class ProductFeedbackController {
         return principal.getId();
     }
 
+    // ========== ПУБЛИЧНЫЕ ЭНДПОИНТЫ ==========
+
     @GetMapping("/products/{productId}/reviews")
     public ResponseEntity<PageResponse<ProductFeedbackResponse>> getProductReviews(
             @PathVariable Long productId,
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         Page<ProductFeedback> page = feedbackService.getProductReviews(productId, pageable);
-        return ResponseEntity.ok(PageResponse.from(feedbackService.toResponsePage(page)));
+        Page<ProductFeedbackResponse> responsePage = feedbackService.toResponsePage(page);
+        return ResponseEntity.ok(PageResponse.from(responsePage));
     }
 
     @GetMapping("/products/{productId}/questions")
@@ -52,7 +55,8 @@ public class ProductFeedbackController {
             @PathVariable Long productId,
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         Page<ProductFeedback> page = feedbackService.getProductQuestions(productId, pageable);
-        return ResponseEntity.ok(PageResponse.from(feedbackService.toResponsePage(page)));
+        Page<ProductFeedbackResponse> responsePage = feedbackService.toResponsePage(page);
+        return ResponseEntity.ok(PageResponse.from(responsePage));
     }
 
     @GetMapping("/products/{productId}/rating")
@@ -66,14 +70,15 @@ public class ProductFeedbackController {
         return ResponseEntity.ok(feedbackService.getRatingStatistics(productId));
     }
 
+    // ========== АВТОРИЗОВАННЫЙ ПОЛЬЗОВАТЕЛЬ ==========
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ProductFeedbackResponse> createFeedback(
-            @Valid @RequestBody CreateFeedbackRequest request) {
+    public ResponseEntity<ProductFeedbackResponse> createFeedback(@Valid @RequestBody CreateFeedbackRequest request) {
         Long userId = getCurrentUserId();
-        User user = userService.getById(userId);
-        ProductFeedback feedback = feedbackService.createFeedback(user, request);
+        var user = userService.getById(userId);
+        var feedback = feedbackService.createFeedback(user, request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(feedbackService.getResponseById(feedback.getId()));
     }
@@ -84,25 +89,8 @@ public class ProductFeedbackController {
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         Long userId = getCurrentUserId();
         Page<ProductFeedback> page = feedbackService.getUserFeedbacks(userId, pageable);
-        return ResponseEntity.ok(PageResponse.from(feedbackService.toResponsePage(page)));
-    }
-
-    @GetMapping("/me/reviews")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<PageResponse<ProductFeedbackResponse>> getMyReviews(
-            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        Long userId = getCurrentUserId();
-        Page<ProductFeedback> page = feedbackService.getUserReviews(userId, pageable);
-        return ResponseEntity.ok(PageResponse.from(feedbackService.toResponsePage(page)));
-    }
-
-    @GetMapping("/me/questions")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<PageResponse<ProductFeedbackResponse>> getMyQuestions(
-            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        Long userId = getCurrentUserId();
-        Page<ProductFeedback> page = feedbackService.getUserQuestions(userId, pageable);
-        return ResponseEntity.ok(PageResponse.from(feedbackService.toResponsePage(page)));
+        Page<ProductFeedbackResponse> responsePage = feedbackService.toResponsePage(page);
+        return ResponseEntity.ok(PageResponse.from(responsePage));
     }
 
     @DeleteMapping("/me/{id}")
@@ -110,17 +98,20 @@ public class ProductFeedbackController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> deleteMyFeedback(@PathVariable Long id) {
         Long userId = getCurrentUserId();
-        User user = userService.getById(userId);
+        var user = userService.getById(userId);
         feedbackService.deleteFeedback(id, user);
         return ResponseEntity.noContent().build();
     }
+
+    // ========== МОДЕРАТОР / АДМИН ==========
 
     @GetMapping("/pending")
     @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
     public ResponseEntity<PageResponse<ProductFeedbackResponse>> getPendingModeration(
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.ASC) Pageable pageable) {
         Page<ProductFeedback> page = feedbackService.getPendingModeration(pageable);
-        return ResponseEntity.ok(PageResponse.from(feedbackService.toResponsePage(page)));
+        Page<ProductFeedbackResponse> responsePage = feedbackService.toResponsePage(page);
+        return ResponseEntity.ok(PageResponse.from(responsePage));
     }
 
     @GetMapping("/unanswered")
@@ -128,22 +119,21 @@ public class ProductFeedbackController {
     public ResponseEntity<PageResponse<ProductFeedbackResponse>> getUnansweredQuestions(
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.ASC) Pageable pageable) {
         Page<ProductFeedback> page = feedbackService.getUnansweredQuestions(pageable);
-        return ResponseEntity.ok(PageResponse.from(feedbackService.toResponsePage(page)));
+        Page<ProductFeedbackResponse> responsePage = feedbackService.toResponsePage(page);
+        return ResponseEntity.ok(PageResponse.from(responsePage));
     }
 
     @PostMapping("/{id}/publish")
     @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
     public ResponseEntity<ProductFeedbackResponse> publish(@PathVariable Long id) {
-        ProductFeedback feedback = feedbackService.publish(id);
+        var feedback = feedbackService.publish(id);
         return ResponseEntity.ok(feedbackService.getResponseById(feedback.getId()));
     }
 
     @PostMapping("/{id}/answer")
     @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
-    public ResponseEntity<ProductFeedbackResponse> answerQuestion(
-            @PathVariable Long id,
-            @RequestParam String answer) {
-        ProductFeedback feedback = feedbackService.answerQuestion(id, answer);
+    public ResponseEntity<ProductFeedbackResponse> answerQuestion(@PathVariable Long id, @RequestParam String answer) {
+        var feedback = feedbackService.answerQuestion(id, answer);
         return ResponseEntity.ok(feedbackService.getResponseById(feedback.getId()));
     }
 
@@ -159,9 +149,11 @@ public class ProductFeedbackController {
     @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
     public ResponseEntity<List<ProductFeedbackResponse>> bulkPublish(@RequestBody List<Long> feedbackIds) {
         List<ProductFeedback> feedbacks = feedbackService.bulkPublish(feedbackIds);
-        return ResponseEntity.ok(feedbacks.stream()
-                .map(ProductFeedbackResponse::from)
-                .toList());
+        List<ProductFeedbackResponse> responses = new ArrayList<>();
+        for (ProductFeedback feedback : feedbacks) {
+            responses.add(ProductFeedbackResponse.from(feedback));
+        }
+        return ResponseEntity.ok(responses);
     }
 
     @PostMapping("/bulk/reject")

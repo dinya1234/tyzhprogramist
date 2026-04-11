@@ -17,15 +17,14 @@ import ru.shop.tyzhprogramist.tyzhprogramist.dto.request.ChatMessageRequest;
 import ru.shop.tyzhprogramist.tyzhprogramist.dto.response.ChatMessageResponse;
 import ru.shop.tyzhprogramist.tyzhprogramist.dto.response.ChatSessionResponse;
 import ru.shop.tyzhprogramist.tyzhprogramist.dto.response.PageResponse;
-import ru.shop.tyzhprogramist.tyzhprogramist.entity.ChatMessage;
 import ru.shop.tyzhprogramist.tyzhprogramist.entity.ChatSession;
-import ru.shop.tyzhprogramist.tyzhprogramist.entity.User;
 import ru.shop.tyzhprogramist.tyzhprogramist.security.SecurityUser;
 import ru.shop.tyzhprogramist.tyzhprogramist.service.ChatService;
 import ru.shop.tyzhprogramist.tyzhprogramist.service.UserService;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -56,33 +55,35 @@ public class ChatController {
 
     @PostMapping("/session")
     public ResponseEntity<ChatSessionResponse> createSession(
-            @RequestAttribute(required = false) Long userId,
-            HttpServletRequest request,
             @RequestParam(required = false) String sourceUrl,
             @RequestParam(required = false) String contextType,
-            @RequestParam(required = false) Long contextId) {
+            @RequestParam(required = false) Long contextId,
+            HttpServletRequest request) {
 
-        ChatSession session;
+        Long userId = getCurrentUserId();
 
         if (userId != null) {
-            User user = userService.getById(userId);
+            var user = userService.getById(userId);
             if (contextType != null && contextId != null) {
-                session = chatService.createSessionWithContext(user, sourceUrl, contextType, contextId);
+                var session = chatService.createSessionWithContext(user, sourceUrl, contextType, contextId);
+                return ResponseEntity.status(HttpStatus.CREATED)
+                        .body(chatService.getSessionResponseById(session.getId()));
             } else {
-                session = chatService.createSession(user, sourceUrl);
+                var session = chatService.createSession(user, sourceUrl);
+                return ResponseEntity.status(HttpStatus.CREATED)
+                        .body(chatService.getSessionResponseById(session.getId()));
             }
         } else {
-            session = chatService.createGuestSession(sourceUrl);
+            var session = chatService.createGuestSession(sourceUrl);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(chatService.getSessionResponseById(session.getId()));
         }
-
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(chatService.getSessionResponseById(session.getId()));
     }
 
     @PostMapping("/message")
     @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<ChatMessageResponse> sendMessage(@Valid @RequestBody ChatMessageRequest request) {
-        ChatMessage message = chatService.sendUserMessage(request.getSessionId(), request.getMessage());
+        var message = chatService.sendUserMessage(request.getSessionId(), request.getMessage());
         return ResponseEntity.status(HttpStatus.CREATED).body(ChatMessageResponse.from(message));
     }
 
@@ -100,47 +101,48 @@ public class ChatController {
     public ResponseEntity<List<ChatMessageResponse>> getLatestMessages(
             @PathVariable Long sessionId,
             @RequestParam(defaultValue = "20") int limit) {
-        List<ChatMessage> messages = chatService.getLastMessages(sessionId, limit);
+        var messages = chatService.getLastMessages(sessionId, limit);
         return ResponseEntity.ok(messages.stream()
                 .map(ChatMessageResponse::from)
-                .toList());
+                .collect(Collectors.toList()));
     }
 
     @GetMapping("/me/sessions")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<PageResponse<ChatSessionResponse>> getMySessions(
-            @RequestAttribute Long userId,
             @PageableDefault(size = 10, sort = "startedAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        Long userId = getCurrentUserId();
         Page<ChatSession> page = chatService.getUserSessionsByUserId(userId, pageable);
-        return ResponseEntity.ok(PageResponse.from(chatService.toResponsePage(page)));
+        Page<ChatSessionResponse> responsePage = page.map(session -> chatService.getSessionResponseById(session.getId()));
+        return ResponseEntity.ok(PageResponse.from(responsePage));
     }
 
     @PostMapping("/me/session/{sessionId}/close")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<ChatSessionResponse> closeMySession(
-            @RequestAttribute Long userId,
-            @PathVariable Long sessionId) {
+    public ResponseEntity<ChatSessionResponse> closeMySession(@PathVariable Long sessionId) {
+        Long userId = getCurrentUserId();
         if (!chatService.canUserAccessSession(userId, sessionId)) {
             return ResponseEntity.notFound().build();
         }
-        ChatSession session = chatService.closeSession(sessionId);
+        var session = chatService.closeSession(sessionId);
         return ResponseEntity.ok(chatService.getSessionResponseById(session.getId()));
     }
 
     @GetMapping("/consultant/pending")
     @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
     public ResponseEntity<List<ChatSessionResponse>> getPendingSessions() {
-        List<ChatSession> sessions = chatService.getPendingSessions();
-        return ResponseEntity.ok(chatService.toResponseList(sessions));
+        var sessions = chatService.getPendingSessions();
+        return ResponseEntity.ok(sessions.stream()
+                .map(session -> chatService.getSessionResponseById(session.getId()))
+                .collect(Collectors.toList()));
     }
 
     @PostMapping("/consultant/session/{sessionId}/take")
     @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
-    public ResponseEntity<ChatSessionResponse> takeSession(
-            @RequestAttribute Long userId,
-            @PathVariable Long sessionId) {
-        User consultant = userService.getById(userId);
-        ChatSession session = chatService.assignConsultant(sessionId, consultant);
+    public ResponseEntity<ChatSessionResponse> takeSession(@PathVariable Long sessionId) {
+        Long userId = getCurrentUserId();
+        var consultant = userService.getById(userId);
+        var session = chatService.assignConsultant(sessionId, consultant);
         return ResponseEntity.ok(chatService.getSessionResponseById(session.getId()));
     }
 
@@ -150,30 +152,34 @@ public class ChatController {
     public ResponseEntity<ChatMessageResponse> sendConsultantMessage(
             @PathVariable Long sessionId,
             @RequestParam String message) {
-        ChatMessage chatMessage = chatService.sendConsultantMessage(sessionId, message);
+        var chatMessage = chatService.sendConsultantMessage(sessionId, message);
         return ResponseEntity.status(HttpStatus.CREATED).body(ChatMessageResponse.from(chatMessage));
     }
 
     @GetMapping("/consultant/sessions")
     @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
     public ResponseEntity<PageResponse<ChatSessionResponse>> getConsultantSessions(
-            @RequestAttribute Long userId,
             @PageableDefault(size = 20, sort = "startedAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        Long userId = getCurrentUserId();
         Page<ChatSession> page = chatService.getConsultantSessionsByUserId(userId, pageable);
-        return ResponseEntity.ok(PageResponse.from(chatService.toResponsePage(page)));
+        Page<ChatSessionResponse> responsePage = page.map(session -> chatService.getSessionResponseById(session.getId()));
+        return ResponseEntity.ok(PageResponse.from(responsePage));
     }
 
     @GetMapping("/consultant/active")
     @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
-    public ResponseEntity<List<ChatSessionResponse>> getActiveConsultantSessions(@RequestAttribute Long userId) {
-        List<ChatSession> sessions = chatService.getActiveConsultantSessions(userId);
-        return ResponseEntity.ok(chatService.toResponseList(sessions));
+    public ResponseEntity<List<ChatSessionResponse>> getActiveConsultantSessions() {
+        Long userId = getCurrentUserId();
+        var sessions = chatService.getActiveConsultantSessions(userId);
+        return ResponseEntity.ok(sessions.stream()
+                .map(session -> chatService.getSessionResponseById(session.getId()))
+                .collect(Collectors.toList()));
     }
 
     @PostMapping("/consultant/session/{sessionId}/close")
     @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
     public ResponseEntity<ChatSessionResponse> closeSessionAsConsultant(@PathVariable Long sessionId) {
-        ChatSession session = chatService.closeSession(sessionId);
+        var session = chatService.closeSession(sessionId);
         return ResponseEntity.ok(chatService.getSessionResponseById(session.getId()));
     }
 
@@ -182,7 +188,8 @@ public class ChatController {
     public ResponseEntity<PageResponse<ChatSessionResponse>> getAllSessions(
             @PageableDefault(size = 20, sort = "startedAt", direction = Sort.Direction.DESC) Pageable pageable) {
         Page<ChatSession> page = chatService.getAllSessions(pageable);
-        return ResponseEntity.ok(PageResponse.from(chatService.toResponsePage(page)));
+        Page<ChatSessionResponse> responsePage = page.map(session -> chatService.getSessionResponseById(session.getId()));
+        return ResponseEntity.ok(PageResponse.from(responsePage));
     }
 
     @GetMapping("/statistics")
@@ -195,11 +202,5 @@ public class ChatController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, Object>> getCurrentLoad() {
         return ResponseEntity.ok(chatService.getCurrentLoad());
-    }
-
-    @GetMapping("/consultants/load")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<Object[]>> getConsultantsByLoad(@RequestParam(defaultValue = "10") int limit) {
-        return ResponseEntity.ok(chatService.getConsultantsByLoad(limit));
     }
 }

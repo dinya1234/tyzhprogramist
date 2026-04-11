@@ -94,6 +94,7 @@ public class SiteSettingsController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SiteSettingsResponse> updateSettings(@Valid @RequestBody SiteSettings settings) {
         SiteSettings updated = siteSettingsService.updateSettings(settings);
+        log.info("Админ обновил настройки сайта");
         return ResponseEntity.ok(SiteSettingsResponse.from(updated));
     }
 
@@ -101,6 +102,7 @@ public class SiteSettingsController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SiteSettingsResponse> updatePickupAddress(@RequestParam String address) {
         SiteSettings settings = siteSettingsService.updatePickupAddress(address);
+        log.info("Админ обновил адрес самовывоза: {}", address);
         return ResponseEntity.ok(SiteSettingsResponse.from(settings));
     }
 
@@ -108,6 +110,7 @@ public class SiteSettingsController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SiteSettingsResponse> updatePickupPhone(@RequestParam String phone) {
         SiteSettings settings = siteSettingsService.updatePickupPhone(phone);
+        log.info("Админ обновил телефон самовывоза: {}", phone);
         return ResponseEntity.ok(SiteSettingsResponse.from(settings));
     }
 
@@ -115,6 +118,7 @@ public class SiteSettingsController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SiteSettingsResponse> updateWorkingHours(@RequestParam String hours) {
         SiteSettings settings = siteSettingsService.updateWorkingHours(hours);
+        log.info("Админ обновил часы работы: {}", hours);
         return ResponseEntity.ok(SiteSettingsResponse.from(settings));
     }
 
@@ -122,6 +126,7 @@ public class SiteSettingsController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SiteSettingsResponse> updateDeliveryCost(@RequestParam BigDecimal cost) {
         SiteSettings settings = siteSettingsService.updateDeliveryCost(cost);
+        log.info("Админ обновил стоимость доставки: {}", cost);
         return ResponseEntity.ok(SiteSettingsResponse.from(settings));
     }
 
@@ -129,6 +134,7 @@ public class SiteSettingsController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SiteSettingsResponse> updateFreeDeliveryThreshold(@RequestParam BigDecimal threshold) {
         SiteSettings settings = siteSettingsService.updateFreeDeliveryThreshold(threshold);
+        log.info("Админ обновил порог бесплатной доставки: {}", threshold);
         return ResponseEntity.ok(SiteSettingsResponse.from(settings));
     }
 
@@ -136,6 +142,7 @@ public class SiteSettingsController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SiteSettingsResponse> resetToDefaults() {
         SiteSettings settings = siteSettingsService.resetToDefaults();
+        log.info("Админ сбросил настройки сайта к значениям по умолчанию");
         return ResponseEntity.ok(SiteSettingsResponse.from(settings));
     }
 
@@ -143,6 +150,7 @@ public class SiteSettingsController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> initializeSettings() {
         siteSettingsService.initializeSettings();
+        log.info("Админ инициализировал настройки сайта");
         return ResponseEntity.ok().build();
     }
 
@@ -150,6 +158,7 @@ public class SiteSettingsController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Integer> deleteDuplicates() {
         int deleted = siteSettingsService.deleteDuplicates();
+        log.info("Админ удалил {} дубликатов настроек", deleted);
         return ResponseEntity.ok(deleted);
     }
 

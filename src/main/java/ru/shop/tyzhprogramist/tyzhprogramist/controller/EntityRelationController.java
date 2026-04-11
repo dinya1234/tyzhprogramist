@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import ru.shop.tyzhprogramist.tyzhprogramist.dto.response.EntityRelationResponse;
 import ru.shop.tyzhprogramist.tyzhprogramist.dto.response.PageResponse;
 import ru.shop.tyzhprogramist.tyzhprogramist.entity.EntityRelation;
+import ru.shop.tyzhprogramist.tyzhprogramist.entity.RelationType;
 import ru.shop.tyzhprogramist.tyzhprogramist.entity.User;
 import ru.shop.tyzhprogramist.tyzhprogramist.security.SecurityUser;
 import ru.shop.tyzhprogramist.tyzhprogramist.service.EntityRelationService;
@@ -94,7 +95,9 @@ public class EntityRelationController {
     public ResponseEntity<List<EntityRelationResponse>> getComparison(@PathVariable String comparisonName) {
         Long userId = getCurrentUserId();
         List<EntityRelation> items = entityRelationService.getComparisonItems(userId, comparisonName);
-        return ResponseEntity.ok(entityRelationService.toResponseList(items));
+        return ResponseEntity.ok(items.stream()
+                .map(EntityRelationResponse::from)
+                .toList());
     }
 
     @GetMapping("/comparisons/{comparisonName}/grouped")
@@ -106,7 +109,7 @@ public class EntityRelationController {
         Map<String, List<EntityRelationResponse>> response = grouped.entrySet().stream()
                 .collect(java.util.stream.Collectors.toMap(
                         Map.Entry::getKey,
-                        e -> entityRelationService.toResponseList(e.getValue())
+                        e -> e.getValue().stream().map(EntityRelationResponse::from).toList()
                 ));
         return ResponseEntity.ok(response);
     }
@@ -119,6 +122,7 @@ public class EntityRelationController {
         Long userId = getCurrentUserId();
         User user = userService.getById(userId);
         EntityRelation relation = entityRelationService.addProductToComparison(user, comparisonName, productId);
+        log.info("Пользователь {} добавил товар {} в сравнение {}", user.getUsername(), productId, comparisonName);
         return ResponseEntity.status(HttpStatus.CREATED).body(EntityRelationResponse.from(relation));
     }
 
@@ -130,6 +134,7 @@ public class EntityRelationController {
         Long userId = getCurrentUserId();
         User user = userService.getById(userId);
         EntityRelation relation = entityRelationService.addPcBuildToComparison(user, comparisonName, pcBuildId);
+        log.info("Пользователь {} добавил сборку {} в сравнение {}", user.getUsername(), pcBuildId, comparisonName);
         return ResponseEntity.status(HttpStatus.CREATED).body(EntityRelationResponse.from(relation));
     }
 
@@ -143,6 +148,7 @@ public class EntityRelationController {
         User user = userService.getById(userId);
         entityRelationService.removeFromComparison(user, comparisonName,
                 EntityRelationService.TYPE_PRODUCT, productId);
+        log.info("Пользователь {} удалил товар {} из сравнения {}", user.getUsername(), productId, comparisonName);
         return ResponseEntity.noContent().build();
     }
 
@@ -156,6 +162,7 @@ public class EntityRelationController {
         User user = userService.getById(userId);
         entityRelationService.removeFromComparison(user, comparisonName,
                 EntityRelationService.TYPE_PC_BUILD, pcBuildId);
+        log.info("Пользователь {} удалил сборку {} из сравнения {}", user.getUsername(), pcBuildId, comparisonName);
         return ResponseEntity.noContent().build();
     }
 
@@ -166,6 +173,7 @@ public class EntityRelationController {
         Long userId = getCurrentUserId();
         User user = userService.getById(userId);
         entityRelationService.deleteComparison(user, comparisonName);
+        log.info("Пользователь {} удалил сравнение {}", user.getUsername(), comparisonName);
         return ResponseEntity.noContent().build();
     }
 
@@ -195,6 +203,7 @@ public class EntityRelationController {
             @RequestParam Long productId2,
             @RequestParam boolean compatible) {
         EntityRelation relation = entityRelationService.createProductCompatibilityRule(productId1, productId2, compatible);
+        log.info("Админ создал правило совместимости между товарами {} и {}", productId1, productId2);
         return ResponseEntity.status(HttpStatus.CREATED).body(EntityRelationResponse.from(relation));
     }
 
@@ -206,6 +215,7 @@ public class EntityRelationController {
             @RequestParam boolean compatible) {
         List<EntityRelation> relations = entityRelationService.createSymmetricProductCompatibilityRule(
                 productId1, productId2, compatible);
+        log.info("Админ создал симметричное правило совместимости между товарами {} и {}", productId1, productId2);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(relations.stream().map(EntityRelationResponse::from).toList());
     }
@@ -216,6 +226,7 @@ public class EntityRelationController {
             @PathVariable Long ruleId,
             @RequestParam boolean compatible) {
         EntityRelation relation = entityRelationService.updateCompatibilityRule(ruleId, compatible);
+        log.info("Админ обновил правило совместимости {}", ruleId);
         return ResponseEntity.ok(EntityRelationResponse.from(relation));
     }
 
@@ -228,6 +239,7 @@ public class EntityRelationController {
         entityRelationService.deleteCompatibilityRule(
                 EntityRelationService.TYPE_PRODUCT, productId1,
                 EntityRelationService.TYPE_PRODUCT, productId2);
+        log.info("Админ удалил правило совместимости между товарами {} и {}", productId1, productId2);
         return ResponseEntity.noContent().build();
     }
 
@@ -238,6 +250,7 @@ public class EntityRelationController {
             @PathVariable String contentType,
             @PathVariable Long objectId) {
         int count = entityRelationService.deleteAllCompatibilityRules(contentType, objectId);
+        log.info("Админ удалил {} правил совместимости для {}-{}", count, contentType, objectId);
         return ResponseEntity.ok(count);
     }
 
@@ -247,7 +260,7 @@ public class EntityRelationController {
             @PathVariable String contentType,
             @PathVariable Long objectId) {
         List<EntityRelation> rules = entityRelationService.getAllCompatibilityRules(contentType, objectId);
-        return ResponseEntity.ok(entityRelationService.toResponseList(rules));
+        return ResponseEntity.ok(rules.stream().map(EntityRelationResponse::from).toList());
     }
 
     @PostMapping("/compatibility/bulk")
@@ -260,6 +273,7 @@ public class EntityRelationController {
             @RequestParam boolean compatible) {
         List<EntityRelation> relations = entityRelationService.bulkCreateCompatibilityRules(
                 fromType, fromId, toTypes, toIds, compatible);
+        log.info("Админ массово создал {} правил совместимости для {}-{}", relations.size(), fromType, fromId);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(relations.stream().map(EntityRelationResponse::from).toList());
     }
@@ -273,6 +287,8 @@ public class EntityRelationController {
             @RequestParam Long targetId) {
         List<EntityRelation> copied = entityRelationService.copyCompatibilityRules(
                 sourceType, sourceId, targetType, targetId);
+        log.info("Админ скопировал {} правил совместимости от {}-{} к {}-{}",
+                copied.size(), sourceType, sourceId, targetType, targetId);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(copied.stream().map(EntityRelationResponse::from).toList());
     }
@@ -281,18 +297,18 @@ public class EntityRelationController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<PageResponse<EntityRelationResponse>> getAllCompatibilityRules(
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        Page<EntityRelation> page = entityRelationService.getByRelationType(
-                ru.shop.tyzhprogramist.tyzhprogramist.entity.RelationType.COMPATIBILITY, pageable);
-        return ResponseEntity.ok(PageResponse.from(entityRelationService.toResponsePage(page)));
+        Page<EntityRelation> page = entityRelationService.getByRelationType(RelationType.COMPATIBILITY, pageable);
+        Page<EntityRelationResponse> responsePage = page.map(EntityRelationResponse::from);
+        return ResponseEntity.ok(PageResponse.from(responsePage));
     }
 
     @GetMapping("/admin/comparisons")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<PageResponse<EntityRelationResponse>> getAllComparisons(
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        Page<EntityRelation> page = entityRelationService.getByRelationType(
-                ru.shop.tyzhprogramist.tyzhprogramist.entity.RelationType.COMPARISON, pageable);
-        return ResponseEntity.ok(PageResponse.from(entityRelationService.toResponsePage(page)));
+        Page<EntityRelation> page = entityRelationService.getByRelationType(RelationType.COMPARISON, pageable);
+        Page<EntityRelationResponse> responsePage = page.map(EntityRelationResponse::from);
+        return ResponseEntity.ok(PageResponse.from(responsePage));
     }
 
     @GetMapping("/statistics")
@@ -319,6 +335,7 @@ public class EntityRelationController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Integer> deleteOldComparisons(@RequestParam(defaultValue = "30") int daysOld) {
         int count = entityRelationService.deleteOldComparisons(daysOld);
+        log.info("Админ удалил {} старых сравнений", count);
         return ResponseEntity.ok(count);
     }
 }

@@ -96,16 +96,21 @@ public class ComponentTypeController {
     @GetMapping("/{id}/compatible")
     public ResponseEntity<List<ComponentTypeResponse>> getCompatibleTypes(@PathVariable Long id) {
         List<ComponentType> types = componentTypeService.getCompatibleTypes(id);
-        return ResponseEntity.ok(componentTypeService.toResponseList(types));
+        return ResponseEntity.ok(types.stream()
+                .map(ComponentTypeResponse::from)
+                .toList());
     }
 
     @GetMapping("/{id}/incompatible")
     public ResponseEntity<List<ComponentTypeResponse>> getIncompatibleTypes(@PathVariable Long id) {
         List<ComponentType> types = componentTypeService.getIncompatibleTypes(id);
-        return ResponseEntity.ok(componentTypeService.toResponseList(types));
+        return ResponseEntity.ok(types.stream()
+                .map(ComponentTypeResponse::from)
+                .toList());
     }
 
     @GetMapping("/{id}/compatibility-rules")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
     public ResponseEntity<List<EntityRelation>> getCompatibilityRules(@PathVariable Long id) {
         return ResponseEntity.ok(componentTypeService.getCompatibilityRules(id));
     }
@@ -120,17 +125,26 @@ public class ComponentTypeController {
 
     @GetMapping("/processors")
     public ResponseEntity<List<ComponentTypeResponse>> getProcessorTypes() {
-        return ResponseEntity.ok(componentTypeService.toResponseList(componentTypeService.getProcessorTypes()));
+        List<ComponentType> types = componentTypeService.getProcessorTypes();
+        return ResponseEntity.ok(types.stream()
+                .map(ComponentTypeResponse::from)
+                .toList());
     }
 
     @GetMapping("/memory")
     public ResponseEntity<List<ComponentTypeResponse>> getMemoryTypes() {
-        return ResponseEntity.ok(componentTypeService.toResponseList(componentTypeService.getMemoryTypes()));
+        List<ComponentType> types = componentTypeService.getMemoryTypes();
+        return ResponseEntity.ok(types.stream()
+                .map(ComponentTypeResponse::from)
+                .toList());
     }
 
     @GetMapping("/storage")
     public ResponseEntity<List<ComponentTypeResponse>> getStorageTypes() {
-        return ResponseEntity.ok(componentTypeService.toResponseList(componentTypeService.getStorageTypes()));
+        List<ComponentType> types = componentTypeService.getStorageTypes();
+        return ResponseEntity.ok(types.stream()
+                .map(ComponentTypeResponse::from)
+                .toList());
     }
 
     @GetMapping("/{id}/is-processor")
@@ -161,7 +175,9 @@ public class ComponentTypeController {
     @GetMapping("/search")
     public ResponseEntity<List<ComponentTypeResponse>> searchByName(@RequestParam String q) {
         List<ComponentType> types = componentTypeService.searchByName(q);
-        return ResponseEntity.ok(componentTypeService.toResponseList(types));
+        return ResponseEntity.ok(types.stream()
+                .map(ComponentTypeResponse::from)
+                .toList());
     }
 
     @PostMapping
@@ -171,6 +187,7 @@ public class ComponentTypeController {
             @RequestParam @NotBlank String name,
             @RequestParam(required = false) Integer orderStep) {
         ComponentType type = componentTypeService.createComponentType(name, orderStep);
+        log.info("Админ создал тип компонента: {}", name);
         return ResponseEntity.status(HttpStatus.CREATED).body(ComponentTypeResponse.from(type));
     }
 
@@ -181,6 +198,7 @@ public class ComponentTypeController {
             @RequestParam(required = false) String name,
             @RequestParam(required = false) Integer orderStep) {
         ComponentType type = componentTypeService.updateComponentType(id, name, orderStep);
+        log.info("Админ обновил тип компонента: id={}", id);
         return ResponseEntity.ok(ComponentTypeResponse.from(type));
     }
 
@@ -189,6 +207,7 @@ public class ComponentTypeController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteType(@PathVariable Long id) {
         componentTypeService.deleteComponentType(id);
+        log.info("Админ удалил тип компонента: id={}", id);
         return ResponseEntity.noContent().build();
     }
 
@@ -196,6 +215,7 @@ public class ComponentTypeController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Integer> reorderSequential() {
         int count = componentTypeService.reorderSequential();
+        log.info("Админ перенумеровал порядок типов компонентов");
         return ResponseEntity.ok(count);
     }
 
@@ -206,6 +226,7 @@ public class ComponentTypeController {
             @RequestParam Long typeId2,
             @RequestParam boolean compatible) {
         EntityRelation rule = componentTypeService.addCompatibilityRule(typeId1, typeId2, compatible);
+        log.info("Админ добавил правило совместимости между типами {} и {}", typeId1, typeId2);
         return ResponseEntity.status(HttpStatus.CREATED).body(rule);
     }
 
@@ -216,6 +237,7 @@ public class ComponentTypeController {
             @RequestParam Long typeId2,
             @RequestParam boolean compatible) {
         List<EntityRelation> rules = componentTypeService.addSymmetricCompatibilityRule(typeId1, typeId2, compatible);
+        log.info("Админ добавил симметричное правило совместимости между типами {} и {}", typeId1, typeId2);
         return ResponseEntity.status(HttpStatus.CREATED).body(rules);
     }
 
@@ -235,6 +257,7 @@ public class ComponentTypeController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> initializeDefaultTypes() {
         componentTypeService.initializeDefaultComponentTypes();
+        log.info("Админ инициализировал типы компонентов по умолчанию");
         return ResponseEntity.ok().build();
     }
 }
