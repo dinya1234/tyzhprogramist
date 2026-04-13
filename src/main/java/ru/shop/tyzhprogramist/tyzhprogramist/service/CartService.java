@@ -12,6 +12,7 @@ import ru.shop.tyzhprogramist.tyzhprogramist.exception.NotFoundException;
 import ru.shop.tyzhprogramist.tyzhprogramist.repository.CartRepository;
 import ru.shop.tyzhprogramist.tyzhprogramist.repository.ProductItemRepository;
 import ru.shop.tyzhprogramist.tyzhprogramist.repository.ProductRepository;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -19,6 +20,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -30,9 +32,28 @@ public class CartService {
     private final FileAttachmentService fileAttachmentService;
 
     @Transactional(readOnly = true)
-    public Cart getUserCart(User user) {
-        return cartRepository.findByUser(user)
-                .orElseGet(() -> createCartForUser(user));
+    public Optional<Cart> findUserCart(User user) {
+        List<Cart> carts = cartRepository.findByUser(user);
+        if (carts.isEmpty()) {
+            return Optional.empty();
+        }
+        if (carts.size() > 1) {
+            log.warn("Найдено {} корзин для пользователя {}, возвращаем первую", carts.size(), user.getUsername());
+        }
+        return Optional.of(carts.get(0));
+    }
+
+    @Transactional
+    public Cart createUserCart(User user) {
+        Cart cart = new Cart(user);
+        Cart saved = cartRepository.save(cart);
+        log.info("Создана новая корзина для пользователя {}", user.getUsername());
+        return saved;
+    }
+
+    @Transactional
+    public Cart getOrCreateUserCart(User user) {
+        return findUserCart(user).orElseGet(() -> createUserCart(user));
     }
 
     @Transactional(readOnly = true)
@@ -42,17 +63,12 @@ public class CartService {
     }
 
     @Transactional
-    public Cart createCartForUser(User user) {
-        Cart cart = new Cart(user);
-        return cartRepository.save(cart);
-    }
-
-    @Transactional
     public Cart createCartForGuest(String sessionKey) {
         if (sessionKey == null || sessionKey.isEmpty()) {
             sessionKey = generateSessionKey();
         }
         Cart cart = new Cart(sessionKey);
+        log.info("Создана новая гостевая корзина с ключом {}", sessionKey);
         return cartRepository.save(cart);
     }
 
@@ -155,10 +171,10 @@ public class CartService {
                 .orElse(null);
 
         if (guestCart == null) {
-            return getUserCart(user);
+            return getOrCreateUserCart(user);
         }
 
-        Cart userCart = getUserCart(user);
+        Cart userCart = getOrCreateUserCart(user);
 
         List<ProductItem> guestItems = productItemRepository.findCartItemsWithProduct(guestCart.getId());
 
@@ -176,7 +192,6 @@ public class CartService {
         }
 
         cartRepository.delete(guestCart);
-
         return userCart;
     }
 

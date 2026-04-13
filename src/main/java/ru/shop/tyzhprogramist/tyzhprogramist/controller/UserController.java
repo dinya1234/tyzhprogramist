@@ -37,14 +37,19 @@ public class UserController {
         return ResponseEntity.ok(userService.getUserResponseById(getCurrentUserId()));
     }
 
-    @PutMapping("/me/password")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Void> changePassword(
-            @RequestParam String oldPassword,
-            @RequestParam String newPassword) {
-        userService.changePassword(getCurrentUserId(), oldPassword, newPassword);
-        return ResponseEntity.noContent().build();
+    @GetMapping("/statistics")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Object> getUserStatistics() {
+        return ResponseEntity.ok(userService.getUserStatistics());
+    }
+
+    @GetMapping("/search")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<PageResponse<UserResponse>> searchUsers(
+            @RequestParam String query,
+            @PageableDefault(size = 20) Pageable pageable) {
+        Page<UserResponse> page = userService.searchUserResponses(query, pageable);
+        return ResponseEntity.ok(PageResponse.from(page));
     }
 
     @GetMapping
@@ -59,6 +64,16 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {
         return ResponseEntity.ok(userService.getUserResponseById(id));
+    }
+
+    @PutMapping("/me/password")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Void> changePassword(
+            @RequestParam String oldPassword,
+            @RequestParam String newPassword) {
+        userService.changePassword(getCurrentUserId(), oldPassword, newPassword);
+        return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/{id}/role")

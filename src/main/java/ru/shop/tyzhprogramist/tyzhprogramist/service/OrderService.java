@@ -99,7 +99,7 @@ public class OrderService {
 
     @Transactional
     public Order createOrderFromCart(User user, CreateOrderRequest request) {
-        Cart cart = cartService.getUserCart(user);
+        Cart cart = cartService.getOrCreateUserCart(user);
 
         List<ProductItem> cartItems = productItemRepository.findCartItemsWithProduct(cart.getId());
 

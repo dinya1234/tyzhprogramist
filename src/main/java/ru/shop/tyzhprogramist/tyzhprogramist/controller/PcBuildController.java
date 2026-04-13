@@ -16,12 +16,14 @@ import ru.shop.tyzhprogramist.tyzhprogramist.dto.request.CreatePcBuildRequest;
 import ru.shop.tyzhprogramist.tyzhprogramist.dto.response.PageResponse;
 import ru.shop.tyzhprogramist.tyzhprogramist.dto.response.PcBuildComponentResponse;
 import ru.shop.tyzhprogramist.tyzhprogramist.dto.response.PcBuildResponse;
+import ru.shop.tyzhprogramist.tyzhprogramist.entity.PcBuild;
 import ru.shop.tyzhprogramist.tyzhprogramist.security.SecurityUser;
 import ru.shop.tyzhprogramist.tyzhprogramist.service.PcBuildService;
 import ru.shop.tyzhprogramist.tyzhprogramist.service.UserService;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @RestController
@@ -49,10 +51,25 @@ public class PcBuildController {
         return ResponseEntity.ok(PageResponse.from(page));
     }
 
+    @GetMapping("/public/recent")
+    public ResponseEntity<List<PcBuild>> getRecentPublicBuilds(@RequestParam(defaultValue = "6") int limit) {
+        return ResponseEntity.ok(pcBuildService.getRecentPublicBuilds(limit));
+    }
+
     @GetMapping("/public/{id}")
     public ResponseEntity<PcBuildResponse> getPublicBuild(@PathVariable Long id) {
         pcBuildService.incrementViews(id);
         return ResponseEntity.ok(pcBuildService.getPcBuildResponseById(id));
+    }
+
+    @GetMapping("/public/search")
+    public ResponseEntity<PageResponse<PcBuildResponse>> searchPublicBuilds(
+            @RequestParam String q,
+            @PageableDefault(size = 12) Pageable pageable) {
+        Page<PcBuild> page = pcBuildService.searchPublicBuilds(q, pageable);
+
+        Page<PcBuildResponse> responsePage = page.map(build -> pcBuildService.getPcBuildResponseById(build.getId()));
+        return ResponseEntity.ok(PageResponse.from(responsePage));
     }
 
     @GetMapping("/me")
@@ -60,6 +77,9 @@ public class PcBuildController {
     public ResponseEntity<PageResponse<PcBuildResponse>> getMyBuilds(
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         Long userId = getCurrentUserId();
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         Page<PcBuildResponse> page = pcBuildService.getUserBuildResponses(userId, pageable);
         return ResponseEntity.ok(PageResponse.from(page));
     }
@@ -68,6 +88,9 @@ public class PcBuildController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<PcBuildResponse> getMyBuild(@PathVariable Long id) {
         Long userId = getCurrentUserId();
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         if (!pcBuildService.canViewBuild(id, userId)) {
             return ResponseEntity.notFound().build();
         }
@@ -80,6 +103,9 @@ public class PcBuildController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<PcBuildResponse> createBuild(@Valid @RequestBody CreatePcBuildRequest request) {
         Long userId = getCurrentUserId();
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         var user = userService.getById(userId);
         var build = pcBuildService.createBuild(user, request);
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -93,6 +119,9 @@ public class PcBuildController {
             @RequestParam(required = false) String name,
             @RequestParam(required = false) Boolean isPublic) {
         Long userId = getCurrentUserId();
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         if (!pcBuildService.canEditBuild(id, userId)) {
             return ResponseEntity.notFound().build();
         }
@@ -105,6 +134,9 @@ public class PcBuildController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> deleteBuild(@PathVariable Long id) {
         Long userId = getCurrentUserId();
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         if (!pcBuildService.canEditBuild(id, userId)) {
             return ResponseEntity.notFound().build();
         }
@@ -116,6 +148,9 @@ public class PcBuildController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<PcBuildComponentResponse>> getComponents(@PathVariable Long id) {
         Long userId = getCurrentUserId();
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         if (!pcBuildService.canViewBuild(id, userId)) {
             return ResponseEntity.notFound().build();
         }
@@ -129,6 +164,9 @@ public class PcBuildController {
             @PathVariable Long productId,
             @RequestParam(defaultValue = "1") Integer quantity) {
         Long userId = getCurrentUserId();
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         if (!pcBuildService.canEditBuild(id, userId)) {
             return ResponseEntity.notFound().build();
         }
@@ -141,6 +179,9 @@ public class PcBuildController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> removeComponent(@PathVariable Long id, @PathVariable Long productId) {
         Long userId = getCurrentUserId();
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         if (!pcBuildService.canEditBuild(id, userId)) {
             return ResponseEntity.notFound().build();
         }
@@ -152,9 +193,26 @@ public class PcBuildController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<BigDecimal> getTotalPrice(@PathVariable Long id) {
         Long userId = getCurrentUserId();
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         if (!pcBuildService.canViewBuild(id, userId)) {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(pcBuildService.calculateTotalPrice(id));
+    }
+
+    @GetMapping("/statistics")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, Object>> getPcBuildStatistics() {
+        return ResponseEntity.ok(pcBuildService.getPcBuildStatistics());
+    }
+
+    @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<PageResponse<PcBuildResponse>> getAllBuildsAdmin(
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        Page<PcBuildResponse> page = pcBuildService.getAllBuildResponses(pageable);
+        return ResponseEntity.ok(PageResponse.from(page));
     }
 }

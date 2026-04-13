@@ -13,8 +13,10 @@ import ru.shop.tyzhprogramist.tyzhprogramist.dto.request.AddToCartRequest;
 import ru.shop.tyzhprogramist.tyzhprogramist.dto.response.CartItemResponse;
 import ru.shop.tyzhprogramist.tyzhprogramist.dto.response.CartResponse;
 import ru.shop.tyzhprogramist.tyzhprogramist.entity.Cart;
+import ru.shop.tyzhprogramist.tyzhprogramist.entity.User;
 import ru.shop.tyzhprogramist.tyzhprogramist.security.SecurityUser;
 import ru.shop.tyzhprogramist.tyzhprogramist.service.CartService;
+import ru.shop.tyzhprogramist.tyzhprogramist.service.UserService;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -26,6 +28,7 @@ import java.util.List;
 public class CartController {
 
     private final CartService cartService;
+    private final UserService userService;
 
     private Long getCurrentUserId() {
         try {
@@ -47,7 +50,8 @@ public class CartController {
 
     private Long getCartId(Long userId, String sessionKey) {
         if (userId != null) {
-            return cartService.getUserCart(null).getId();
+            User user = userService.getById(userId);
+            return cartService.getOrCreateUserCart(user).getId();
         }
         return cartService.getGuestCart(sessionKey).getId();
     }

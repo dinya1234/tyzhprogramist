@@ -35,14 +35,10 @@ public class OrderController {
         return principal.getId();
     }
 
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<OrderResponse> createOrder(@Valid @RequestBody CreateOrderRequest request) {
-        Long userId = getCurrentUserId();
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(orderService.getOrderResponseById(
-                        orderService.createOrderFromCart(userService.getById(userId), request).getId()));
+    @GetMapping("/statistics")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Object> getOrderStatistics() {
+        return ResponseEntity.ok(orderService.getOrderStatistics());
     }
 
     @GetMapping("/me")
@@ -76,6 +72,25 @@ public class OrderController {
         return ResponseEntity.ok(orderService.getOrderResponseById(orderService.cancelOrder(orderId).getId()));
     }
 
+    @GetMapping("/status/{status}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<PageResponse<OrderResponse>> getOrdersByStatus(
+            @PathVariable OrderStatus status,
+            @PageableDefault(size = 20) Pageable pageable) {
+        Page<OrderResponse> page = orderService.getOrderResponsesByStatus(status, pageable);
+        return ResponseEntity.ok(PageResponse.from(page));
+    }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<OrderResponse> createOrder(@Valid @RequestBody CreateOrderRequest request) {
+        Long userId = getCurrentUserId();
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(orderService.getOrderResponseById(
+                        orderService.createOrderFromCart(userService.getById(userId), request).getId()));
+    }
+
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<PageResponse<OrderResponse>> getAllOrders(
@@ -95,14 +110,5 @@ public class OrderController {
     public ResponseEntity<OrderResponse> updateStatus(@PathVariable Long orderId, @RequestParam OrderStatus status) {
         return ResponseEntity.ok(orderService.getOrderResponseById(
                 orderService.updateOrderStatus(orderId, status).getId()));
-    }
-
-    @GetMapping("/status/{status}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<PageResponse<OrderResponse>> getOrdersByStatus(
-            @PathVariable OrderStatus status,
-            @PageableDefault(size = 20) Pageable pageable) {
-        Page<OrderResponse> page = orderService.getOrderResponsesByStatus(status, pageable);
-        return ResponseEntity.ok(PageResponse.from(page));
     }
 }

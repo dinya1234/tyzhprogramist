@@ -321,8 +321,11 @@ public class PcBuildService {
 
     @Transactional(readOnly = true)
     public BigDecimal calculateTotalPrice(Long buildId) {
-        return productItemRepository.sumTotalPriceByParent(ParentType.PC_BUILD, buildId)
-                .setScale(2, RoundingMode.HALF_UP);
+        BigDecimal total = productItemRepository.sumTotalPriceByParent(ParentType.PC_BUILD, buildId);
+        if (total == null) {
+            return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        }
+        return total.setScale(2, RoundingMode.HALF_UP);
     }
 
     @Transactional(readOnly = true)
@@ -449,12 +452,24 @@ public class PcBuildService {
         long totalBuilds = pcBuildRepository.count();
         long publicBuilds = countPublicBuilds();
 
+        Long totalViews = 0L;
+        Double avgViews = 0.0;
+
+        if (overall != null) {
+            if (overall.length > 2) {
+                totalViews = overall[2] != null ? ((Number) overall[2]).longValue() : 0L;
+            }
+            if (overall.length > 3) {
+                avgViews = overall[3] != null ? ((Number) overall[3]).doubleValue() : 0.0;
+            }
+        }
+
         return Map.of(
                 "totalBuilds", totalBuilds,
                 "publicBuilds", publicBuilds,
                 "privateBuilds", totalBuilds - publicBuilds,
-                "totalViews", overall != null ? overall[2] : 0,
-                "avgViews", overall != null ? overall[3] : 0,
+                "totalViews", totalViews,
+                "avgViews", avgViews,
                 "topUsers", getTopUsersByBuilds(10),
                 "dailyStats", getDailyStatistics(
                         LocalDateTime.now().minusDays(30),
