@@ -9,11 +9,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import ru.shop.tyzhprogramist.tyzhprogramist.dto.response.ProductFullResponse;
-import ru.shop.tyzhprogramist.tyzhprogramist.dto.response.ProductResponse;
 import ru.shop.tyzhprogramist.tyzhprogramist.entity.Category;
 import ru.shop.tyzhprogramist.tyzhprogramist.entity.Product;
 import ru.shop.tyzhprogramist.tyzhprogramist.service.ProductService;
@@ -42,7 +43,10 @@ class ProductControllerTest {
     void setUp() {
         objectMapper = new ObjectMapper();
         productController = new ProductController(productService);
-        mockMvc = MockMvcBuilders.standaloneSetup(productController).build();
+
+        mockMvc = MockMvcBuilders.standaloneSetup(productController)
+                .setCustomArgumentResolvers(new PageableHandlerMethodArgumentResolver())
+                .build();
     }
 
     @Test
