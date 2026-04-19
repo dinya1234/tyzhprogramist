@@ -1,121 +1,51 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useAuth, AuthProvider } from './context/AuthContext';
+import LoginPage from './pages/LoginPage';
+import Header from './components/Header';
+import Footer from './components/Footer';
+import './index.css';
 
-function App() {
-  const [count, setCount] = useState(0)
+// Временные заглушки для страниц
+function HomePage() { return <div className="container"><h1>Главная страница</h1></div>; }
+import CatalogPage from './pages/CatalogPage';
+function ConfiguratorPage() { return <div className="container"><h1>Конфигуратор ПК</h1></div>; }
+function ServicePage() { return <div className="container"><h1>Сервисный центр</h1></div>; }
+function ProfilePage() { return <div className="container"><h1>Личный кабинет</h1></div>; }
+function CartPage() { return <div className="container"><h1>Корзина</h1></div>; }
 
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+function PrivateRoute({ children }) {
+    const { isAuthenticated, loading } = useAuth();
+    if (loading) return <div style={{ textAlign: 'center', padding: '50px' }}>Загрузка...</div>;
+    return isAuthenticated ? children : <Navigate to="/login" replace />;
 }
 
-export default App
+function AppContent() {
+    return (
+        <BrowserRouter>
+            <Header />
+            <main>
+                <Routes>
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/" element={<PrivateRoute><HomePage /></PrivateRoute>} />
+                    <Route path="/catalog" element={<PrivateRoute><CatalogPage /></PrivateRoute>} />
+                    <Route path="/configurator" element={<PrivateRoute><ConfiguratorPage /></PrivateRoute>} />
+                    <Route path="/service" element={<PrivateRoute><ServicePage /></PrivateRoute>} />
+                    <Route path="/profile" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
+                    <Route path="/cart" element={<PrivateRoute><CartPage /></PrivateRoute>} />
+                </Routes>
+            </main>
+            <Footer />
+        </BrowserRouter>
+    );
+}
+
+function App() {
+    return (
+        <AuthProvider>
+            <AppContent />
+        </AuthProvider>
+    );
+}
+
+export default App;
