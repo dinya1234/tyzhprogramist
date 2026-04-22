@@ -4,7 +4,7 @@ export default function Footer() {
     return (
         <footer className="footer">
             <div className="container">
-                © 2025 Тыжпрограммист — Ваш проводник в мир технологий
+                © 2026 Тыжпрограммист — ломаем неломуемое и продаем железки
             </div>
         </footer>
     );

@@ -1,14 +1,17 @@
-
+// src/pages/CatalogPage.jsx
 import React, { useState, useEffect } from 'react';
 import { products, categories } from '../services/api';
 import ProductCard from '../components/ProductCard';
+import { useSearchParams } from 'react-router-dom';
 
 export default function CatalogPage() {
+    const [searchParams, setSearchParams] = useSearchParams();
     const [allProducts, setAllProducts] = useState([]);
     const [filteredProducts, setFilteredProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [categoryList, setCategoryList] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState(null);
+    const [selectedCategorySlug, setSelectedCategorySlug] = useState(null);
 
     // Фильтры
     const [priceMin, setPriceMin] = useState('');
@@ -20,7 +23,7 @@ export default function CatalogPage() {
     const [totalPages, setTotalPages] = useState(0);
     const [totalElements, setTotalElements] = useState(0);
 
-    // Загрузка категорий
+    // Загрузка категорий (плоский список)
     useEffect(() => {
         categories.getAll()
             .then(res => {
@@ -28,6 +31,20 @@ export default function CatalogPage() {
             })
             .catch(err => console.error('Ошибка загрузки категорий:', err));
     }, []);
+
+    // Чтение параметров из URL при загрузке
+    useEffect(() => {
+        const categorySlug = searchParams.get('category');
+        if (categorySlug) {
+            // Находим категорию по slug
+            categories.getBySlug(categorySlug)
+                .then(res => {
+                    setSelectedCategory(res.data.id);
+                    setSelectedCategorySlug(categorySlug);
+                })
+                .catch(err => console.error('Категория не найдена:', err));
+        }
+    }, [searchParams]);
 
     // Загрузка товаров
     useEffect(() => {
@@ -39,10 +56,12 @@ export default function CatalogPage() {
             sort: sortBy
         };
 
+        // Используем selectedCategory для фильтрации
         if (selectedCategory) {
             params.categoryId = selectedCategory;
         }
 
+        // Фильтр по цене через API
         if (priceMin) params.minPrice = priceMin;
         if (priceMax) params.maxPrice = priceMax;
 
@@ -60,22 +79,19 @@ export default function CatalogPage() {
             });
     }, [page, selectedCategory, sortBy, priceMin, priceMax]);
 
-    // Применение фильтров на клиенте (для цены)
-    useEffect(() => {
-        let filtered = [...allProducts];
-
-        if (priceMin) {
-            filtered = filtered.filter(p => p.price >= Number(priceMin));
+    // Обновление URL при выборе категории
+    const handleCategoryClick = (categoryId, categorySlug) => {
+        if (selectedCategory === categoryId) {
+            // Снимаем выбор
+            setSelectedCategory(null);
+            setSelectedCategorySlug(null);
+            setSearchParams({});
+        } else {
+            // Выбираем категорию
+            setSelectedCategory(categoryId);
+            setSelectedCategorySlug(categorySlug);
+            setSearchParams({ category: categorySlug });
         }
-        if (priceMax) {
-            filtered = filtered.filter(p => p.price <= Number(priceMax));
-        }
-
-        setFilteredProducts(filtered);
-    }, [priceMin, priceMax, allProducts]);
-
-    const handleCategoryClick = (categoryId) => {
-        setSelectedCategory(selectedCategory === categoryId ? null : categoryId);
         setPage(0);
     };
 
@@ -86,10 +102,12 @@ export default function CatalogPage() {
 
     const resetFilters = () => {
         setSelectedCategory(null);
+        setSelectedCategorySlug(null);
         setPriceMin('');
         setPriceMax('');
         setSortBy('createdAt,desc');
         setPage(0);
+        setSearchParams({});
     };
 
     if (loading && page === 0) {
@@ -111,13 +129,13 @@ export default function CatalogPage() {
                         {/* Категории */}
                         <div style={{ marginBottom: '20px' }}>
                             <label style={{ display: 'block', marginBottom: '8px' }}>Категории</label>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '300px', overflowY: 'auto' }}>
                                 {categoryList.map(cat => (
                                     <label key={cat.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
                                         <input
                                             type="checkbox"
                                             checked={selectedCategory === cat.id}
-                                            onChange={() => handleCategoryClick(cat.id)}
+                                            onChange={() => handleCategoryClick(cat.id, cat.slug)}
                                         />
                                         <span>{cat.name}</span>
                                     </label>
@@ -178,6 +196,30 @@ export default function CatalogPage() {
                         <span style={{ color: '#9ca3af' }}>Найдено: {totalElements}</span>
                     </div>
 
+                    {/* Активные фильтры */}
+                    {(selectedCategory || priceMin || priceMax) && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '20px' }}>
+                            {selectedCategory && (
+                                <span className="active-filter">
+                                    Категория: {categoryList.find(c => c.id === selectedCategory)?.name}
+                                    <button onClick={() => handleCategoryClick(selectedCategory, '')}>✕</button>
+                                </span>
+                            )}
+                            {priceMin && (
+                                <span className="active-filter">
+                                    Цена от: {priceMin} ₽
+                                    <button onClick={() => setPriceMin('')}>✕</button>
+                                </span>
+                            )}
+                            {priceMax && (
+                                <span className="active-filter">
+                                    Цена до: {priceMax} ₽
+                                    <button onClick={() => setPriceMax('')}>✕</button>
+                                </span>
+                            )}
+                        </div>
+                    )}
+
                     {filteredProducts.length === 0 ? (
                         <div style={{ textAlign: 'center', padding: '60px', background: '#15181f', borderRadius: '16px' }}>
                             🔍 Товары не найдены. Попробуйте изменить фильтры.
@@ -201,8 +243,8 @@ export default function CatalogPage() {
                                         ← Назад
                                     </button>
                                     <span style={{ padding: '8px 16px', background: '#15181f', borderRadius: '8px' }}>
-                    Страница {page + 1} из {totalPages}
-                  </span>
+                                        Страница {page + 1} из {totalPages}
+                                    </span>
                                     <button
                                         onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
                                         disabled={page >= totalPages - 1}
