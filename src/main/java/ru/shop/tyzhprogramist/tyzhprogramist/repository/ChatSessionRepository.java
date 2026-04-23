@@ -36,8 +36,12 @@ public interface ChatSessionRepository extends JpaRepository<ChatSession, Long> 
     Page<ChatSession> findByUserId(Long userId, Pageable pageable);
 
     @Query("SELECT cs FROM ChatSession cs WHERE cs.user.id = :userId AND cs.status = 'ACTIVE'")
-    Optional<ChatSession> findActiveUserSession(@Param("userId") Long userId);
+    List<ChatSession> findActiveUserSessions(@Param("userId") Long userId);
 
+    default Optional<ChatSession> findActiveUserSession(Long userId) {
+        List<ChatSession> sessions = findActiveUserSessions(userId);
+        return sessions.isEmpty() ? Optional.empty() : Optional.of(sessions.get(0));
+    }
     @Query("SELECT cs FROM ChatSession cs WHERE cs.user.id = :userId ORDER BY cs.startedAt DESC")
     List<ChatSession> findLastUserSession(@Param("userId") Long userId, Pageable pageable);
 

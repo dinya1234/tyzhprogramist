@@ -675,4 +675,16 @@ public class ChatService {
         LocalDateTime threshold = LocalDateTime.now().minusMinutes(minutes);
         return chatSessionRepository.findLongRunningSessions(threshold);
     }
+    @Transactional(readOnly = true)
+    public ChatSessionResponse getSessionWithMessages(Long sessionId, int limit) {
+        ChatSession session = getSessionById(sessionId);
+        ChatSessionResponse response = ChatSessionResponse.from(session);
+
+        List<ChatMessage> messages = getLastMessages(sessionId, limit);
+        response.setMessages(messages.stream()
+                .map(ChatMessageResponse::from)
+                .collect(Collectors.toList()));
+
+        return response;
+    }
 }

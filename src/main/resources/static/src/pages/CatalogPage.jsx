@@ -10,20 +10,16 @@ export default function CatalogPage() {
     const [filteredProducts, setFilteredProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [categoryList, setCategoryList] = useState([]);
-    const [selectedCategory, setSelectedCategory] = useState(null);
-    const [selectedCategorySlug, setSelectedCategorySlug] = useState(null);
-
-    // Фильтры
+    const [selectedCategory, setSelectedCategory] = useState('');
     const [priceMin, setPriceMin] = useState('');
     const [priceMax, setPriceMax] = useState('');
     const [sortBy, setSortBy] = useState('createdAt,desc');
-
-    // Пагинация
     const [page, setPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [totalElements, setTotalElements] = useState(0);
+    const itemsPerPage = 12;
 
-    // Загрузка категорий (плоский список)
+    // Загрузка категорий
     useEffect(() => {
         categories.getAll()
             .then(res => {
@@ -32,87 +28,110 @@ export default function CatalogPage() {
             .catch(err => console.error('Ошибка загрузки категорий:', err));
     }, []);
 
-    // Чтение параметров из URL при загрузке
-    useEffect(() => {
-        const categorySlug = searchParams.get('category');
-        if (categorySlug) {
-            // Находим категорию по slug
-            categories.getBySlug(categorySlug)
-                .then(res => {
-                    setSelectedCategory(res.data.id);
-                    setSelectedCategorySlug(categorySlug);
-                })
-                .catch(err => console.error('Категория не найдена:', err));
-        }
-    }, [searchParams]);
-
-    // Загрузка товаров
+    // Загрузка всех товаров (один раз)
     useEffect(() => {
         setLoading(true);
-
-        const params = {
-            page: page,
-            size: 12,
-            sort: sortBy
-        };
-
-        // Используем selectedCategory для фильтрации
-        if (selectedCategory) {
-            params.categoryId = selectedCategory;
-        }
-
-        // Фильтр по цене через API
-        if (priceMin) params.minPrice = priceMin;
-        if (priceMax) params.maxPrice = priceMax;
-
-        products.getAll(params)
+        // Загружаем все активные товары без пагинации
+        products.getAll({ page: 0, size: 1000, sort: 'createdAt,desc' })
             .then(res => {
+                console.log('Загружено товаров:', res.data.content?.length || 0);
                 setAllProducts(res.data.content || []);
-                setFilteredProducts(res.data.content || []);
-                setTotalPages(res.data.totalPages || 0);
-                setTotalElements(res.data.totalElements || 0);
                 setLoading(false);
             })
             .catch(err => {
                 console.error('Ошибка загрузки товаров:', err);
                 setLoading(false);
             });
-    }, [page, selectedCategory, sortBy, priceMin, priceMax]);
+    }, []);
 
-    // Обновление URL при выборе категории
-    const handleCategoryClick = (categoryId, categorySlug) => {
-        if (selectedCategory === categoryId) {
-            // Снимаем выбор
-            setSelectedCategory(null);
-            setSelectedCategorySlug(null);
-            setSearchParams({});
-        } else {
-            // Выбираем категорию
-            setSelectedCategory(categoryId);
-            setSelectedCategorySlug(categorySlug);
-            setSearchParams({ category: categorySlug });
+    // Применение фильтров и сортировки
+    useEffect(() => {
+        if (allProducts.length === 0) return;
+
+        let filtered = [...allProducts];
+
+        // Фильтр по категории
+        if (selectedCategory) {
+            filtered = filtered.filter(product => product.categoryId === parseInt(selectedCategory));
+            console.log(`Фильтр по категории: ${selectedCategory}, найдено: ${filtered.length}`);
         }
-        setPage(0);
-    };
 
-    const handleSortChange = (e) => {
-        setSortBy(e.target.value);
+        // Фильтр по цене
+        if (priceMin) {
+            filtered = filtered.filter(product => product.price >= parseFloat(priceMin));
+        }
+        if (priceMax) {
+            filtered = filtered.filter(product => product.price <= parseFloat(priceMax));
+        }
+
+        // Сортировка
+        switch(sortBy) {
+            case 'price,asc':
+                filtered.sort((a, b) => a.price - b.price);
+                break;
+            case 'price,desc':
+                filtered.sort((a, b) => b.price - a.price);
+                break;
+            case 'name,asc':
+                filtered.sort((a, b) => a.name.localeCompare(b.name));
+                break;
+            case 'createdAt,desc':
+            default:
+                filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                break;
+        }
+
+        // Пагинация
+        const start = page * itemsPerPage;
+        const end = start + itemsPerPage;
+        const paginated = filtered.slice(start, end);
+
+        setFilteredProducts(paginated);
+        setTotalElements(filtered.length);
+        setTotalPages(Math.ceil(filtered.length / itemsPerPage));
+
+    }, [allProducts, selectedCategory, priceMin, priceMax, sortBy, page]);
+
+    // Обновление URL при изменении фильтров
+    useEffect(() => {
+        const params = new URLSearchParams();
+        if (selectedCategory) params.set('category', selectedCategory);
+        if (priceMin) params.set('priceMin', priceMin);
+        if (priceMax) params.set('priceMax', priceMax);
+        if (sortBy !== 'createdAt,desc') params.set('sort', sortBy);
+        setSearchParams(params);
+    }, [selectedCategory, priceMin, priceMax, sortBy, setSearchParams]);
+
+    // Чтение фильтров из URL при загрузке
+    useEffect(() => {
+        const categoryId = searchParams.get('category');
+        const minPrice = searchParams.get('priceMin');
+        const maxPrice = searchParams.get('priceMax');
+        const sort = searchParams.get('sort');
+
+        if (categoryId) setSelectedCategory(categoryId);
+        if (minPrice) setPriceMin(minPrice);
+        if (maxPrice) setPriceMax(maxPrice);
+        if (sort) setSortBy(sort);
+    }, [searchParams]);
+
+    const handleCategoryChange = (e) => {
+        setSelectedCategory(e.target.value);
         setPage(0);
     };
 
     const resetFilters = () => {
-        setSelectedCategory(null);
-        setSelectedCategorySlug(null);
+        setSelectedCategory('');
         setPriceMin('');
         setPriceMax('');
         setSortBy('createdAt,desc');
         setPage(0);
-        setSearchParams({});
     };
 
-    if (loading && page === 0) {
+    if (loading) {
         return (
             <div className="container" style={{ textAlign: 'center', padding: '50px' }}>
+                <div style={{ fontSize: '24px', marginBottom: '16px' }}>🔄</div>
                 <h2>Загрузка товаров...</h2>
             </div>
         );
@@ -120,109 +139,299 @@ export default function CatalogPage() {
 
     return (
         <div className="container" style={{ marginTop: '30px' }}>
-            <div style={{ display: 'flex', gap: '30px' }}>
+            <div style={{ display: 'flex', gap: '30px', flexWrap: 'wrap' }}>
                 {/* Боковая панель фильтров */}
                 <aside style={{ width: '280px', flexShrink: 0 }}>
-                    <div style={{ background: '#15181f', padding: '20px', borderRadius: '16px', position: 'sticky', top: '100px' }}>
-                        <h3 style={{ marginBottom: '16px' }}>Фильтры</h3>
+                    <div style={{
+                        background: '#15181f',
+                        padding: '20px',
+                        borderRadius: '16px',
+                        position: 'sticky',
+                        top: '100px'
+                    }}>
+                        <h3 style={{ marginBottom: '16px', fontSize: '20px' }}>Фильтры</h3>
 
                         {/* Категории */}
-                        <div style={{ marginBottom: '20px' }}>
-                            <label style={{ display: 'block', marginBottom: '8px' }}>Категории</label>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '300px', overflowY: 'auto' }}>
+                        <div style={{ marginBottom: '24px' }}>
+                            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>
+                                Категория
+                            </label>
+                            <select
+                                value={selectedCategory}
+                                onChange={handleCategoryChange}
+                                style={{
+                                    width: '100%',
+                                    padding: '10px',
+                                    background: '#0a0c10',
+                                    border: '1px solid #3f434e',
+                                    borderRadius: '8px',
+                                    color: 'white',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                <option value="">Все категории</option>
                                 {categoryList.map(cat => (
-                                    <label key={cat.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedCategory === cat.id}
-                                            onChange={() => handleCategoryClick(cat.id, cat.slug)}
-                                        />
-                                        <span>{cat.name}</span>
-                                    </label>
+                                    <option key={cat.id} value={cat.id}>
+                                        {cat.name}
+                                    </option>
                                 ))}
-                            </div>
+                            </select>
                         </div>
 
                         {/* Цена */}
-                        <div style={{ marginBottom: '20px' }}>
-                            <label style={{ display: 'block', marginBottom: '8px' }}>Цена</label>
+                        <div style={{ marginBottom: '24px' }}>
+                            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>
+                                Цена (₽)
+                            </label>
                             <div style={{ display: 'flex', gap: '8px' }}>
                                 <input
                                     type="number"
                                     placeholder="От"
                                     value={priceMin}
-                                    onChange={(e) => setPriceMin(e.target.value)}
-                                    style={{ width: '50%', padding: '8px', background: '#0a0c10', border: '1px solid #3f434e', borderRadius: '8px', color: 'white' }}
+                                    onChange={(e) => {
+                                        setPriceMin(e.target.value);
+                                        setPage(0);
+                                    }}
+                                    style={{
+                                        width: '50%',
+                                        padding: '10px',
+                                        background: '#0a0c10',
+                                        border: '1px solid #3f434e',
+                                        borderRadius: '8px',
+                                        color: 'white'
+                                    }}
                                 />
                                 <input
                                     type="number"
                                     placeholder="До"
                                     value={priceMax}
-                                    onChange={(e) => setPriceMax(e.target.value)}
-                                    style={{ width: '50%', padding: '8px', background: '#0a0c10', border: '1px solid #3f434e', borderRadius: '8px', color: 'white' }}
+                                    onChange={(e) => {
+                                        setPriceMax(e.target.value);
+                                        setPage(0);
+                                    }}
+                                    style={{
+                                        width: '50%',
+                                        padding: '10px',
+                                        background: '#0a0c10',
+                                        border: '1px solid #3f434e',
+                                        borderRadius: '8px',
+                                        color: 'white'
+                                    }}
                                 />
                             </div>
                         </div>
 
                         {/* Сортировка */}
-                        <div style={{ marginBottom: '20px' }}>
-                            <label style={{ display: 'block', marginBottom: '8px' }}>Сортировка</label>
+                        <div style={{ marginBottom: '24px' }}>
+                            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>
+                                Сортировка
+                            </label>
                             <select
                                 value={sortBy}
-                                onChange={handleSortChange}
-                                style={{ width: '100%', padding: '8px', background: '#0a0c10', border: '1px solid #3f434e', borderRadius: '8px', color: 'white' }}
+                                onChange={(e) => {
+                                    setSortBy(e.target.value);
+                                    setPage(0);
+                                }}
+                                style={{
+                                    width: '100%',
+                                    padding: '10px',
+                                    background: '#0a0c10',
+                                    border: '1px solid #3f434e',
+                                    borderRadius: '8px',
+                                    color: 'white',
+                                    cursor: 'pointer'
+                                }}
                             >
-                                <option value="createdAt,desc">Новинки</option>
-                                <option value="price,asc">Цена (по возрастанию)</option>
-                                <option value="price,desc">Цена (по убыванию)</option>
-                                <option value="name,asc">Название (А-Я)</option>
+                                <option value="createdAt,desc">📅 Новинки</option>
+                                <option value="price,asc">💰 Цена (по возрастанию)</option>
+                                <option value="price,desc">💰 Цена (по убыванию)</option>
+                                <option value="name,asc">📝 Название (А-Я)</option>
                             </select>
                         </div>
 
                         <button
                             onClick={resetFilters}
-                            className="btn-outline"
-                            style={{ width: '100%', marginTop: '20px' }}
+                            style={{
+                                width: '100%',
+                                padding: '10px',
+                                background: 'transparent',
+                                border: '1px solid #3f434e',
+                                borderRadius: '8px',
+                                color: 'white',
+                                cursor: 'pointer',
+                                transition: 'all 0.3s'
+                            }}
+                            onMouseEnter={(e) => {
+                                e.target.style.background = '#ff4444';
+                                e.target.style.borderColor = '#ff4444';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.target.style.background = 'transparent';
+                                e.target.style.borderColor = '#3f434e';
+                            }}
                         >
-                            Сбросить фильтры
+                            🗑️ Сбросить фильтры
                         </button>
                     </div>
                 </aside>
 
                 {/* Основной контент */}
                 <div style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                        <h2>Товары</h2>
-                        <span style={{ color: '#9ca3af' }}>Найдено: {totalElements}</span>
+                    {/* Заголовок и счетчик */}
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: '24px',
+                        flexWrap: 'wrap',
+                        gap: '16px'
+                    }}>
+                        <h2 style={{ fontSize: '28px', margin: 0 }}>Каталог товаров</h2>
+                        <span style={{
+                            color: '#9ca3af',
+                            background: '#15181f',
+                            padding: '8px 16px',
+                            borderRadius: '20px',
+                            fontSize: '14px'
+                        }}>
+                            Найдено: {totalElements} товаров
+                        </span>
                     </div>
 
                     {/* Активные фильтры */}
-                    {(selectedCategory || priceMin || priceMax) && (
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '20px' }}>
+                    {(selectedCategory || priceMin || priceMax || sortBy !== 'createdAt,desc') && (
+                        <div style={{
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            gap: '8px',
+                            marginBottom: '24px',
+                            padding: '12px',
+                            background: '#15181f',
+                            borderRadius: '12px'
+                        }}>
+                            <span style={{ color: '#9ca3af', marginRight: '8px' }}>Активные фильтры:</span>
                             {selectedCategory && (
-                                <span className="active-filter">
-                                    Категория: {categoryList.find(c => c.id === selectedCategory)?.name}
-                                    <button onClick={() => handleCategoryClick(selectedCategory, '')}>✕</button>
+                                <span style={{
+                                    background: '#2a2f3a',
+                                    padding: '4px 12px',
+                                    borderRadius: '16px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px',
+                                    fontSize: '14px'
+                                }}>
+                                    Категория: {categoryList.find(c => c.id === parseInt(selectedCategory))?.name}
+                                    <button
+                                        onClick={() => {
+                                            setSelectedCategory('');
+                                            setPage(0);
+                                        }}
+                                        style={{
+                                            background: 'none',
+                                            border: 'none',
+                                            color: '#ff4444',
+                                            cursor: 'pointer',
+                                            fontSize: '16px'
+                                        }}
+                                    >×</button>
                                 </span>
                             )}
                             {priceMin && (
-                                <span className="active-filter">
-                                    Цена от: {priceMin} ₽
-                                    <button onClick={() => setPriceMin('')}>✕</button>
+                                <span style={{
+                                    background: '#2a2f3a',
+                                    padding: '4px 12px',
+                                    borderRadius: '16px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px',
+                                    fontSize: '14px'
+                                }}>
+                                    От {priceMin} ₽
+                                    <button
+                                        onClick={() => {
+                                            setPriceMin('');
+                                            setPage(0);
+                                        }}
+                                        style={{
+                                            background: 'none',
+                                            border: 'none',
+                                            color: '#ff4444',
+                                            cursor: 'pointer',
+                                            fontSize: '16px'
+                                        }}
+                                    >×</button>
                                 </span>
                             )}
                             {priceMax && (
-                                <span className="active-filter">
-                                    Цена до: {priceMax} ₽
-                                    <button onClick={() => setPriceMax('')}>✕</button>
+                                <span style={{
+                                    background: '#2a2f3a',
+                                    padding: '4px 12px',
+                                    borderRadius: '16px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px',
+                                    fontSize: '14px'
+                                }}>
+                                    До {priceMax} ₽
+                                    <button
+                                        onClick={() => {
+                                            setPriceMax('');
+                                            setPage(0);
+                                        }}
+                                        style={{
+                                            background: 'none',
+                                            border: 'none',
+                                            color: '#ff4444',
+                                            cursor: 'pointer',
+                                            fontSize: '16px'
+                                        }}
+                                    >×</button>
+                                </span>
+                            )}
+                            {sortBy !== 'createdAt,desc' && (
+                                <span style={{
+                                    background: '#2a2f3a',
+                                    padding: '4px 12px',
+                                    borderRadius: '16px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px',
+                                    fontSize: '14px'
+                                }}>
+                                    Сортировка: {
+                                        sortBy === 'price,asc' ? 'По возрастанию цены' :
+                                        sortBy === 'price,desc' ? 'По убыванию цены' :
+                                        'По названию'
+                                    }
+                                    <button
+                                        onClick={() => {
+                                            setSortBy('createdAt,desc');
+                                            setPage(0);
+                                        }}
+                                        style={{
+                                            background: 'none',
+                                            border: 'none',
+                                            color: '#ff4444',
+                                            cursor: 'pointer',
+                                            fontSize: '16px'
+                                        }}
+                                    >×</button>
                                 </span>
                             )}
                         </div>
                     )}
 
+                    {/* Список товаров */}
                     {filteredProducts.length === 0 ? (
-                        <div style={{ textAlign: 'center', padding: '60px', background: '#15181f', borderRadius: '16px' }}>
-                            🔍 Товары не найдены. Попробуйте изменить фильтры.
+                        <div style={{
+                            textAlign: 'center',
+                            padding: '80px 20px',
+                            background: '#15181f',
+                            borderRadius: '16px'
+                        }}>
+                            <div style={{ fontSize: '64px', marginBottom: '16px' }}>🔍</div>
+                            <h3 style={{ marginBottom: '8px' }}>Товары не найдены</h3>
+                            <p style={{ color: '#9ca3af' }}>Попробуйте изменить параметры фильтрации</p>
                         </div>
                     ) : (
                         <>
@@ -234,21 +443,49 @@ export default function CatalogPage() {
 
                             {/* Пагинация */}
                             {totalPages > 1 && (
-                                <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '40px' }}>
+                                <div style={{
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                    gap: '12px',
+                                    marginTop: '48px',
+                                    alignItems: 'center'
+                                }}>
                                     <button
                                         onClick={() => setPage(p => Math.max(0, p - 1))}
                                         disabled={page === 0}
-                                        className="btn-outline"
+                                        style={{
+                                            padding: '10px 20px',
+                                            background: page === 0 ? '#2a2f3a' : '#15181f',
+                                            border: '1px solid #3f434e',
+                                            borderRadius: '8px',
+                                            color: page === 0 ? '#6c757d' : 'white',
+                                            cursor: page === 0 ? 'not-allowed' : 'pointer',
+                                            transition: 'all 0.3s'
+                                        }}
                                     >
                                         ← Назад
                                     </button>
-                                    <span style={{ padding: '8px 16px', background: '#15181f', borderRadius: '8px' }}>
+                                    <span style={{
+                                        padding: '10px 20px',
+                                        background: '#15181f',
+                                        borderRadius: '8px',
+                                        minWidth: '120px',
+                                        textAlign: 'center'
+                                    }}>
                                         Страница {page + 1} из {totalPages}
                                     </span>
                                     <button
                                         onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
                                         disabled={page >= totalPages - 1}
-                                        className="btn-outline"
+                                        style={{
+                                            padding: '10px 20px',
+                                            background: page >= totalPages - 1 ? '#2a2f3a' : '#15181f',
+                                            border: '1px solid #3f434e',
+                                            borderRadius: '8px',
+                                            color: page >= totalPages - 1 ? '#6c757d' : 'white',
+                                            cursor: page >= totalPages - 1 ? 'not-allowed' : 'pointer',
+                                            transition: 'all 0.3s'
+                                        }}
                                     >
                                         Вперед →
                                     </button>

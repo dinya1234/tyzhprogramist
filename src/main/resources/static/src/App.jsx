@@ -53,6 +53,9 @@ function PrivateRoute({ children, requiredRoles = [] }) {
 }
 
 function AppContent() {
+    const { user } = useAuth();
+    const isModerator = user?.role === 'MODERATOR' || user?.role === 'ADMIN';
+
     return (
         <BrowserRouter>
             <Header />

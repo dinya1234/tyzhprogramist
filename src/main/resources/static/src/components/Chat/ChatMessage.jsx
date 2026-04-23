@@ -5,6 +5,7 @@ export default function ChatMessage({ message }) {
     const { senderType, message: text, timestamp, isTemp } = message;
 
     const formatTime = (dateStr) => {
+        if (!dateStr) return '';
         const date = new Date(dateStr);
         return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
     };

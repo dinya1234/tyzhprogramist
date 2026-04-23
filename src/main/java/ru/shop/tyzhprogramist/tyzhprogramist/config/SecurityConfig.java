@@ -24,7 +24,7 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity
+@EnableMethodSecurity(prePostEnabled = true)
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -40,24 +40,43 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cors = new CorsConfiguration();
-        cors.setAllowedOriginPatterns(List.of("*"));
+        cors.setAllowedOriginPatterns(List.of("http://localhost:3000", "http://localhost:5173", "*"));
         cors.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         cors.setAllowedHeaders(List.of("*"));
-        cors.setAllowCredentials(false);
+        cors.setAllowCredentials(true);
+        cors.setExposedHeaders(List.of("Authorization", "Content-Type"));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", cors);
         return source;
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, CorsConfigurationSource corsConfigurationSource) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
-                .cors(cors -> cors.configurationSource(corsConfigurationSource))
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/register", "/api/login", "/api/auth/refresh").permitAll()
+
+                        // WebSocket endpoints
+                        .requestMatchers("/ws-chat/**", "/ws/**", "/topic/**", "/queue/**", "/app/**", "/sockjs/**").permitAll()
+
+                        // Chat endpoints - публичные
+                        .requestMatchers(HttpMethod.POST, "/api/chat/session").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/chat/message").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/chat/session/**").permitAll()
+
+                        // Chat endpoints - для модераторов (упрощаем)
+                        .requestMatchers("/api/chat/consultant/**").hasAnyRole("ADMIN", "MODERATOR")
+
+                        // Chat endpoints - только для админов
+                        .requestMatchers("/api/chat/statistics", "/api/chat/load", "/api/chat/sessions").hasRole("ADMIN")
+
+                        // User endpoints
+                        .requestMatchers("/api/chat/me/**").authenticated()
+
                         .requestMatchers("/error").permitAll()
                         .anyRequest().authenticated()
                 )

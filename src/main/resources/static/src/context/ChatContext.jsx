@@ -1,12 +1,12 @@
 // src/context/ChatContext.jsx
-import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
-import { chat, chatWS } from '../services/api';
+import React, { createContext, useState, useContext, useEffect, useCallback, useRef } from 'react';
+import api from '../services/api';
 
 const ChatContext = createContext();
 
 export const useChat = () => useContext(ChatContext);
 
-export const ChatProvider = ({ children }) => {
+export const ChatProvider = ({ children, isModerator = false }) => {
     const [activeSession, setActiveSession] = useState(null);
     const [messages, setMessages] = useState([]);
     const [isOpen, setIsOpen] = useState(false);
@@ -15,31 +15,103 @@ export const ChatProvider = ({ children }) => {
     const [activeSessions, setActiveSessions] = useState([]);
     const [userRole, setUserRole] = useState(null);
 
+    const pollingInterval = useRef(null);
+    const sessionsPollingInterval = useRef(null);
+
     // Получаем роль пользователя
     useEffect(() => {
         const user = JSON.parse(localStorage.getItem('user') || '{}');
         setUserRole(user.role);
     }, []);
 
-    // Создание новой сессии чата
-    const createSession = async (contextType, contextId, sourceUrl) => {
+    // Функция для загрузки сообщений сессии
+    const loadSessionMessages = useCallback(async (sessionId) => {
+        if (!sessionId) return;
+        try {
+            const response = await api.get(`/chat/session/${sessionId}/messages`);
+            const newMessages = response.data || [];
+            setMessages(prev => {
+                // Сравниваем по длине или по последнему сообщению
+                if (prev.length !== newMessages.length) {
+                    console.log('Messages updated:', newMessages.length);
+                    return newMessages;
+                }
+                return prev;
+            });
+            return newMessages;
+        } catch (error) {
+            console.error('Failed to load messages:', error);
+            return [];
+        }
+    }, []);
+
+    // Polling для получения новых сообщений в текущей сессии
+    const startPolling = useCallback((sessionId) => {
+        if (pollingInterval.current) {
+            clearInterval(pollingInterval.current);
+        }
+
+        console.log('Starting polling for session:', sessionId);
+
+        pollingInterval.current = setInterval(async () => {
+            if (sessionId) {
+                await loadSessionMessages(sessionId);
+            }
+        }, 2000); // Каждые 2 секунды
+    }, [loadSessionMessages]);
+
+    const stopPolling = useCallback(() => {
+        if (pollingInterval.current) {
+            clearInterval(pollingInterval.current);
+            pollingInterval.current = null;
+        }
+    }, []);
+
+    // Для модератора - загрузка ожидающих сессий
+    const loadPendingSessions = useCallback(async () => {
+        if (!isModerator) return;
+        try {
+            const response = await api.get('/chat/consultant/pending');
+            const sessions = response.data || [];
+            setPendingSessions(sessions);
+            console.log('Pending sessions loaded:', sessions.length);
+            return sessions;
+        } catch (error) {
+            console.error('Failed to load pending sessions:', error);
+            return [];
+        }
+    }, [isModerator]);
+
+    // Для модератора - загрузка активных сессий
+    const loadActiveConsultantSessions = useCallback(async () => {
+        if (!isModerator) return;
+        try {
+            const response = await api.get('/chat/consultant/active');
+            const sessions = response.data || [];
+            setActiveSessions(sessions);
+            console.log('Active sessions loaded:', sessions.length);
+            return sessions;
+        } catch (error) {
+            console.error('Failed to load active sessions:', error);
+            return [];
+        }
+    }, [isModerator]);
+
+    // Создание новой сессии (только для пользователей)
+    const createSession = useCallback(async (contextType, contextId, sourceUrl) => {
         setIsLoading(true);
         try {
-            const response = await chat.createSession(sourceUrl, contextType, contextId);
+            const response = await api.post('/chat/session', null, {
+                params: { sourceUrl, contextType, contextId }
+            });
             const session = response.data;
             setActiveSession(session);
 
-            // Подключаем WebSocket
-            const token = localStorage.getItem('accessToken');
-            if (token) {
-                chatWS.connect(session.id, token);
-            }
-
-            // Загружаем историю сообщений
-            const messagesRes = await chat.getMessages(session.id);
-            setMessages(messagesRes.data || []);
-
+            await loadSessionMessages(session.id);
+            startPolling(session.id);
             setIsOpen(true);
+
+            console.log('Session created:', session);
             return session;
         } catch (error) {
             console.error('Failed to create chat session:', error);
@@ -47,134 +119,182 @@ export const ChatProvider = ({ children }) => {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [startPolling, loadSessionMessages]);
 
-    // Отправка сообщения
-    const sendMessage = async (message) => {
-        if (!activeSession) return;
+    // Загрузка существующей сессии
+    const loadSession = useCallback(async (sessionId) => {
+        setIsLoading(true);
+        try {
+            const response = await api.get(`/chat/session/${sessionId}`);
+            const session = response.data;
+            setActiveSession(session);
 
-        const tempMessage = {
-            id: Date.now(),
-            senderType: 'USER',
-            message: message,
-            timestamp: new Date().toISOString(),
-            isTemp: true
-        };
+            await loadSessionMessages(sessionId);
+            startPolling(sessionId);
+            setIsOpen(true);
 
-        setMessages(prev => [...prev, tempMessage]);
+            console.log('Session loaded:', session);
+            return session;
+        } catch (error) {
+            console.error('Failed to load session:', error);
+            throw error;
+        } finally {
+            setIsLoading(false);
+        }
+    }, [startPolling, loadSessionMessages]);
+
+    // Отправка сообщения (для пользователя)
+    const sendMessage = useCallback(async (message) => {
+        if (!activeSession || !message.trim()) return;
+
+        console.log('Sending user message:', { sessionId: activeSession.id, message });
 
         try {
-            const response = await chat.sendMessage(activeSession.id, message);
-            // Заменяем временное сообщение на реальное
-            setMessages(prev => prev.map(msg =>
-                msg.id === tempMessage.id ? response.data : msg
-            ));
+            await api.post('/chat/message', {
+                sessionId: activeSession.id,
+                message: message
+            });
+
+            // Сразу обновляем сообщения
+            setTimeout(async () => {
+                await loadSessionMessages(activeSession.id);
+            }, 300);
         } catch (error) {
             console.error('Failed to send message:', error);
-            setMessages(prev => prev.filter(msg => msg.id !== tempMessage.id));
+            alert('Не удалось отправить сообщение');
             throw error;
         }
-    };
+    }, [activeSession, loadSessionMessages]);
 
-    // Получение сообщений через WebSocket
-    useEffect(() => {
-        const handleNewMessage = (data) => {
-            setMessages(prev => [...prev, data]);
-        };
+    // Отправка сообщения как консультант (для модератора)
+    const sendConsultantMessage = useCallback(async (sessionId, message) => {
+        if (!message.trim()) return;
 
-        chatWS.on('message', handleNewMessage);
+        console.log('Sending consultant message:', { sessionId, message });
 
-        return () => {
-            chatWS.off('message', handleNewMessage);
-        };
-    }, []);
+        try {
+            await api.post(`/chat/consultant/session/${sessionId}/message`, null, {
+                params: { message }
+            });
+
+            // Если это активная сессия, обновляем сообщения
+            if (activeSession?.id === sessionId) {
+                setTimeout(async () => {
+                    await loadSessionMessages(sessionId);
+                }, 300);
+            }
+        } catch (error) {
+            console.error('Failed to send consultant message:', error);
+            alert('Не удалось отправить сообщение');
+            throw error;
+        }
+    }, [activeSession?.id, loadSessionMessages]);
+
+    // Принятие сессии консультантом
+    const takeSession = useCallback(async (sessionId) => {
+        if (!isModerator) return;
+
+        console.log('Taking session:', sessionId);
+
+        try {
+            const response = await api.post(`/chat/consultant/session/${sessionId}/take`);
+            const session = response.data;
+            setActiveSession(session);
+
+            // Удаляем из ожидающих
+            setPendingSessions(prev => prev.filter(s => s.id !== sessionId));
+
+            // Загружаем сообщения
+            await loadSessionMessages(sessionId);
+            startPolling(sessionId);
+            setIsOpen(true);
+
+            // Обновляем список активных сессий
+            await loadActiveConsultantSessions();
+
+            console.log('Session taken:', session);
+            return session;
+        } catch (error) {
+            console.error('Failed to take session:', error);
+            alert('Не удалось взять сессию');
+            throw error;
+        }
+    }, [isModerator, startPolling, loadSessionMessages, loadActiveConsultantSessions]);
 
     // Закрытие сессии
-    const closeSession = async (sessionId) => {
+    const closeSession = useCallback(async (sessionId) => {
         try {
-            await chat.closeSession(sessionId);
+            if (isModerator) {
+                await api.post(`/chat/consultant/session/${sessionId}/close`);
+                await loadActiveConsultantSessions();
+            } else {
+                await api.post(`/chat/me/session/${sessionId}/close`);
+            }
+
             setActiveSession(null);
             setMessages([]);
             setIsOpen(false);
-            chatWS.disconnect();
+            stopPolling();
+
+            console.log('Session closed:', sessionId);
         } catch (error) {
             console.error('Failed to close session:', error);
         }
-    };
+    }, [isModerator, stopPolling, loadActiveConsultantSessions]);
 
-    // Получение очереди запросов (для консультантов)
-    const loadPendingSessions = useCallback(async () => {
-        if (userRole !== 'ADMIN' && userRole !== 'MODERATOR') return;
-
+    // Загрузка истории чатов пользователя
+    const loadMySessions = useCallback(async () => {
         try {
-            const response = await chat.getPendingSessions();
-            setPendingSessions(response.data || []);
+            const response = await api.get('/chat/me/sessions');
+            return response.data.content;
         } catch (error) {
-            console.error('Failed to load pending sessions:', error);
+            console.error('Failed to load my sessions:', error);
+            return [];
         }
-    }, [userRole]);
+    }, []);
 
-    // Принятие сессии консультантом
-    const takeSession = async (sessionId) => {
-        try {
-            const response = await chat.takeSession(sessionId);
-            setActiveSession(response.data);
-            setPendingSessions(prev => prev.filter(s => s.id !== sessionId));
-
-            // Подключаем WebSocket
-            const token = localStorage.getItem('accessToken');
-            if (token) {
-                chatWS.connect(sessionId, token);
-            }
-
-            const messagesRes = await chat.getMessages(sessionId);
-            setMessages(messagesRes.data || []);
-
-            setIsOpen(true);
-            return response.data;
-        } catch (error) {
-            console.error('Failed to take session:', error);
-            throw error;
-        }
-    };
-
-    // Отправка сообщения как консультант
-    const sendConsultantMessage = async (sessionId, message) => {
-        try {
-            const response = await chat.sendConsultantMessage(sessionId, message);
-            return response.data;
-        } catch (error) {
-            console.error('Failed to send consultant message:', error);
-            throw error;
-        }
-    };
-
-    // Загрузка активных сессий консультанта
-    const loadActiveConsultantSessions = useCallback(async () => {
-        if (userRole !== 'ADMIN' && userRole !== 'MODERATOR') return;
-
-        try {
-            const response = await chat.getActiveConsultantSessions();
-            setActiveSessions(response.data || []);
-        } catch (error) {
-            console.error('Failed to load active sessions:', error);
-        }
-    }, [userRole]);
-
-    // Периодическая загрузка очереди для консультантов
+    // Для модератора - периодическая загрузка сессий (каждые 3 секунды)
     useEffect(() => {
-        if (userRole !== 'ADMIN' && userRole !== 'MODERATOR') return;
+        if (!isModerator) return;
 
-        loadPendingSessions();
-        loadActiveConsultantSessions();
+        const loadAllSessions = async () => {
+            await Promise.all([
+                loadPendingSessions(),
+                loadActiveConsultantSessions()
+            ]);
+        };
 
-        const interval = setInterval(() => {
-            loadPendingSessions();
-            loadActiveConsultantSessions();
-        }, 5000); // Каждые 5 секунд
+        // Загружаем сразу
+        loadAllSessions();
 
-        return () => clearInterval(interval);
-    }, [userRole, loadPendingSessions, loadActiveConsultantSessions]);
+        // И устанавливаем интервал
+        sessionsPollingInterval.current = setInterval(loadAllSessions, 3000);
+
+        return () => {
+            if (sessionsPollingInterval.current) {
+                clearInterval(sessionsPollingInterval.current);
+            }
+        };
+    }, [isModerator, loadPendingSessions, loadActiveConsultantSessions]);
+
+    // Для модератора - если есть активная сессия, обновляем её сообщения
+    useEffect(() => {
+        if (isModerator && activeSession?.id) {
+            // Обновляем сообщения активной сессии каждые 2 секунды
+            const interval = setInterval(async () => {
+                await loadSessionMessages(activeSession.id);
+            }, 2000);
+
+            return () => clearInterval(interval);
+        }
+    }, [isModerator, activeSession?.id, loadSessionMessages]);
+
+    // Очистка polling при размонтировании
+    useEffect(() => {
+        return () => {
+            stopPolling();
+        };
+    }, [stopPolling]);
 
     const value = {
         activeSession,
@@ -184,14 +304,21 @@ export const ChatProvider = ({ children }) => {
         pendingSessions,
         activeSessions,
         userRole,
+        isConnected: false,
+        typingUsers: {},
+        isModerator,
         createSession,
+        loadSession,
         sendMessage,
+        sendConsultantMessage,
         closeSession,
         loadPendingSessions,
         takeSession,
-        sendConsultantMessage,
         loadActiveConsultantSessions,
-        setIsOpen
+        loadMySessions,
+        setIsOpen,
+        loadSessionMessages,
+        handleTyping: () => {}
     };
 
     return (
