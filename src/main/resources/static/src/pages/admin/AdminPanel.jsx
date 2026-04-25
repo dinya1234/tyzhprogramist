@@ -39,6 +39,7 @@ export default function AdminPanel() {
     // Состояния для разных вкладок
     const [productsList, setProductsList] = useState([]);
     const [categoriesList, setCategoriesList] = useState([]);
+    const [flatCategories, setFlatCategories] = useState([]);
     const [ordersList, setOrdersList] = useState([]);
     const [usersList, setUsersList] = useState([]);
     const [feedbacksList, setFeedbacksList] = useState([]);
@@ -60,6 +61,15 @@ export default function AdminPanel() {
         warrantyMonths: 12,
         isActive: true,
         categoryId: ''
+    });
+
+    const [categoryModalOpen, setCategoryModalOpen] = useState(false);
+    const [categoryForm, setCategoryForm] = useState({
+        id: null,
+        name: '',
+        slug: '',
+        parentId: '',
+        order: ''
     });
 
     // Фильтры
@@ -137,6 +147,19 @@ export default function AdminPanel() {
         try {
             const res = await categories.getTree();
             setCategoriesList(res.data || []);
+
+            const flatten = (nodes) => {
+                const out = [];
+                const stack = Array.isArray(nodes) ? [...nodes] : [];
+                while (stack.length) {
+                    const n = stack.shift();
+                    if (!n) continue;
+                    out.push({ id: n.id, name: n.name, slug: n.slug, parentId: n.parentId, order: n.order });
+                    if (Array.isArray(n.children) && n.children.length) stack.unshift(...n.children);
+                }
+                return out;
+            };
+            setFlatCategories(flatten(res.data || []));
         } catch (error) {
             console.error('Ошибка загрузки категорий:', error);
         }
@@ -162,11 +185,8 @@ export default function AdminPanel() {
 
     const loadFeedbacks = async () => {
         try {
-            const [pendingRes, allRes] = await Promise.all([
-                feedbacks.getPendingModeration({ page: 0, size: 50 }),
-                feedbacks.getAll({ page: 0, size: 50 })
-            ]);
-            setFeedbacksList(allRes.data.content || []);
+            const pendingRes = await feedbacks.getPendingModeration({ page: 0, size: 50 });
+            setFeedbacksList(pendingRes.data.content || []);
         } catch (error) {
             console.error('Ошибка загрузки отзывов:', error);
         }
@@ -259,6 +279,57 @@ export default function AdminPanel() {
         }
     };
 
+    const openCreateCategory = () => {
+        setCategoryForm({ id: null, name: '', slug: '', parentId: '', order: '' });
+        setCategoryModalOpen(true);
+    };
+
+    const openEditCategory = (cat) => {
+        setCategoryForm({
+            id: cat.id,
+            name: cat.name || '',
+            slug: cat.slug || '',
+            parentId: cat.parentId ? String(cat.parentId) : '',
+            order: cat.order != null ? String(cat.order) : ''
+        });
+        setCategoryModalOpen(true);
+    };
+
+    const handleSaveCategory = async () => {
+        if (!categoryForm.name.trim() || !categoryForm.slug.trim()) {
+            alert('Укажите name и slug');
+            return;
+        }
+        const params = {
+            name: categoryForm.name.trim(),
+            slug: categoryForm.slug.trim(),
+            parentId: categoryForm.parentId ? parseInt(categoryForm.parentId, 10) : undefined,
+            order: categoryForm.order === '' ? undefined : parseInt(categoryForm.order, 10)
+        };
+
+        try {
+            if (categoryForm.id) {
+                await categories.update(categoryForm.id, params);
+            } else {
+                await categories.create(params);
+            }
+            setCategoryModalOpen(false);
+            await loadCategories();
+        } catch (e) {
+            alert(e.response?.data?.message || 'Ошибка сохранения категории');
+        }
+    };
+
+    const handleDeleteCategory = async (id) => {
+        if (!window.confirm('Удалить категорию?')) return;
+        try {
+            await categories.delete(id);
+            await loadCategories();
+        } catch (e) {
+            alert(e.response?.data?.message || 'Ошибка удаления категории');
+        }
+    };
+
     const handleToggleUserActive = async (userId, nextActive) => {
         try {
             await users.updateActive(userId, nextActive);
@@ -304,6 +375,16 @@ export default function AdminPanel() {
             loadFeedbacks();
         } catch (error) {
             alert('Ошибка публикации');
+        }
+    };
+
+    const handleFeedbackReject = async (id) => {
+        if (!window.confirm('Отклонить отзыв/вопрос?')) return;
+        try {
+            await feedbacks.delete(id);
+            loadFeedbacks();
+        } catch (error) {
+            alert('Ошибка отклонения');
         }
     };
 
@@ -633,7 +714,7 @@ export default function AdminPanel() {
                                                 style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid #2a2d36', background: '#0a0c10', color: 'white' }}
                                             >
                                                 <option value="">Выберите категорию</option>
-                                                {categoryList.map(c => (
+                                                {flatCategories.map(c => (
                                                     <option key={c.id} value={c.id}>{c.name}</option>
                                                 ))}
                                             </select>
@@ -721,7 +802,7 @@ export default function AdminPanel() {
                     <div>
                         <div className="admin-header">
                             <h1>📁 Управление категориями</h1>
-                            <button className="btn-primary">➕ Добавить категорию</button>
+                            <button className="btn-primary" onClick={openCreateCategory}>➕ Добавить категорию</button>
                         </div>
 
                         <div className="admin-categories-tree">
@@ -730,8 +811,8 @@ export default function AdminPanel() {
                                     <div className="admin-category-header">
                                         <span className="admin-category-name">📁 {cat.name}</span>
                                         <div className="admin-actions">
-                                            <button className="admin-btn-edit">✏️</button>
-                                            <button className="admin-btn-delete">🗑️</button>
+                                            <button className="admin-btn-edit" onClick={() => openEditCategory(cat)}>✏️</button>
+                                            <button className="admin-btn-delete" onClick={() => handleDeleteCategory(cat.id)}>🗑️</button>
                                         </div>
                                     </div>
                                     {cat.children && cat.children.length > 0 && (
@@ -740,8 +821,8 @@ export default function AdminPanel() {
                                                 <div key={child.id} className="admin-category-child">
                                                     <span>📄 {child.name}</span>
                                                     <div className="admin-actions">
-                                                        <button className="admin-btn-edit">✏️</button>
-                                                        <button className="admin-btn-delete">🗑️</button>
+                                                        <button className="admin-btn-edit" onClick={() => openEditCategory(child)}>✏️</button>
+                                                        <button className="admin-btn-delete" onClick={() => handleDeleteCategory(child.id)}>🗑️</button>
                                                     </div>
                                                 </div>
                                             ))}
@@ -750,6 +831,78 @@ export default function AdminPanel() {
                                 </div>
                             ))}
                         </div>
+
+                        {categoryModalOpen && (
+                            <div style={{
+                                position: 'fixed',
+                                inset: 0,
+                                background: 'rgba(0,0,0,0.55)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                zIndex: 2000,
+                                padding: 16
+                            }}>
+                                <div style={{
+                                    width: 'min(720px, 100%)',
+                                    background: '#0f1218',
+                                    border: '1px solid #2a2d36',
+                                    borderRadius: 16,
+                                    padding: 18
+                                }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                                        <h2 style={{ margin: 0 }}>{categoryForm.id ? `✏️ Категория #${categoryForm.id}` : '➕ Новая категория'}</h2>
+                                        <button className="btn-outline btn-sm" onClick={() => setCategoryModalOpen(false)}>Закрыть</button>
+                                    </div>
+
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                                        <div>
+                                            <div style={{ marginBottom: 6, color: '#9ca3af' }}>Name</div>
+                                            <input
+                                                value={categoryForm.name}
+                                                onChange={(e) => setCategoryForm(p => ({ ...p, name: e.target.value }))}
+                                                style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid #2a2d36', background: '#0a0c10', color: 'white' }}
+                                            />
+                                        </div>
+                                        <div>
+                                            <div style={{ marginBottom: 6, color: '#9ca3af' }}>Slug</div>
+                                            <input
+                                                value={categoryForm.slug}
+                                                onChange={(e) => setCategoryForm(p => ({ ...p, slug: e.target.value }))}
+                                                style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid #2a2d36', background: '#0a0c10', color: 'white' }}
+                                            />
+                                        </div>
+                                        <div>
+                                            <div style={{ marginBottom: 6, color: '#9ca3af' }}>Parent (опц.)</div>
+                                            <select
+                                                value={categoryForm.parentId}
+                                                onChange={(e) => setCategoryForm(p => ({ ...p, parentId: e.target.value }))}
+                                                style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid #2a2d36', background: '#0a0c10', color: 'white' }}
+                                            >
+                                                <option value="">(root)</option>
+                                                {flatCategories.map(c => (
+                                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <div style={{ marginBottom: 6, color: '#9ca3af' }}>Order (опц.)</div>
+                                            <input
+                                                type="number"
+                                                value={categoryForm.order}
+                                                onChange={(e) => setCategoryForm(p => ({ ...p, order: e.target.value }))}
+                                                style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid #2a2d36', background: '#0a0c10', color: 'white' }}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div style={{ marginTop: 14, display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+                                        <button className="btn-outline" onClick={() => setCategoryModalOpen(false)}>Отмена</button>
+                                        <button className="btn-primary" onClick={handleSaveCategory}>Сохранить</button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -872,7 +1025,7 @@ export default function AdminPanel() {
                         </div>
 
                         <div className="admin-feedbacks">
-                            {feedbacksList.filter(f => !f.isPublished).map(feedback => (
+                            {feedbacksList.map(feedback => (
                                 <div key={feedback.id} className="admin-feedback-card">
                                     <div className="admin-feedback-header">
                                         <span className="admin-feedback-user">{feedback.userName}</span>
@@ -882,7 +1035,7 @@ export default function AdminPanel() {
                                     <div className="admin-feedback-text">{feedback.text}</div>
                                     <div className="admin-feedback-actions">
                                         <button className="btn-primary btn-sm" onClick={() => handleFeedbackPublish(feedback.id)}>✅ Опубликовать</button>
-                                        <button className="btn-danger btn-sm">❌ Отклонить</button>
+                                        <button className="btn-danger btn-sm" onClick={() => handleFeedbackReject(feedback.id)}>❌ Отклонить</button>
                                     </div>
                                 </div>
                             ))}

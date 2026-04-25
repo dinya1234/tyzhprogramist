@@ -1,7 +1,7 @@
 // src/pages/ConfiguratorPage.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { pcBuilds, componentTypes, products, categories } from '../services/api';
+import { pcBuilds, componentTypes, products, categories, comparisons } from '../services/api';
 import { useChat } from '../context/ChatContext';
 import { useCart } from '../context/CartContext';
 
@@ -357,6 +357,35 @@ export default function ConfiguratorPage() {
 
     const progressPercent = (step / totalSteps) * 100;
 
+    const showCompatibilityReport = () => {
+        if (compatibilityWarnings.length === 0) {
+            alert('✅ Явных проблем совместимости не найдено (проверка базовая).');
+            return;
+        }
+        alert(compatibilityWarnings.join('\n'));
+    };
+
+    const showPowerReport = () => {
+        const lines = [
+            `Расчётное потребление: ~${powerSupplyCalc.estimated}W`,
+            `Рекомендуемый БП: ${powerSupplyCalc.recommended}W`
+        ];
+        if (powerSupplyCalc.warning) lines.push(powerSupplyCalc.warning);
+        alert(lines.join('\n'));
+    };
+
+    const compareThisBuild = async () => {
+        if (!currentBuildId) return;
+        try {
+            const comparisonName = 'Мои сборки';
+            await comparisons.createComparison(comparisonName).catch(() => {});
+            await comparisons.addToComparison(comparisonName, 'PcBuild', currentBuildId);
+            navigate('/comparison');
+        } catch (e) {
+            alert(e.response?.data?.message || 'Не удалось добавить сборку в сравнение');
+        }
+    };
+
     return (
         <div className="container" style={{ marginTop: '30px', marginBottom: '60px' }}>
             <h1 style={{ marginBottom: '24px' }}>🖥️ Конфигуратор ПК</h1>
@@ -504,6 +533,18 @@ export default function ConfiguratorPage() {
                         top: '100px'
                     }}>
                         <h3 style={{ marginBottom: '16px' }}>📋 Ваша сборка</h3>
+
+                        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '14px' }}>
+                            <button className="btn-outline btn-sm" onClick={showCompatibilityReport}>
+                                ✅ Проверить совместимость
+                            </button>
+                            <button className="btn-outline btn-sm" onClick={showPowerReport}>
+                                ⚡ Проверить мощность
+                            </button>
+                            <button className="btn-outline btn-sm" onClick={compareThisBuild}>
+                                📊 Сравнить сборки
+                            </button>
+                        </div>
 
                         <div style={{ marginBottom: '16px' }}>
                             <input

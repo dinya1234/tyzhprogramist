@@ -94,7 +94,10 @@ export const products = {
 export const categories = {
     getAll: () => api.get('/categories/roots'),
     getTree: () => api.get('/categories/tree'),
-    getBySlug: (slug) => api.get(`/categories/${slug}`)
+    getBySlug: (slug) => api.get(`/categories/${slug}`),
+    create: (params) => api.post('/categories', null, { params }),
+    update: (id, params) => api.put(`/categories/${id}`, null, { params }),
+    delete: (id) => api.delete(`/categories/${id}`)
 };
 
 // ========== КОРЗИНА ==========

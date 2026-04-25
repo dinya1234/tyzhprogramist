@@ -10,6 +10,7 @@ export default function Header() {
     const { cart } = useCart();
     const { setIsOpen } = useChat();
     const navigate = useNavigate();
+    const isStaff = user?.role === 'ADMIN' || user?.role === 'MODERATOR';
 
     const handleLogout = () => {
         logout();
@@ -42,7 +43,16 @@ export default function Header() {
                         )}
                     </ul>
                     <div className="header-actions">
-                        <button className="icon-btn" id="consultantTrigger" onClick={handleOpenSupportChat} title="Чат поддержки">💬</button>
+                        {!isStaff && (
+                            <button
+                                className="icon-btn"
+                                id="consultantTrigger"
+                                onClick={handleOpenSupportChat}
+                                title="Чат поддержки"
+                            >
+                                💬
+                            </button>
+                        )}
                         <Link to="/cart" className="icon-btn" style={{ position: 'relative' }}>
                             🛒
                             {cart.totalItems > 0 && (

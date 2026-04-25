@@ -1,10 +1,16 @@
 // src/pages/HomePage.jsx
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { products, categories } from '../services/api';
 import ProductCard from '../components/ProductCard';
+import { useAuth } from '../context/AuthContext';
+import { useChat } from '../context/ChatContext';
 
 export default function HomePage() {
+    const navigate = useNavigate();
+    const { user } = useAuth();
+    const { createSession, sendMessage, setIsOpen } = useChat();
+
     const [newProducts, setNewProducts] = useState([]);
     const [bestsellers, setBestsellers] = useState([]);
     const [categoryTree, setCategoryTree] = useState([]);
@@ -25,6 +31,27 @@ export default function HomePage() {
             setLoading(false);
         });
     }, []);
+
+    const handleAskExpert = async () => {
+        // Чат поддержки доступен только авторизованным пользователям (не модератор/админ)
+        if (!user) {
+            navigate('/login');
+            return;
+        }
+        if (user.role === 'ADMIN' || user.role === 'MODERATOR') {
+            navigate('/consultant');
+            return;
+        }
+
+        try {
+            await createSession('HomePage', null, window.location.href);
+            await sendMessage('Здравствуйте! Нужна помощь с выбором комплектующих/ПК 🙂');
+            setIsOpen(true);
+        } catch (e) {
+            console.error(e);
+            alert('Не удалось открыть чат');
+        }
+    };
 
     if (loading) {
         return (
@@ -117,7 +144,7 @@ export default function HomePage() {
                     <p style={{ marginBottom: '24px', color: '#c4b5fd' }}>
                         Наши консультанты помогут подобрать идеальный ПК под ваш бюджет
                     </p>
-                    <button className="btn btn-primary btn-lg" id="openConsultantChat">
+                    <button className="btn btn-primary btn-lg" id="openConsultantChat" onClick={handleAskExpert}>
                         💬 Спросить эксперта
                     </button>
                 </div>
