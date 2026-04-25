@@ -52,6 +52,7 @@ export default function AdminPanel() {
     const [productForm, setProductForm] = useState({
         id: null,
         name: '',
+        slug: '',
         price: '',
         oldPrice: '',
         quantity: 0,
@@ -60,6 +61,8 @@ export default function AdminPanel() {
         fullDescription: '',
         warrantyMonths: 12,
         isActive: true,
+        isNew: false,
+        isBestseller: false,
         categoryId: ''
     });
 
@@ -216,6 +219,7 @@ export default function AdminPanel() {
         setProductForm({
             id: null,
             name: '',
+            slug: '',
             price: '',
             oldPrice: '',
             quantity: 0,
@@ -224,6 +228,8 @@ export default function AdminPanel() {
             fullDescription: '',
             warrantyMonths: 12,
             isActive: true,
+            isNew: false,
+            isBestseller: false,
             categoryId: ''
         });
         setProductModalOpen(true);
@@ -233,6 +239,7 @@ export default function AdminPanel() {
         setProductForm({
             id: p.id,
             name: p.name || '',
+            slug: p.slug || '',
             price: p.price ?? '',
             oldPrice: p.oldPrice ?? '',
             quantity: p.quantity ?? 0,
@@ -241,28 +248,59 @@ export default function AdminPanel() {
             fullDescription: p.fullDescription || '',
             warrantyMonths: p.warrantyMonths ?? 12,
             isActive: p.isActive !== false,
+            isNew: !!p.isNew,
+            isBestseller: !!p.isBestseller,
             categoryId: p.categoryId ? String(p.categoryId) : ''
         });
         setProductModalOpen(true);
     };
 
+    const slugify = (input) => {
+        const s = String(input || '').trim().toLowerCase();
+        const map = {
+            'а':'a','б':'b','в':'v','г':'g','д':'d','е':'e','ё':'e','ж':'zh','з':'z','и':'i','й':'y',
+            'к':'k','л':'l','м':'m','н':'n','о':'o','п':'p','р':'r','с':'s','т':'t','у':'u','ф':'f',
+            'х':'h','ц':'c','ч':'ch','ш':'sh','щ':'sch','ъ':'','ы':'y','ь':'','э':'e','ю':'yu','я':'ya'
+        };
+        const translit = s.replace(/[а-яё]/g, (ch) => map[ch] ?? ch);
+        return translit
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/-+/g, '-')
+            .replace(/^-|-$/g, '');
+    };
+
     const handleSaveProduct = async () => {
         const categoryId = productForm.categoryId ? parseInt(productForm.categoryId, 10) : null;
-        if (!productForm.name?.trim() || !categoryId) {
+        const name = productForm.name?.trim();
+        const sku = productForm.sku?.trim();
+        const slug = (productForm.slug?.trim() || slugify(name));
+
+        if (!name || !categoryId) {
             alert('Укажите название и категорию');
+            return;
+        }
+        if (!sku) {
+            alert('Укажите SKU (артикул)');
+            return;
+        }
+        if (!slug) {
+            alert('Укажите slug (или заполните название, чтобы он сгенерировался)');
             return;
         }
 
         const payload = {
-            name: productForm.name,
+            name,
+            sku,
+            slug,
             price: Number(productForm.price) || 0,
             oldPrice: productForm.oldPrice === '' ? null : (Number(productForm.oldPrice) || null),
             quantity: Number(productForm.quantity) || 0,
-            sku: productForm.sku,
             shortDescription: productForm.shortDescription,
             fullDescription: productForm.fullDescription,
             warrantyMonths: Number(productForm.warrantyMonths) || 12,
-            isActive: !!productForm.isActive
+            isActive: !!productForm.isActive,
+            isNew: !!productForm.isNew,
+            isBestseller: !!productForm.isBestseller
         };
 
         try {
@@ -707,6 +745,15 @@ export default function AdminPanel() {
                                             />
                                         </div>
                                         <div>
+                                            <div style={{ marginBottom: 6, color: '#9ca3af' }}>Slug</div>
+                                            <input
+                                                value={productForm.slug}
+                                                onChange={(e) => setProductForm(p => ({ ...p, slug: e.target.value }))}
+                                                placeholder="Авто из названия, если пусто"
+                                                style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid #2a2d36', background: '#0a0c10', color: 'white' }}
+                                            />
+                                        </div>
+                                        <div>
                                             <div style={{ marginBottom: 6, color: '#9ca3af' }}>Категория</div>
                                             <select
                                                 value={productForm.categoryId}
@@ -747,7 +794,7 @@ export default function AdminPanel() {
                                             />
                                         </div>
                                         <div>
-                                            <div style={{ marginBottom: 6, color: '#9ca3af' }}>SKU (опц.)</div>
+                                            <div style={{ marginBottom: 6, color: '#9ca3af' }}>SKU</div>
                                             <input
                                                 value={productForm.sku}
                                                 onChange={(e) => setProductForm(p => ({ ...p, sku: e.target.value }))}
@@ -784,6 +831,22 @@ export default function AdminPanel() {
                                                 onChange={(e) => setProductForm(p => ({ ...p, isActive: e.target.checked }))}
                                             />
                                             Активен
+                                        </label>
+                                        <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                            <input
+                                                type="checkbox"
+                                                checked={!!productForm.isNew}
+                                                onChange={(e) => setProductForm(p => ({ ...p, isNew: e.target.checked }))}
+                                            />
+                                            Новинка
+                                        </label>
+                                        <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                            <input
+                                                type="checkbox"
+                                                checked={!!productForm.isBestseller}
+                                                onChange={(e) => setProductForm(p => ({ ...p, isBestseller: e.target.checked }))}
+                                            />
+                                            Хит продаж
                                         </label>
 
                                         <div style={{ marginLeft: 'auto', display: 'flex', gap: 10 }}>
