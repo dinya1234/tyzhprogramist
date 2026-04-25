@@ -3,15 +3,25 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
+import { useChat } from '../context/ChatContext';
 
 export default function Header() {
     const { user, logout } = useAuth();
     const { cart } = useCart();
+    const { setIsOpen } = useChat();
     const navigate = useNavigate();
 
     const handleLogout = () => {
         logout();
         navigate('/login');
+    };
+
+    const handleOpenSupportChat = () => {
+        if (!user) {
+            navigate('/login');
+            return;
+        }
+        setIsOpen(true);
     };
 
     return (
@@ -24,9 +34,15 @@ export default function Header() {
                         <li><Link to="/configurator">Собрать ПК</Link></li>
                         <li><Link to="/service">Сервис</Link></li>
                         {user && <li><Link to="/profile">Профиль</Link></li>}
+                        {(user?.role === 'ADMIN' || user?.role === 'MODERATOR') && (
+                            <li><Link to="/consultant">Чат (консультант)</Link></li>
+                        )}
+                        {user?.role === 'ADMIN' && (
+                            <li><Link to="/admin">Админ-панель</Link></li>
+                        )}
                     </ul>
                     <div className="header-actions">
-                        <button className="icon-btn" id="consultantTrigger">💬</button>
+                        <button className="icon-btn" id="consultantTrigger" onClick={handleOpenSupportChat} title="Чат поддержки">💬</button>
                         <Link to="/cart" className="icon-btn" style={{ position: 'relative' }}>
                             🛒
                             {cart.totalItems > 0 && (

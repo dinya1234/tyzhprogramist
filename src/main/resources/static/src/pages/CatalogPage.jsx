@@ -3,9 +3,11 @@ import React, { useState, useEffect } from 'react';
 import { products, categories } from '../services/api';
 import ProductCard from '../components/ProductCard';
 import { useSearchParams } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 export default function CatalogPage() {
     const [searchParams, setSearchParams] = useSearchParams();
+    const { isAuthenticated } = useAuth();
     const [allProducts, setAllProducts] = useState([]);
     const [filteredProducts, setFilteredProducts] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -115,6 +117,20 @@ export default function CatalogPage() {
         if (sort) setSortBy(sort);
     }, [searchParams]);
 
+    // Если пришёл slug (старые ссылки) — преобразуем в id, когда категории загрузились
+    useEffect(() => {
+        const categoryParam = searchParams.get('category');
+        if (!categoryParam) return;
+
+        const isNumeric = /^\d+$/.test(categoryParam);
+        if (isNumeric) return;
+
+        const match = categoryList.find(c => c.slug === categoryParam);
+        if (match?.id) {
+            setSelectedCategory(String(match.id));
+        }
+    }, [categoryList, searchParams]);
+
     const handleCategoryChange = (e) => {
         setSelectedCategory(e.target.value);
         setPage(0);
@@ -139,6 +155,28 @@ export default function CatalogPage() {
 
     return (
         <div className="container" style={{ marginTop: '30px' }}>
+            {!isAuthenticated && (
+                <div style={{
+                    background: 'linear-gradient(135deg, #1e1b4b, #2e1065)',
+                    borderRadius: '16px',
+                    padding: '16px 18px',
+                    marginBottom: '18px',
+                    border: '1px solid rgba(192, 132, 252, 0.35)'
+                }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
+                        <div>
+                            <div style={{ fontWeight: 700, marginBottom: 4 }}>Чтобы смотреть каталог полностью — зарегистрируйтесь</div>
+                            <div style={{ color: '#ddd6fe', fontSize: 14 }}>
+                                Гостям доступна только витрина на главной странице.
+                            </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: 10 }}>
+                            <button className="btn-outline btn-sm" onClick={() => window.location.href = '/login'}>Войти</button>
+                            <button className="btn-primary btn-sm" onClick={() => window.location.href = '/login'}>Регистрация</button>
+                        </div>
+                    </div>
+                </div>
+            )}
             <div style={{ display: 'flex', gap: '30px', flexWrap: 'wrap' }}>
                 {/* Боковая панель фильтров */}
                 <aside style={{ width: '280px', flexShrink: 0 }}>
@@ -159,6 +197,7 @@ export default function CatalogPage() {
                             <select
                                 value={selectedCategory}
                                 onChange={handleCategoryChange}
+                                disabled={!isAuthenticated}
                                 style={{
                                     width: '100%',
                                     padding: '10px',
@@ -192,6 +231,7 @@ export default function CatalogPage() {
                                         setPriceMin(e.target.value);
                                         setPage(0);
                                     }}
+                                disabled={!isAuthenticated}
                                     style={{
                                         width: '50%',
                                         padding: '10px',
@@ -209,6 +249,7 @@ export default function CatalogPage() {
                                         setPriceMax(e.target.value);
                                         setPage(0);
                                     }}
+                                disabled={!isAuthenticated}
                                     style={{
                                         width: '50%',
                                         padding: '10px',
@@ -232,6 +273,7 @@ export default function CatalogPage() {
                                     setSortBy(e.target.value);
                                     setPage(0);
                                 }}
+                                disabled={!isAuthenticated}
                                 style={{
                                     width: '100%',
                                     padding: '10px',
@@ -251,6 +293,7 @@ export default function CatalogPage() {
 
                         <button
                             onClick={resetFilters}
+                            disabled={!isAuthenticated}
                             style={{
                                 width: '100%',
                                 padding: '10px',
@@ -436,13 +479,13 @@ export default function CatalogPage() {
                     ) : (
                         <>
                             <div className="product-grid">
-                                {filteredProducts.map(product => (
+                                {(isAuthenticated ? filteredProducts : filteredProducts.slice(0, itemsPerPage)).map(product => (
                                     <ProductCard key={product.id} product={product} />
                                 ))}
                             </div>
 
                             {/* Пагинация */}
-                            {totalPages > 1 && (
+                            {totalPages > 1 && isAuthenticated && (
                                 <div style={{
                                     display: 'flex',
                                     justifyContent: 'center',

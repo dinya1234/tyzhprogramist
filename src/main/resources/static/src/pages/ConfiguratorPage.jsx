@@ -1,7 +1,7 @@
 // src/pages/ConfiguratorPage.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { pcBuilds, componentTypes, products, cart } from '../services/api';
+import { pcBuilds, componentTypes, products, categories } from '../services/api';
 import { useChat } from '../context/ChatContext';
 import { useCart } from '../context/CartContext';
 
@@ -23,6 +23,7 @@ export default function ConfiguratorPage() {
     const [totalPrice, setTotalPrice] = useState(0);
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [categoryTree, setCategoryTree] = useState([]);
 
     // Проверка совместимости
     const [compatibilityWarnings, setCompatibilityWarnings] = useState([]);
@@ -35,6 +36,16 @@ export default function ConfiguratorPage() {
     // Загрузка типов компонентов
     useEffect(() => {
         loadComponentTypes();
+    }, []);
+
+    // Загрузка дерева категорий (нужно, чтобы корректно фильтровать товары по categoryId)
+    useEffect(() => {
+        categories.getTree()
+            .then(res => setCategoryTree(res.data || []))
+            .catch(err => {
+                console.error('Ошибка загрузки категорий:', err);
+                setCategoryTree([]);
+            });
     }, []);
 
     // Загрузка существующей сборки (если редактируем)
@@ -81,12 +92,73 @@ export default function ConfiguratorPage() {
     const loadProductsForType = async (type) => {
         setLoading(true);
         try {
-            // Получаем товары по категории (используем имя типа для поиска)
-            const response = await products.getAll({
-                categoryName: type.name,
-                size: 50
-            });
-            setAvailableProducts(response.data.content || []);
+            const typeName = type?.name?.trim();
+
+            const flattenCategories = (nodes) => {
+                const out = [];
+                const stack = Array.isArray(nodes) ? [...nodes] : [];
+                while (stack.length) {
+                    const n = stack.shift();
+                    if (!n) continue;
+                    out.push(n);
+                    if (Array.isArray(n.children) && n.children.length) {
+                        stack.unshift(...n.children);
+                    }
+                }
+                return out;
+            };
+
+            const normalize = (s) =>
+                (s || '')
+                    .toLowerCase()
+                    .replace(/ё/g, 'е')
+                    .replace(/[^a-zа-я0-9]+/g, ' ')
+                    .trim();
+
+            const typeNorm = normalize(typeName);
+            const allCats = flattenCategories(categoryTree);
+
+            const explicitMap = {
+                'процессор': ['процессор', 'cpu'],
+                'материнская плата': ['материнская плата', 'материнские платы', 'motherboard'],
+                'оперативная память': ['оперативная память', 'озу', 'ram'],
+                'видеокарта': ['видеокарта', 'gpu', 'видеокарты'],
+                'накопитель': ['накопитель', 'ssd', 'hdd', 'storage', 'диск'],
+                'блок питания': ['блок питания', 'psu'],
+                'охлаждение': ['охлаждение', 'кулер', 'cooler'],
+                'корпус': ['корпус', 'case']
+            };
+
+            const findCategoryIdForType = () => {
+                if (!typeNorm) return null;
+
+                // 1) Пробуем прямое совпадение по подстроке в названии категории
+                const direct = allCats.find(c => normalize(c.name).includes(typeNorm) || typeNorm.includes(normalize(c.name)));
+                if (direct?.id) return direct.id;
+
+                // 2) Пробуем по словарю синонимов
+                const entry = Object.entries(explicitMap).find(([k]) => normalize(k) === typeNorm)
+                    || Object.entries(explicitMap).find(([, variants]) => variants.some(v => typeNorm.includes(normalize(v)) || normalize(v).includes(typeNorm)));
+                if (entry) {
+                    const [, variants] = entry;
+                    const found = allCats.find(c => variants.some(v => normalize(c.name).includes(normalize(v))));
+                    if (found?.id) return found.id;
+                }
+
+                return null;
+            };
+
+            const categoryId = findCategoryIdForType();
+
+            let response;
+            if (categoryId) {
+                response = await products.getByCategory(categoryId, { size: 50 });
+            } else {
+                // Фоллбек: если категорию не удалось сопоставить, хотя бы покажем релевантное поиском
+                response = await products.search(typeName || '', { size: 50 });
+            }
+
+            setAvailableProducts(response.data.content || response.data || []);
         } catch (error) {
             console.error('Ошибка загрузки товаров:', error);
             setAvailableProducts([]);

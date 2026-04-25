@@ -1,6 +1,7 @@
 // src/components/Chat/ChatWidget.jsx
 import React, { useState, useEffect } from 'react';
 import { useChat } from '../../context/ChatContext';
+import { useAuth } from '../../context/AuthContext';
 import ChatWindow from './ChatWindow';
 import './Chat.css';
 
@@ -15,37 +16,42 @@ export default function ChatWidget() {
         loadSession
     } = useChat();
 
+    const { isAuthenticated } = useAuth();
     const [isMinimized, setIsMinimized] = useState(false);
 
-    // Автоматически создаем или загружаем существующую сессию
+    // Чат поддержки не должен сам создаваться до регистрации/логина.
+    // Создаём/подгружаем сессию только когда пользователь ОТКРЫВАЕТ чат.
     useEffect(() => {
-        const initChat = async () => {
-            // Проверяем, есть ли уже сессия в localStorage
-            const savedSessionId = localStorage.getItem('chatSessionId');
+        const ensureSession = async () => {
+            if (!isAuthenticated) return;
+            if (!isOpen) return;
+            if (activeSession || isLoading) return;
 
-            if (savedSessionId && !activeSession) {
-                // Пробуем загрузить существующую сессию
+            const savedSessionId = localStorage.getItem('chatSessionId');
+            if (savedSessionId) {
                 try {
-                    await loadSession(parseInt(savedSessionId));
-                    console.log('Loaded existing session:', savedSessionId);
-                } catch (error) {
-                    console.log('Session not found, creating new one');
+                    await loadSession(parseInt(savedSessionId, 10));
+                    return;
+                } catch (e) {
                     localStorage.removeItem('chatSessionId');
-                    await createSession(null, null, window.location.href);
                 }
-            } else if (!activeSession && !isLoading) {
-                // Создаем новую сессию
-                const session = await createSession(null, null, window.location.href);
-                if (session) {
-                    localStorage.setItem('chatSessionId', session.id);
-                }
+            }
+
+            const session = await createSession(null, null, window.location.href);
+            if (session?.id) {
+                localStorage.setItem('chatSessionId', session.id);
             }
         };
 
-        initChat();
-    }, []); // Запускаем только один раз
+        ensureSession();
+    }, [isAuthenticated, isOpen, activeSession, isLoading, loadSession, createSession]);
 
     const handleOpen = () => {
+        if (!isAuthenticated) {
+            // если не авторизован — не открываем поддержку
+            window.location.href = '/login';
+            return;
+        }
         setIsOpen(true);
         setIsMinimized(false);
     };

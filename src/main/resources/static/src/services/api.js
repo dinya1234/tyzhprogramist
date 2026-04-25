@@ -85,6 +85,8 @@ export const products = {
     search: (q, params) => api.get('/products/search', { params: { q, ...params } }),
     getNew: (limit = 12) => api.get('/products/new', { params: { limit } }),
     getBestsellers: (limit = 12) => api.get('/products/bestsellers', { params: { limit } }),
+    create: (data, categoryId) => api.post('/products', data, { params: { categoryId } }),
+    update: (id, data, categoryId) => api.put(`/products/${id}`, data, { params: categoryId != null ? { categoryId } : {} }),
     delete: (id) => api.delete(`/products/${id}`)
 };
 
@@ -128,6 +130,7 @@ export const orders = {
 export const users = {
     getAll: (params) => api.get('/users', { params }),
     getById: (id) => api.get(`/users/${id}`),
+    getStatistics: () => api.get('/users/statistics'),
     updateRole: (id, role) => api.put(`/users/${id}/role?role=${role}`),
     updateActive: (id, active) => api.put(`/users/${id}/active?active=${active}`),
     delete: (id) => api.delete(`/users/${id}`)

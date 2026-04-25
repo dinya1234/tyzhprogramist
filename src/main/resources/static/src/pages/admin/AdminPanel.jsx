@@ -25,7 +25,11 @@ export default function AdminPanel() {
         totalRevenue: 0,
         pendingFeedbacks: 0,
         pendingRepairs: 0,
-        activeChats: 0
+        activeChats: 0,
+        activeToday: 0,
+        unverified: 0,
+        inactive: 0,
+        byRole: []
     });
 
     const [recentOrders, setRecentOrders] = useState([]);
@@ -43,6 +47,20 @@ export default function AdminPanel() {
     // Формы
     const [editingProduct, setEditingProduct] = useState(null);
     const [editingCategory, setEditingCategory] = useState(null);
+    const [productModalOpen, setProductModalOpen] = useState(false);
+    const [productForm, setProductForm] = useState({
+        id: null,
+        name: '',
+        price: '',
+        oldPrice: '',
+        quantity: 0,
+        sku: '',
+        shortDescription: '',
+        fullDescription: '',
+        warrantyMonths: 12,
+        isActive: true,
+        categoryId: ''
+    });
 
     // Фильтры
     const [searchTerm, setSearchTerm] = useState('');
@@ -63,6 +81,7 @@ export default function AdminPanel() {
         try {
             // Статистика пользователей
             const usersRes = await users.getAll({ page: 0, size: 1 });
+            const usersStatsRes = await users.getStatistics().catch(() => ({ data: null }));
             // Статистика заказов
             const ordersRes = await orders.getAll({ page: 0, size: 5 });
             setRecentOrders(ordersRes.data.content || []);
@@ -76,6 +95,8 @@ export default function AdminPanel() {
             // Заявки на ремонт
             const repairsRes = await repairRequests.getAll({ page: 0, size: 1 });
 
+            const userStats = usersStatsRes?.data || {};
+
             setStats({
                 totalUsers: usersRes.data.totalElements || 0,
                 totalOrders: ordersRes.data.totalElements || 0,
@@ -83,7 +104,11 @@ export default function AdminPanel() {
                 totalRevenue: 1250000,
                 pendingFeedbacks: feedbacksRes.data.totalElements || 0,
                 pendingRepairs: repairsRes.data.totalElements || 0,
-                activeChats: 3
+                activeChats: 3,
+                activeToday: userStats.activeToday || 0,
+                unverified: userStats.unverified || 0,
+                inactive: userStats.inactive || 0,
+                byRole: userStats.byRole || []
             });
 
             // Топ товаров
@@ -164,6 +189,94 @@ export default function AdminPanel() {
             } catch (error) {
                 alert('Ошибка удаления');
             }
+        }
+    };
+
+    const openCreateProduct = () => {
+        setProductForm({
+            id: null,
+            name: '',
+            price: '',
+            oldPrice: '',
+            quantity: 0,
+            sku: '',
+            shortDescription: '',
+            fullDescription: '',
+            warrantyMonths: 12,
+            isActive: true,
+            categoryId: ''
+        });
+        setProductModalOpen(true);
+    };
+
+    const openEditProduct = (p) => {
+        setProductForm({
+            id: p.id,
+            name: p.name || '',
+            price: p.price ?? '',
+            oldPrice: p.oldPrice ?? '',
+            quantity: p.quantity ?? 0,
+            sku: p.sku || '',
+            shortDescription: p.shortDescription || '',
+            fullDescription: p.fullDescription || '',
+            warrantyMonths: p.warrantyMonths ?? 12,
+            isActive: p.isActive !== false,
+            categoryId: p.categoryId ? String(p.categoryId) : ''
+        });
+        setProductModalOpen(true);
+    };
+
+    const handleSaveProduct = async () => {
+        const categoryId = productForm.categoryId ? parseInt(productForm.categoryId, 10) : null;
+        if (!productForm.name?.trim() || !categoryId) {
+            alert('Укажите название и категорию');
+            return;
+        }
+
+        const payload = {
+            name: productForm.name,
+            price: Number(productForm.price) || 0,
+            oldPrice: productForm.oldPrice === '' ? null : (Number(productForm.oldPrice) || null),
+            quantity: Number(productForm.quantity) || 0,
+            sku: productForm.sku,
+            shortDescription: productForm.shortDescription,
+            fullDescription: productForm.fullDescription,
+            warrantyMonths: Number(productForm.warrantyMonths) || 12,
+            isActive: !!productForm.isActive
+        };
+
+        try {
+            if (productForm.id) {
+                await products.update(productForm.id, payload, categoryId);
+            } else {
+                await products.create(payload, categoryId);
+            }
+            setProductModalOpen(false);
+            await loadProducts();
+            await loadDashboardData();
+        } catch (e) {
+            alert(e.response?.data?.message || 'Ошибка сохранения товара');
+        }
+    };
+
+    const handleToggleUserActive = async (userId, nextActive) => {
+        try {
+            await users.updateActive(userId, nextActive);
+            await loadUsers();
+            await loadDashboardData();
+        } catch (e) {
+            alert(e.response?.data?.message || 'Ошибка обновления статуса');
+        }
+    };
+
+    const handleDeleteUser = async (userId) => {
+        if (!window.confirm('Удалить пользователя? Это действие необратимо.')) return;
+        try {
+            await users.delete(userId);
+            await loadUsers();
+            await loadDashboardData();
+        } catch (e) {
+            alert(e.response?.data?.message || 'Ошибка удаления пользователя');
         }
     };
 
@@ -303,6 +416,13 @@ export default function AdminPanel() {
                                 </div>
                             </div>
                             <div className="admin-stat-card">
+                                <div className="admin-stat-icon">⚡</div>
+                                <div className="admin-stat-info">
+                                    <h3>{stats.activeToday}</h3>
+                                    <p>Активны сегодня</p>
+                                </div>
+                            </div>
+                            <div className="admin-stat-card">
                                 <div className="admin-stat-icon">📦</div>
                                 <div className="admin-stat-info">
                                     <h3>{stats.totalOrders}</h3>
@@ -337,7 +457,44 @@ export default function AdminPanel() {
                                     <p>Заявок на ремонт</p>
                                 </div>
                             </div>
+                            <div className="admin-stat-card">
+                                <div className="admin-stat-icon">📧</div>
+                                <div className="admin-stat-info">
+                                    <h3>{stats.unverified}</h3>
+                                    <p>Без подтверждения email</p>
+                                </div>
+                            </div>
+                            <div className="admin-stat-card">
+                                <div className="admin-stat-icon">🕒</div>
+                                <div className="admin-stat-info">
+                                    <h3>{stats.inactive}</h3>
+                                    <p>Неактивны (3+ мес.)</p>
+                                </div>
+                            </div>
                         </div>
+
+                        {/* Роли */}
+                        {Array.isArray(stats.byRole) && stats.byRole.length > 0 && (
+                            <div className="admin-section">
+                                <h2>👥 Пользователи по ролям</h2>
+                                <table className="admin-table">
+                                    <thead>
+                                    <tr>
+                                        <th>Роль</th>
+                                        <th>Кол-во</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {stats.byRole.map((row, idx) => (
+                                        <tr key={idx}>
+                                            <td>{String(row[0])}</td>
+                                            <td>{Number(row[1] ?? 0)}</td>
+                                        </tr>
+                                    ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
 
                         {/* Последние заказы */}
                         <div className="admin-section">
@@ -396,7 +553,7 @@ export default function AdminPanel() {
                     <div>
                         <div className="admin-header">
                             <h1>📦 Управление товарами</h1>
-                            <button className="btn-primary">➕ Добавить товар</button>
+                            <button className="btn-primary" onClick={openCreateProduct}>➕ Добавить товар</button>
                         </div>
 
                         <div className="admin-search">
@@ -425,13 +582,137 @@ export default function AdminPanel() {
                                     <td>{product.quantity || 0} шт.</td>
                                     <td>{product.isActive ? '✅ Активен' : '❌ Неактивен'}</td>
                                     <td className="admin-actions">
-                                        <button className="admin-btn-edit">✏️</button>
+                                        <button className="admin-btn-edit" onClick={() => openEditProduct(product)}>✏️</button>
                                         <button className="admin-btn-delete" onClick={() => handleProductDelete(product.id)}>🗑️</button>
                                     </td>
                                 </tr>
                             ))}
                             </tbody>
                         </table>
+
+                        {/* Модалка товара */}
+                        {productModalOpen && (
+                            <div style={{
+                                position: 'fixed',
+                                inset: 0,
+                                background: 'rgba(0,0,0,0.55)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                zIndex: 2000,
+                                padding: 16
+                            }}>
+                                <div style={{
+                                    width: 'min(900px, 100%)',
+                                    maxHeight: '90vh',
+                                    overflowY: 'auto',
+                                    background: '#0f1218',
+                                    border: '1px solid #2a2d36',
+                                    borderRadius: 16,
+                                    padding: 18
+                                }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                                        <h2 style={{ margin: 0 }}>{productForm.id ? `✏️ Редактирование товара #${productForm.id}` : '➕ Новый товар'}</h2>
+                                        <button className="btn-outline btn-sm" onClick={() => setProductModalOpen(false)}>Закрыть</button>
+                                    </div>
+
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                                        <div>
+                                            <div style={{ marginBottom: 6, color: '#9ca3af' }}>Название</div>
+                                            <input
+                                                value={productForm.name}
+                                                onChange={(e) => setProductForm(p => ({ ...p, name: e.target.value }))}
+                                                style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid #2a2d36', background: '#0a0c10', color: 'white' }}
+                                            />
+                                        </div>
+                                        <div>
+                                            <div style={{ marginBottom: 6, color: '#9ca3af' }}>Категория</div>
+                                            <select
+                                                value={productForm.categoryId}
+                                                onChange={(e) => setProductForm(p => ({ ...p, categoryId: e.target.value }))}
+                                                style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid #2a2d36', background: '#0a0c10', color: 'white' }}
+                                            >
+                                                <option value="">Выберите категорию</option>
+                                                {categoryList.map(c => (
+                                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <div style={{ marginBottom: 6, color: '#9ca3af' }}>Цена</div>
+                                            <input
+                                                type="number"
+                                                value={productForm.price}
+                                                onChange={(e) => setProductForm(p => ({ ...p, price: e.target.value }))}
+                                                style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid #2a2d36', background: '#0a0c10', color: 'white' }}
+                                            />
+                                        </div>
+                                        <div>
+                                            <div style={{ marginBottom: 6, color: '#9ca3af' }}>Старая цена (опц.)</div>
+                                            <input
+                                                type="number"
+                                                value={productForm.oldPrice}
+                                                onChange={(e) => setProductForm(p => ({ ...p, oldPrice: e.target.value }))}
+                                                style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid #2a2d36', background: '#0a0c10', color: 'white' }}
+                                            />
+                                        </div>
+                                        <div>
+                                            <div style={{ marginBottom: 6, color: '#9ca3af' }}>Кол-во</div>
+                                            <input
+                                                type="number"
+                                                value={productForm.quantity}
+                                                onChange={(e) => setProductForm(p => ({ ...p, quantity: e.target.value }))}
+                                                style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid #2a2d36', background: '#0a0c10', color: 'white' }}
+                                            />
+                                        </div>
+                                        <div>
+                                            <div style={{ marginBottom: 6, color: '#9ca3af' }}>SKU (опц.)</div>
+                                            <input
+                                                value={productForm.sku}
+                                                onChange={(e) => setProductForm(p => ({ ...p, sku: e.target.value }))}
+                                                style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid #2a2d36', background: '#0a0c10', color: 'white' }}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div style={{ marginTop: 12 }}>
+                                        <div style={{ marginBottom: 6, color: '#9ca3af' }}>Короткое описание</div>
+                                        <textarea
+                                            rows={3}
+                                            value={productForm.shortDescription}
+                                            onChange={(e) => setProductForm(p => ({ ...p, shortDescription: e.target.value }))}
+                                            style={{ width: '100%', padding: 10, borderRadius: 12, border: '1px solid #2a2d36', background: '#0a0c10', color: 'white' }}
+                                        />
+                                    </div>
+
+                                    <div style={{ marginTop: 12 }}>
+                                        <div style={{ marginBottom: 6, color: '#9ca3af' }}>Полное описание (HTML можно)</div>
+                                        <textarea
+                                            rows={6}
+                                            value={productForm.fullDescription}
+                                            onChange={(e) => setProductForm(p => ({ ...p, fullDescription: e.target.value }))}
+                                            style={{ width: '100%', padding: 10, borderRadius: 12, border: '1px solid #2a2d36', background: '#0a0c10', color: 'white' }}
+                                        />
+                                    </div>
+
+                                    <div style={{ marginTop: 12, display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+                                        <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                            <input
+                                                type="checkbox"
+                                                checked={!!productForm.isActive}
+                                                onChange={(e) => setProductForm(p => ({ ...p, isActive: e.target.checked }))}
+                                            />
+                                            Активен
+                                        </label>
+
+                                        <div style={{ marginLeft: 'auto', display: 'flex', gap: 10 }}>
+                                            <button className="btn-outline" onClick={() => setProductModalOpen(false)}>Отмена</button>
+                                            <button className="btn-primary" onClick={handleSaveProduct}>Сохранить</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -561,7 +842,20 @@ export default function AdminPanel() {
                                             <option value="MODERATOR">Модератор</option>
                                             <option value="ADMIN">Админ</option>
                                         </select>
-                                        <button className="admin-btn-delete">🔒</button>
+                                        <button
+                                            className="admin-btn-delete"
+                                            onClick={() => handleToggleUserActive(userItem.id, !userItem.isActive)}
+                                            title={userItem.isActive ? 'Заблокировать' : 'Разблокировать'}
+                                        >
+                                            {userItem.isActive ? '🔒' : '🔓'}
+                                        </button>
+                                        <button
+                                            className="admin-btn-delete"
+                                            onClick={() => handleDeleteUser(userItem.id)}
+                                            title="Удалить"
+                                        >
+                                            🗑️
+                                        </button>
                                     </td>
                                 </tr>
                             ))}

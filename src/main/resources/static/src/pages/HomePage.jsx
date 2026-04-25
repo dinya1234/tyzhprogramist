@@ -69,7 +69,7 @@ export default function HomePage() {
                     {categoryTree.slice(0, 6).map(cat => (
                         <Link
                             key={cat.id}
-                            to={`/catalog?category=${cat.slug}`}
+                            to={`/catalog?category=${cat.id}`}
                             style={{
                                 background: '#15181f',
                                 padding: '20px',

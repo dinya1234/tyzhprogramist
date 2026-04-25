@@ -8,7 +8,7 @@ export default function ChatWindow({ onMinimize }) {
         sendMessage,
         activeSession,
         isLoading,
-        closeSession
+        setIsOpen
     } = useChat();
 
     const [inputMessage, setInputMessage] = useState('');
@@ -42,11 +42,10 @@ export default function ChatWindow({ onMinimize }) {
     };
 
     const handleClose = async () => {
-        if (activeSession && window.confirm('Закрыть чат?')) {
-            await closeSession(activeSession.id);
-            localStorage.removeItem('chatSessionId');
-        }
-        onMinimize();
+        // "Закрыть" здесь = скрыть окно, но НЕ завершать сессию,
+        // чтобы пользователь мог открыть чат снова и продолжить переписку.
+        setIsOpen(false);
+        onMinimize?.();
     };
 
     // Статус чата
