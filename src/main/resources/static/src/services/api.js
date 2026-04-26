@@ -223,25 +223,32 @@ export const chat = {
 
 // ========== СРАВНЕНИЕ ==========
 export const comparisons = {
+    normalizeName: (name) => encodeURIComponent(String(name ?? '').trim()),
     getMyNames: () => api.get('/relations/comparisons'),
-    getComparison: (name) => api.get(`/relations/comparisons/${name}`),
-    getComparisonGrouped: (name) => api.get(`/relations/comparisons/${name}/grouped`),
-    addProduct: (name, productId) => api.post(`/relations/comparisons/${name}/products/${productId}`),
-    addPcBuild: (name, pcBuildId) => api.post(`/relations/comparisons/${name}/pc-builds/${pcBuildId}`),
+    getComparison: (name) => api.get(`/relations/comparisons/${comparisons.normalizeName(name)}`),
+    getComparisonGrouped: (name) => api.get(`/relations/comparisons/${comparisons.normalizeName(name)}/grouped`),
+    addProduct: (name, productId) => api.post(`/relations/comparisons/${comparisons.normalizeName(name)}/products/${productId}`),
+    addPcBuild: (name, pcBuildId) => api.post(`/relations/comparisons/${comparisons.normalizeName(name)}/pc-builds/${pcBuildId}`),
     addToComparison: (name, contentType, objectId) => {
         if (contentType === 'Product') {
-            return api.post(`/relations/comparisons/${name}/products/${objectId}`);
+            return api.post(`/relations/comparisons/${comparisons.normalizeName(name)}/products/${objectId}`);
         } else {
-            return api.post(`/relations/comparisons/${name}/pc-builds/${objectId}`);
+            return api.post(`/relations/comparisons/${comparisons.normalizeName(name)}/pc-builds/${objectId}`);
         }
     },
-    removeProduct: (name, productId) => api.delete(`/relations/comparisons/${name}/products/${productId}`),
-    removePcBuild: (name, pcBuildId) => api.delete(`/relations/comparisons/${name}/pc-builds/${pcBuildId}`),
-    deleteComparison: (name) => api.delete(`/relations/comparisons/${name}`),
-    createComparison: (name) => api.post(`/relations/comparisons/${name}`),
-    getCount: (name) => api.get(`/relations/comparisons/${name}/count`),
+    removeProduct: (name, productId) => api.delete(`/relations/comparisons/${comparisons.normalizeName(name)}/products/${productId}`),
+    removePcBuild: (name, pcBuildId) => api.delete(`/relations/comparisons/${comparisons.normalizeName(name)}/pc-builds/${pcBuildId}`),
+    deleteComparison: (name) => api.delete(`/relations/comparisons/${comparisons.normalizeName(name)}`),
+    createComparison: (name) => api.post(`/relations/comparisons/${comparisons.normalizeName(name)}`),
+    getCount: (name) => api.get(`/relations/comparisons/${comparisons.normalizeName(name)}/count`),
     existsInComparison: (name, contentType, objectId) =>
-        api.get(`/relations/comparisons/exists?comparisonName=${name}&contentType=${contentType}&objectId=${objectId}`)
+        api.get(`/relations/comparisons/exists?comparisonName=${encodeURIComponent(String(name ?? '').trim())}&contentType=${contentType}&objectId=${objectId}`)
+};
+
+// ========== СОВМЕСТИМОСТЬ КОМПОНЕНТОВ ==========
+export const relations = {
+    areProductsCompatible: (productId1, productId2) =>
+        api.get(`/relations/compatibility/products/${productId1}/${productId2}`)
 };
 
 // ========== ФАЙЛЫ ==========

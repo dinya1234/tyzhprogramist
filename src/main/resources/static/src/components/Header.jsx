@@ -3,26 +3,15 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
-import { useChat } from '../context/ChatContext';
 
 export default function Header() {
     const { user, logout } = useAuth();
     const { cart } = useCart();
-    const { setIsOpen } = useChat();
     const navigate = useNavigate();
-    const isStaff = user?.role === 'ADMIN' || user?.role === 'MODERATOR';
 
     const handleLogout = () => {
         logout();
         navigate('/login');
-    };
-
-    const handleOpenSupportChat = () => {
-        if (!user) {
-            navigate('/login');
-            return;
-        }
-        setIsOpen(true);
     };
 
     return (
@@ -43,16 +32,6 @@ export default function Header() {
                         )}
                     </ul>
                     <div className="header-actions">
-                        {!isStaff && (
-                            <button
-                                className="icon-btn"
-                                id="consultantTrigger"
-                                onClick={handleOpenSupportChat}
-                                title="Чат поддержки"
-                            >
-                                💬
-                            </button>
-                        )}
                         <Link to="/cart" className="icon-btn" style={{ position: 'relative' }}>
                             🛒
                             {cart.totalItems > 0 && (

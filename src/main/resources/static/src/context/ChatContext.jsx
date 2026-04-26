@@ -121,6 +121,13 @@ export const ChatProvider = ({ children, isModerator = false }) => {
         }
     }, [startPolling, loadSessionMessages]);
 
+    const createNewSession = useCallback(async (sourceUrl) => {
+        setActiveSession(null);
+        setMessages([]);
+        stopPolling();
+        return createSession(null, null, sourceUrl || window.location.href);
+    }, [createSession, stopPolling]);
+
     // Загрузка существующей сессии
     const loadSession = useCallback(async (sessionId) => {
         setIsLoading(true);
@@ -161,7 +168,18 @@ export const ChatProvider = ({ children, isModerator = false }) => {
             }, 300);
         } catch (error) {
             console.error('Failed to send message:', error);
-            alert('Не удалось отправить сообщение');
+            if (error?.response?.status === 400) {
+                try {
+                    const refreshedSession = await api.get(`/chat/session/${activeSession.id}`);
+                    const session = refreshedSession.data;
+                    setActiveSession(session);
+                    if (session?.status === 'CLOSED') {
+                        localStorage.removeItem('chatSessionId');
+                    }
+                } catch (refreshError) {
+                    console.error('Failed to refresh session state:', refreshError);
+                }
+            }
             throw error;
         }
     }, [activeSession, loadSessionMessages]);
@@ -308,6 +326,7 @@ export const ChatProvider = ({ children, isModerator = false }) => {
         typingUsers: {},
         isModerator,
         createSession,
+        createNewSession,
         loadSession,
         sendMessage,
         sendConsultantMessage,

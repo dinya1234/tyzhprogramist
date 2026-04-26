@@ -9,7 +9,7 @@ export default function ChatWidget() {
     const {
         isOpen,
         setIsOpen,
-        createSession,
+        createNewSession,
         isLoading,
         activeSession,
         messages,
@@ -30,21 +30,24 @@ export default function ChatWidget() {
             const savedSessionId = localStorage.getItem('chatSessionId');
             if (savedSessionId) {
                 try {
-                    await loadSession(parseInt(savedSessionId, 10));
+                    const existingSession = await loadSession(parseInt(savedSessionId, 10));
+                    if (existingSession?.status === 'CLOSED') {
+                        localStorage.removeItem('chatSessionId');
+                    }
                     return;
                 } catch (e) {
                     localStorage.removeItem('chatSessionId');
                 }
             }
 
-            const session = await createSession(null, null, window.location.href);
+            const session = await createNewSession(window.location.href);
             if (session?.id) {
                 localStorage.setItem('chatSessionId', session.id);
             }
         };
 
         ensureSession();
-    }, [isAuthenticated, isOpen, activeSession, isLoading, loadSession, createSession]);
+    }, [isAuthenticated, isOpen, activeSession, isLoading, loadSession, createNewSession]);
 
     const handleOpen = () => {
         if (!isAuthenticated) {

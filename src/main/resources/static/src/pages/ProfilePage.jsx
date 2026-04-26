@@ -27,6 +27,7 @@ export default function ProfilePage() {
 
     const [loading, setLoading] = useState(true);
     const [updating, setUpdating] = useState(false);
+    const [buildActionId, setBuildActionId] = useState(null);
     const [message, setMessage] = useState({ text: '', type: '' });
 
     // Загрузка данных
@@ -105,6 +106,40 @@ export default function ProfilePage() {
     const showMessage = (text, type) => {
         setMessage({ text, type });
         setTimeout(() => setMessage({ text: '', type: '' }), 3000);
+    };
+
+    const handleToggleBuildVisibility = async (build) => {
+        if (!build?.id) return;
+        setBuildActionId(build.id);
+        try {
+            const nextPublic = !build.isPublic;
+            const response = await pcBuilds.update(build.id, build.name, nextPublic);
+            const updatedBuild = response.data;
+            setBuildsList((prev) =>
+                prev.map((b) => (b.id === build.id ? { ...b, ...updatedBuild, isPublic: updatedBuild?.isPublic ?? nextPublic } : b))
+            );
+            showMessage(nextPublic ? 'Сборка опубликована' : 'Сборка скрыта из каталога', 'success');
+        } catch (error) {
+            showMessage(error.response?.data?.message || 'Ошибка обновления доступа', 'error');
+        } finally {
+            setBuildActionId(null);
+        }
+    };
+
+    const handleDeleteBuild = async (build) => {
+        if (!build?.id) return;
+        if (!window.confirm(`Удалить сборку "${build.name}"?`)) return;
+
+        setBuildActionId(build.id);
+        try {
+            await pcBuilds.delete(build.id);
+            setBuildsList((prev) => prev.filter((b) => b.id !== build.id));
+            showMessage('Сборка удалена', 'success');
+        } catch (error) {
+            showMessage(error.response?.data?.message || 'Ошибка удаления сборки', 'error');
+        } finally {
+            setBuildActionId(null);
+        }
     };
 
     const formatDate = (dateStr) => {
@@ -300,7 +335,22 @@ export default function ProfilePage() {
                                                 <span className="profile-build-price">{build.totalPrice?.toLocaleString()} ₽</span>
                                                 <div className="profile-build-actions">
                                                     <Link to={`/configurator?buildId=${build.id}`} className="profile-build-link">Редактировать</Link>
-                                                    <button className="profile-build-link danger">Удалить</button>
+                                                    <button
+                                                        className="profile-build-link"
+                                                        onClick={() => handleToggleBuildVisibility(build)}
+                                                        disabled={buildActionId === build.id}
+                                                    >
+                                                        {buildActionId === build.id
+                                                            ? 'Сохранение...'
+                                                            : (build.isPublic ? 'Сделать приватной' : 'Опубликовать')}
+                                                    </button>
+                                                    <button
+                                                        className="profile-build-link danger"
+                                                        onClick={() => handleDeleteBuild(build)}
+                                                        disabled={buildActionId === build.id}
+                                                    >
+                                                        {buildActionId === build.id ? 'Удаление...' : 'Удалить'}
+                                                    </button>
                                                 </div>
                                             </div>
                                         </div>

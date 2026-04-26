@@ -1,7 +1,7 @@
 // src/pages/ConfiguratorPage.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { pcBuilds, componentTypes, products, categories, comparisons } from '../services/api';
+import { pcBuilds, componentTypes, products, categories, comparisons, relations } from '../services/api';
 import { useChat } from '../context/ChatContext';
 import { useCart } from '../context/CartContext';
 
@@ -22,6 +22,7 @@ export default function ConfiguratorPage() {
     const [isPublic, setIsPublic] = useState(false);
     const [totalPrice, setTotalPrice] = useState(0);
     const [loading, setLoading] = useState(false);
+    const [buildCreating, setBuildCreating] = useState(false);
     const [saving, setSaving] = useState(false);
     const [categoryTree, setCategoryTree] = useState([]);
 
@@ -32,6 +33,95 @@ export default function ConfiguratorPage() {
         recommended: 0,
         warning: null
     });
+
+    const normalize = (value) =>
+        String(value || '')
+            .toLowerCase()
+            .replace(/ё/g, 'е')
+            .replace(/[^a-zа-я0-9]+/g, ' ')
+            .trim();
+
+    const resolveTypeName = (label) => {
+        if (!label) return label;
+        const labelNorm = normalize(label);
+        const exact = componentTypesList.find((t) => normalize(t.name) === labelNorm);
+        if (exact) return exact.name;
+
+        const aliases = {
+            'процессор': ['процессор', 'процессоры', 'cpu'],
+            'материнская плата': ['материнская плата', 'материнские платы', 'motherboard'],
+            'оперативная память': ['оперативная память', 'озу', 'ram'],
+            'видеокарта': ['видеокарта', 'видеокарты', 'gpu'],
+            'накопитель': ['накопитель', 'накопители', 'ssd', 'hdd', 'storage'],
+            'блок питания': ['блок питания', 'блоки питания', 'psu', 'power supply'],
+            'корпус': ['корпус', 'корпуса', 'case'],
+            'охлаждение': ['охлаждение', 'кулер', 'cooler']
+        };
+
+        const matchedEntry = Object.entries(aliases).find(([, values]) =>
+            values.some((v) => labelNorm.includes(normalize(v)) || normalize(v).includes(labelNorm))
+        );
+        if (!matchedEntry) return label;
+
+        const [canonical] = matchedEntry;
+        const matchedType = componentTypesList.find((t) => normalize(t.name) === normalize(canonical));
+        return matchedType?.name || label;
+    };
+
+    const extractWattage = (...texts) => {
+        const source = texts
+            .filter(Boolean)
+            .map((t) => String(t))
+            .join(' ')
+            .replace(/&nbsp;/gi, ' ');
+        if (!source) return null;
+
+        // 650W / 650 W / 650Вт / 650 ватт
+        const wattMatch = source.match(/(\d{2,4})(?:[.,]\d+)?\s*(?:w|вт|ватт)\b/i);
+        if (wattMatch) {
+            return Math.round(Number(wattMatch[1]));
+        }
+
+        // 0.75kW / 0,75 кВт / 1 kW
+        const kwMatch = source.match(/(\d+(?:[.,]\d+)?)\s*(?:kw|квт)\b/i);
+        if (kwMatch) {
+            const kw = Number(String(kwMatch[1]).replace(',', '.'));
+            if (!Number.isNaN(kw)) {
+                return Math.round(kw * 1000);
+            }
+        }
+
+        return null;
+    };
+
+    const estimateComponentPower = (component) => {
+        const nameNorm = normalize(component?.name);
+        const typeNorm = normalize(component?.typeName || component?.categoryName);
+        const combined = `${typeNorm} ${nameNorm}`;
+
+        if (combined.includes('видеокарта') || combined.includes('gpu') || combined.includes('rtx') || combined.includes('rx ')) {
+            if (combined.includes('4090')) return 450;
+            if (combined.includes('4080') || combined.includes('7900')) return 320;
+            if (combined.includes('4070') || combined.includes('7800')) return 250;
+            if (combined.includes('4060') || combined.includes('7700')) return 170;
+            return 220;
+        }
+
+        if (combined.includes('процессор') || combined.includes('cpu') || combined.includes('ryzen') || combined.includes('core i')) {
+            if (combined.includes('i9') || combined.includes('ryzen 9')) return 170;
+            if (combined.includes('i7') || combined.includes('ryzen 7')) return 125;
+            if (combined.includes('i5') || combined.includes('ryzen 5')) return 95;
+            return 105;
+        }
+
+        if (combined.includes('материнская')) return 55;
+        if (combined.includes('оператив') || combined.includes('озу') || combined.includes('ram')) return 12;
+        if (combined.includes('накопитель') || combined.includes('ssd')) return 8;
+        if (combined.includes('hdd')) return 12;
+        if (combined.includes('охлаждение') || combined.includes('кулер')) return 8;
+        if (combined.includes('корпус')) return 6;
+        return 20;
+    };
 
     // Загрузка типов компонентов
     useEffect(() => {
@@ -72,6 +162,17 @@ export default function ConfiguratorPage() {
         calculatePowerSupply();
     }, [selectedComponents]);
 
+    useEffect(() => {
+        if (!componentTypesList.length || !Object.keys(selectedComponents).length) return;
+
+        const remapped = {};
+        Object.values(selectedComponents).forEach((component) => {
+            const resolvedTypeName = resolveTypeName(component.typeName || component.categoryName);
+            remapped[resolvedTypeName] = { ...component, typeName: resolvedTypeName };
+        });
+        setSelectedComponents(remapped);
+    }, [componentTypesList]);
+
     const loadComponentTypes = async () => {
         try {
             const response = await componentTypes.getOrdered();
@@ -107,13 +208,6 @@ export default function ConfiguratorPage() {
                 }
                 return out;
             };
-
-            const normalize = (s) =>
-                (s || '')
-                    .toLowerCase()
-                    .replace(/ё/g, 'е')
-                    .replace(/[^a-zа-я0-9]+/g, ' ')
-                    .trim();
 
             const typeNorm = normalize(typeName);
             const allCats = flattenCategories(categoryTree);
@@ -168,14 +262,39 @@ export default function ConfiguratorPage() {
     };
 
     const createNewBuild = async () => {
+        if (buildCreating) return null;
+        setBuildCreating(true);
         try {
-            const response = await pcBuilds.create({
-                name: buildName,
-                isPublic: false
-            });
-            setCurrentBuildId(response.data.id);
-        } catch (error) {
-            console.error('Ошибка создания сборки:', error);
+            const baseName = (buildName || 'Моя сборка').trim();
+            for (let attempt = 1; attempt <= 12; attempt += 1) {
+                let candidateName = attempt === 1 ? baseName : `${baseName} (${attempt})`;
+                if (attempt > 10) {
+                    candidateName = `${baseName} ${Date.now().toString().slice(-5)}`;
+                }
+
+                try {
+                    const response = await pcBuilds.create({
+                        name: candidateName,
+                        isPublic: false
+                    });
+                    const newId = response.data.id;
+                    setCurrentBuildId(newId);
+                    if (candidateName !== buildName) {
+                        setBuildName(candidateName);
+                    }
+                    return newId;
+                } catch (error) {
+                    const message = String(error?.response?.data?.message || '').toLowerCase();
+                    const isDuplicateName = error?.response?.status === 400 && message.includes('сборка с таким именем');
+                    if (!isDuplicateName || attempt === 12) {
+                        console.error('Ошибка создания сборки:', error);
+                        return null;
+                    }
+                }
+            }
+            return null;
+        } finally {
+            setBuildCreating(false);
         }
     };
 
@@ -191,25 +310,57 @@ export default function ConfiguratorPage() {
             const componentsRes = await pcBuilds.getComponents(buildId);
             const components = {};
             componentsRes.data.forEach(comp => {
-                components[comp.componentType] = {
+                const typeName = resolveTypeName(comp.componentType);
+                components[typeName] = {
                     id: comp.productId,
                     name: comp.productName,
                     price: comp.price,
-                    quantity: comp.quantity
+                    quantity: comp.quantity,
+                    typeName,
+                    categoryName: comp.componentType
                 };
             });
-            setSelectedComponents(components);
+
+            const withDetailsEntries = await Promise.all(
+                Object.entries(components).map(async ([typeName, component]) => {
+                    try {
+                        const detailsRes = await products.getById(component.id);
+                        return [typeName, {
+                            ...component,
+                            shortDescription: detailsRes.data?.shortDescription,
+                            fullDescription: detailsRes.data?.fullDescription
+                        }];
+                    } catch (e) {
+                        return [typeName, component];
+                    }
+                })
+            );
+            setSelectedComponents(Object.fromEntries(withDetailsEntries));
         } catch (error) {
             console.error('Ошибка загрузки сборки:', error);
         }
     };
 
     const selectComponent = async (product) => {
-        if (!currentBuildId) return;
+        let buildId = currentBuildId;
+        if (!buildId) {
+            buildId = await createNewBuild();
+        }
+        if (!buildId) {
+            alert('Не удалось создать сборку. Проверьте авторизацию и попробуйте снова.');
+            return;
+        }
 
         setLoading(true);
         try {
-            await pcBuilds.addComponent(currentBuildId, product.id, 1);
+            await pcBuilds.addComponent(buildId, product.id, 1);
+            let details = null;
+            try {
+                const detailsRes = await products.getById(product.id);
+                details = detailsRes.data || null;
+            } catch (e) {
+                details = null;
+            }
 
             setSelectedComponents(prev => ({
                 ...prev,
@@ -217,7 +368,11 @@ export default function ConfiguratorPage() {
                     id: product.id,
                     name: product.name,
                     price: product.price,
-                    quantity: 1
+                    quantity: 1,
+                    typeName: currentType.name,
+                    categoryName: product.categoryName,
+                    shortDescription: details?.shortDescription,
+                    fullDescription: details?.fullDescription
                 }
             }));
         } catch (error) {
@@ -253,21 +408,27 @@ export default function ConfiguratorPage() {
         }
     };
 
-    const checkCompatibility = () => {
-        const warnings = [];
+    const checkCompatibility = async () => {
         const components = Object.values(selectedComponents);
+        if (components.length < 2) {
+            setCompatibilityWarnings([]);
+            return;
+        }
 
-        // Проверка процессора и материнской платы
-        const cpu = components.find(c => c.name?.toLowerCase().includes('процессор'));
-        const motherboard = components.find(c => c.name?.toLowerCase().includes('материнская'));
-
-        if (cpu && motherboard) {
-            // Простая проверка сокета (можно расширить)
-            if (cpu.name.includes('Intel') && motherboard.name.includes('AMD')) {
-                warnings.push('⚠️ Процессор Intel и материнская плата AMD могут быть несовместимы!');
-            }
-            if (cpu.name.includes('AMD') && motherboard.name.includes('Intel')) {
-                warnings.push('⚠️ Процессор AMD и материнская плата Intel могут быть несовместимы!');
+        const warnings = [];
+        for (let i = 0; i < components.length; i += 1) {
+            for (let j = i + 1; j < components.length; j += 1) {
+                const first = components[i];
+                const second = components[j];
+                if (!first?.id || !second?.id) continue;
+                try {
+                    const res = await relations.areProductsCompatible(first.id, second.id);
+                    if (res.data === false) {
+                        warnings.push(`⚠️ ${first.name} и ${second.name} несовместимы`);
+                    }
+                } catch (error) {
+                    console.error('Ошибка проверки совместимости:', error);
+                }
             }
         }
 
@@ -275,30 +436,28 @@ export default function ConfiguratorPage() {
     };
 
     const calculatePowerSupply = () => {
-        let estimated = 150; // Базовая мощность
-
-        Object.values(selectedComponents).forEach(comp => {
-            // Примерное энергопотребление по типу компонента
-            if (comp.name?.toLowerCase().includes('видеокарта')) estimated += 200;
-            else if (comp.name?.toLowerCase().includes('процессор')) estimated += 125;
-            else if (comp.name?.toLowerCase().includes('материнская')) estimated += 50;
-            else if (comp.name?.toLowerCase().includes('озу')) estimated += 15;
-            else if (comp.name?.toLowerCase().includes('ssd')) estimated += 10;
-            else if (comp.name?.toLowerCase().includes('hdd')) estimated += 15;
+        let estimated = 70; // база: мать + вентиляторы + периферия
+        Object.values(selectedComponents).forEach((comp) => {
+            estimated += estimateComponentPower(comp) * (comp.quantity || 1);
         });
 
         const recommended = Math.ceil(estimated * 1.3);
         let warning = null;
 
-        const psu = Object.values(selectedComponents).find(c =>
-            c.name?.toLowerCase().includes('блок питания')
+        const psu = Object.values(selectedComponents).find((c) =>
+            normalize(c.typeName || c.categoryName).includes('блок питания')
         );
 
         if (psu) {
-            const psuPower = parseInt(psu.name?.match(/\d+/)?.[0] || 0);
+            const psuPower = extractWattage(psu.name, psu.shortDescription, psu.fullDescription);
             if (psuPower && psuPower < recommended) {
                 warning = `⚠️ Блок питания (${psuPower}W) может быть недостаточным. Рекомендуется ${recommended}W`;
             }
+            if (!psuPower) {
+                warning = `⚠️ Не удалось определить мощность выбранного БП по названию. Требуется не менее ${recommended}W`;
+            }
+        } else if (Object.keys(selectedComponents).length > 0) {
+            warning = `⚠️ Блок питания не выбран. Для этой сборки нужен БП от ${recommended}W`;
         }
 
         setPowerSupplyCalc({ estimated, recommended, warning });
@@ -359,7 +518,7 @@ export default function ConfiguratorPage() {
 
     const showCompatibilityReport = () => {
         if (compatibilityWarnings.length === 0) {
-            alert('✅ Явных проблем совместимости не найдено (проверка базовая).');
+            alert('✅ Явных проблем совместимости не найдено (проверка по правилам совместимости товаров).');
             return;
         }
         alert(compatibilityWarnings.join('\n'));
@@ -533,6 +692,11 @@ export default function ConfiguratorPage() {
                         top: '100px'
                     }}>
                         <h3 style={{ marginBottom: '16px' }}>📋 Ваша сборка</h3>
+                        {buildCreating && (
+                            <div style={{ marginBottom: 12, fontSize: 12, color: '#9ca3af' }}>
+                                Создаём сборку...
+                            </div>
+                        )}
 
                         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '14px' }}>
                             <button className="btn-outline btn-sm" onClick={showCompatibilityReport}>

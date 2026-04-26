@@ -8,6 +8,7 @@ export default function ChatWindow({ onMinimize }) {
         sendMessage,
         activeSession,
         isLoading,
+        createNewSession,
         setIsOpen
     } = useChat();
 
@@ -46,6 +47,18 @@ export default function ChatWindow({ onMinimize }) {
         // чтобы пользователь мог открыть чат снова и продолжить переписку.
         setIsOpen(false);
         onMinimize?.();
+    };
+
+    const handleCreateNewChat = async () => {
+        try {
+            const session = await createNewSession(window.location.href);
+            if (session?.id) {
+                localStorage.setItem('chatSessionId', String(session.id));
+            }
+        } catch (error) {
+            console.error('Failed to create new chat session:', error);
+            alert('Не удалось создать новый чат');
+        }
     };
 
     // Статус чата
@@ -188,7 +201,20 @@ export default function ChatWindow({ onMinimize }) {
                 </form>
             ) : (
                 <div style={{ padding: 12, textAlign: 'center', color: '#666', background: '#f5f5f5', borderTop: '1px solid #e0e0e0' }}>
-                    Чат закрыт. Спасибо за обращение!
+                    <div style={{ marginBottom: 10 }}>Чат закрыт. Спасибо за обращение!</div>
+                    <button
+                        onClick={handleCreateNewChat}
+                        style={{
+                            border: 'none',
+                            borderRadius: 8,
+                            padding: '8px 12px',
+                            cursor: 'pointer',
+                            color: 'white',
+                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                        }}
+                    >
+                        Создать новый чат
+                    </button>
                 </div>
             )}
         </div>

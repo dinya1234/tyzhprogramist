@@ -465,6 +465,23 @@ export default function AdminPanel() {
         return <span style={{ background: info.color, padding: '4px 8px', borderRadius: '20px', fontSize: '11px', color: 'white' }}>{info.text}</span>;
     };
 
+    const normalizedSearchTerm = searchTerm.trim().toLowerCase();
+    const filteredProducts = productsList.filter((product) => {
+        if (!normalizedSearchTerm) return true;
+
+        const id = String(product.id ?? '').toLowerCase();
+        const name = String(product.name ?? '').toLowerCase();
+        const categoryName = String(product.categoryName ?? '').toLowerCase();
+        const sku = String(product.sku ?? '').toLowerCase();
+
+        return (
+            id.includes(normalizedSearchTerm) ||
+            name.includes(normalizedSearchTerm) ||
+            categoryName.includes(normalizedSearchTerm) ||
+            sku.includes(normalizedSearchTerm)
+        );
+    });
+
     if (loading) {
         return (
             <div className="container" style={{ textAlign: 'center', padding: '60px' }}>
@@ -676,7 +693,13 @@ export default function AdminPanel() {
                         </div>
 
                         <div className="admin-search">
-                            <input type="text" placeholder="Поиск товаров..." className="admin-search-input" />
+                            <input
+                                type="text"
+                                placeholder="Поиск товаров..."
+                                className="admin-search-input"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
                         </div>
 
                         <table className="admin-table">
@@ -692,7 +715,7 @@ export default function AdminPanel() {
                             </tr>
                             </thead>
                             <tbody>
-                            {productsList.map(product => (
+                            {filteredProducts.map(product => (
                                 <tr key={product.id}>
                                     <td>{product.id}</td>
                                     <td>{product.name}</td>

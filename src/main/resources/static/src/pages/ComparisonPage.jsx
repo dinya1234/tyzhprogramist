@@ -10,7 +10,7 @@ export default function ComparisonPage() {
     const { addToCart } = useCart();
 
     // Состояния
-    const [comparisons, setComparisons] = useState([]);
+    const [comparisonNames, setComparisonNames] = useState([]);
     const [selectedComparison, setSelectedComparison] = useState(null);
     const [comparisonItems, setComparisonItems] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -35,7 +35,7 @@ export default function ComparisonPage() {
     const loadComparisons = async () => {
         try {
             const response = await comparisons.getMyNames();
-            setComparisons(response.data || []);
+            setComparisonNames(response.data || []);
 
             if (response.data && response.data.length > 0) {
                 setSelectedComparison(response.data[0]);
@@ -64,11 +64,16 @@ export default function ComparisonPage() {
                         type: 'product'
                     };
                 } else if (item.fromContentType === 'PcBuild') {
-                    const buildRes = await pcBuilds.getPublicBuild(item.fromObjectId);
+                    let buildRes;
+                    try {
+                        buildRes = await pcBuilds.getMyBuild(item.fromObjectId);
+                    } catch (_) {
+                        buildRes = await pcBuilds.getPublicBuild(item.fromObjectId);
+                    }
                     return {
                         ...item,
                         details: buildRes.data,
-                        type: 'build'
+                        type: 'pcBuild'
                     };
                 }
                 return item;
@@ -93,8 +98,13 @@ export default function ComparisonPage() {
                 const response = await products.search(searchTerm, { page: 0, size: 10 });
                 setSearchResults(response.data.content || []);
             } else {
-                const response = await pcBuilds.searchPublic(searchTerm, { page: 0, size: 10 });
-                setSearchResults(response.data.content || []);
+                const response = await pcBuilds.getMyBuilds({ page: 0, size: 100 });
+                const allBuilds = response.data.content || [];
+                const normalizedTerm = searchTerm.trim().toLowerCase();
+                const filtered = allBuilds.filter((build) =>
+                    String(build.name || '').toLowerCase().includes(normalizedTerm)
+                );
+                setSearchResults(filtered.slice(0, 10));
             }
         } catch (error) {
             console.error('Ошибка поиска:', error);
@@ -104,10 +114,15 @@ export default function ComparisonPage() {
     const handleAddToComparison = async (itemId, itemName) => {
         try {
             if (creatingNew) {
-                await comparisons.createComparison(newComparisonName);
-                await comparisons.addToComparison(newComparisonName, searchType === 'product' ? 'Product' : 'PcBuild', itemId);
+                const normalizedNewName = String(newComparisonName || '').trim();
+                if (!normalizedNewName) {
+                    alert('Введите название сравнения');
+                    return;
+                }
+                await comparisons.createComparison(normalizedNewName);
+                await comparisons.addToComparison(normalizedNewName, searchType === 'product' ? 'Product' : 'PcBuild', itemId);
                 await loadComparisons();
-                setSelectedComparison(newComparisonName);
+                setSelectedComparison(normalizedNewName);
                 setCreatingNew(false);
                 setNewComparisonName('');
             } else if (selectedComparison) {
@@ -224,9 +239,9 @@ export default function ComparisonPage() {
             </div>
 
             {/* Список сравнений */}
-            {comparisons.length > 0 ? (
+            {comparisonNames.length > 0 ? (
                 <div className="comparison-tabs">
-                    {comparisons.map(name => (
+                    {comparisonNames.map(name => (
                         <button
                             key={name}
                             className={`comparison-tab ${selectedComparison === name ? 'active' : ''}`}
