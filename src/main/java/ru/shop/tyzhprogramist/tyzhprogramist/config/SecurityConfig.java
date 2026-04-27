@@ -60,28 +60,22 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/register", "/api/login", "/api/auth/refresh").permitAll()
 
-                        // Swagger / OpenAPI
                         .requestMatchers(
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html"
                         ).permitAll()
 
-                        // WebSocket endpoints
                         .requestMatchers("/ws-chat/**", "/ws/**", "/topic/**", "/queue/**", "/app/**", "/sockjs/**").permitAll()
 
-                        // Chat endpoints - публичные
                         .requestMatchers(HttpMethod.POST, "/api/chat/session").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/chat/message").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/chat/session/**").permitAll()
 
-                        // Chat endpoints - для модераторов (упрощаем)
                         .requestMatchers("/api/chat/consultant/**").hasAnyRole("ADMIN", "MODERATOR")
 
-                        // Chat endpoints - только для админов
                         .requestMatchers("/api/chat/statistics", "/api/chat/load", "/api/chat/sessions").hasRole("ADMIN")
 
-                        // User endpoints
                         .requestMatchers("/api/chat/me/**").authenticated()
 
                         .requestMatchers("/error").permitAll()

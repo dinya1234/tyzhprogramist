@@ -239,7 +239,9 @@ export const comparisons = {
     removeProduct: (name, productId) => api.delete(`/relations/comparisons/${comparisons.normalizeName(name)}/products/${productId}`),
     removePcBuild: (name, pcBuildId) => api.delete(`/relations/comparisons/${comparisons.normalizeName(name)}/pc-builds/${pcBuildId}`),
     deleteComparison: (name) => api.delete(`/relations/comparisons/${comparisons.normalizeName(name)}`),
-    createComparison: (name) => api.post(`/relations/comparisons/${comparisons.normalizeName(name)}`),
+    // В бэке нет отдельного endpoint для "пустого" сравнения.
+    // Сравнение создается при добавлении первого элемента.
+    createComparison: (name) => Promise.resolve({ data: { name: String(name ?? '').trim() } }),
     getCount: (name) => api.get(`/relations/comparisons/${comparisons.normalizeName(name)}/count`),
     existsInComparison: (name, contentType, objectId) =>
         api.get(`/relations/comparisons/exists?comparisonName=${encodeURIComponent(String(name ?? '').trim())}&contentType=${contentType}&objectId=${objectId}`)

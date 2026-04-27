@@ -119,7 +119,7 @@ export default function ComparisonPage() {
                     alert('Введите название сравнения');
                     return;
                 }
-                await comparisons.createComparison(normalizedNewName);
+                // Сравнение создается на сервере автоматически при добавлении первого элемента
                 await comparisons.addToComparison(normalizedNewName, searchType === 'product' ? 'Product' : 'PcBuild', itemId);
                 await loadComparisons();
                 setSelectedComparison(normalizedNewName);

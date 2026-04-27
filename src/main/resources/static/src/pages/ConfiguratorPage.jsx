@@ -537,7 +537,7 @@ export default function ConfiguratorPage() {
         if (!currentBuildId) return;
         try {
             const comparisonName = 'Мои сборки';
-            await comparisons.createComparison(comparisonName).catch(() => {});
+            // Бэкенд создает сравнение автоматически при первом добавлении
             await comparisons.addToComparison(comparisonName, 'PcBuild', currentBuildId);
             navigate('/comparison');
         } catch (e) {
