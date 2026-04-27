@@ -87,6 +87,7 @@ export default function ComparisonPage() {
 
     const handleComparisonChange = (name) => {
         setSelectedComparison(name);
+        setCreatingNew(false);
         loadComparisonItems(name);
     };
 
@@ -251,7 +252,8 @@ export default function ComparisonPage() {
                         </button>
                     ))}
                     <button className="comparison-tab add" onClick={() => {
-                        setCreatingNew(true);
+                        // Добавить элемент в уже выбранное сравнение
+                        setCreatingNew(false);
                         setShowAddModal(true);
                     }}>
                         + Добавить
@@ -398,7 +400,10 @@ export default function ComparisonPage() {
             {selectedComparison && comparisonItems.length === 0 && (
                 <div className="comparison-empty-items">
                     <p>В этом сравнении пока нет элементов</p>
-                    <button className="btn-primary" onClick={() => setShowAddModal(true)}>
+                    <button className="btn-primary" onClick={() => {
+                        setCreatingNew(false);
+                        setShowAddModal(true);
+                    }}>
                         Добавить товар или сборку
                     </button>
                 </div>
@@ -406,11 +411,17 @@ export default function ComparisonPage() {
 
             {/* Модальное окно добавления */}
             {showAddModal && (
-                <div className="comparison-modal-overlay" onClick={() => setShowAddModal(false)}>
+                <div className="comparison-modal-overlay" onClick={() => {
+                    setShowAddModal(false);
+                    setCreatingNew(false);
+                }}>
                     <div className="comparison-modal" onClick={(e) => e.stopPropagation()}>
                         <div className="comparison-modal-header">
                             <h3>{creatingNew ? 'Новое сравнение' : 'Добавить в сравнение'}</h3>
-                            <button className="comparison-modal-close" onClick={() => setShowAddModal(false)}>✕</button>
+                            <button className="comparison-modal-close" onClick={() => {
+                                setShowAddModal(false);
+                                setCreatingNew(false);
+                            }}>✕</button>
                         </div>
 
                         {creatingNew && (
