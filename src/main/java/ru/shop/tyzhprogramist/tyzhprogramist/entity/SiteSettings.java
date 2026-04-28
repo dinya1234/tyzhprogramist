@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 @Getter
 @Entity
 @Table(name = "site_settings")
-public class SiteSettings {//дописать сингнилтон или как он там называется я не выговорю
+public class SiteSettings {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

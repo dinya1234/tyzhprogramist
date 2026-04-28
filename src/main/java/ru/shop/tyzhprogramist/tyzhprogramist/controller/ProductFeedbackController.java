@@ -39,8 +39,6 @@ public class ProductFeedbackController {
         return principal.getId();
     }
 
-    // ========== ПУБЛИЧНЫЕ ЭНДПОИНТЫ ==========
-
     @GetMapping("/products/{productId}/reviews")
     public ResponseEntity<PageResponse<ProductFeedbackResponse>> getProductReviews(
             @PathVariable Long productId,
@@ -69,8 +67,6 @@ public class ProductFeedbackController {
     public ResponseEntity<Map<Integer, Long>> getRatingStatistics(@PathVariable Long productId) {
         return ResponseEntity.ok(feedbackService.getRatingStatistics(productId));
     }
-
-    // ========== АВТОРИЗОВАННЫЙ ПОЛЬЗОВАТЕЛЬ ==========
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -102,8 +98,6 @@ public class ProductFeedbackController {
         feedbackService.deleteFeedback(id, user);
         return ResponseEntity.noContent().build();
     }
-
-    // ========== МОДЕРАТОР / АДМИН ==========
 
     @GetMapping("/pending")
     @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")

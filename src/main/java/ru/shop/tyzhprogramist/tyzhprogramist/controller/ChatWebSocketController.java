@@ -36,7 +36,6 @@ public class ChatWebSocketController {
                             a.getAuthority().equals("ROLE_ADMIN"));
         }
 
-        // Сохраняем сообщение
         ChatMessage message;
         if (isModerator) {
             message = chatService.sendConsultantMessage(request.getSessionId(), request.getMessage());
@@ -46,7 +45,6 @@ public class ChatWebSocketController {
 
         ChatMessageResponse response = ChatMessageResponse.from(message);
 
-        // СПОСОБ 1: Используем MessageBuilder для явного создания сообщения
         org.springframework.messaging.Message<ChatMessageResponse> msg =
                 org.springframework.messaging.support.MessageBuilder
                         .withPayload(response)
@@ -54,7 +52,6 @@ public class ChatWebSocketController {
 
         messagingTemplate.send("/topic/chat/" + request.getSessionId(), msg);
 
-        // Если сообщение от пользователя - уведомляем модераторов
         if (message.getSenderType() == SenderType.USER) {
             Map<String, Object> notification = new HashMap<>();
             notification.put("sessionId", request.getSessionId());

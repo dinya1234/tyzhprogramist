@@ -61,7 +61,6 @@ public class EntityRelation {
         this.createdAt = LocalDateTime.now();
     }
 
-    // Конструктор для сравнения (comparison)
     public EntityRelation(User user, String name,
                           String fromContentType, Long fromObjectId,
                           String toContentType, Long toObjectId) {

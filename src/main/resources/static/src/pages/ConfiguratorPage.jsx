@@ -1,12 +1,13 @@
 // src/pages/ConfiguratorPage.jsx
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate , useSearchParams } from 'react-router-dom';
 import { pcBuilds, componentTypes, products, categories, comparisons, relations } from '../services/api';
 import { useChat } from '../context/ChatContext';
 import { useCart } from '../context/CartContext';
 
 export default function ConfiguratorPage() {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const { createSession, sendMessage, setIsOpen } = useChat();
     const { addToCart } = useCart();
 
@@ -22,9 +23,10 @@ export default function ConfiguratorPage() {
     const [isPublic, setIsPublic] = useState(false);
     const [totalPrice, setTotalPrice] = useState(0);
     const [loading, setLoading] = useState(false);
-    const [buildCreating, setBuildCreating] = useState(false);
     const [saving, setSaving] = useState(false);
     const [categoryTree, setCategoryTree] = useState([]);
+    const [isBuildLoaded, setIsBuildLoaded] = useState(false);
+    const [buildCreating, setBuildCreating] = useState(false);
 
     // Проверка совместимости
     const [compatibilityWarnings, setCompatibilityWarnings] = useState([]);
@@ -76,13 +78,11 @@ export default function ConfiguratorPage() {
             .replace(/&nbsp;/gi, ' ');
         if (!source) return null;
 
-        // 650W / 650 W / 650Вт / 650 ватт
         const wattMatch = source.match(/(\d{2,4})(?:[.,]\d+)?\s*(?:w|вт|ватт)\b/i);
         if (wattMatch) {
             return Math.round(Number(wattMatch[1]));
         }
 
-        // 0.75kW / 0,75 кВт / 1 kW
         const kwMatch = source.match(/(\d+(?:[.,]\d+)?)\s*(?:kw|квт)\b/i);
         if (kwMatch) {
             const kw = Number(String(kwMatch[1]).replace(',', '.'));
@@ -128,7 +128,7 @@ export default function ConfiguratorPage() {
         loadComponentTypes();
     }, []);
 
-    // Загрузка дерева категорий (нужно, чтобы корректно фильтровать товары по categoryId)
+    // Загрузка дерева категорий
     useEffect(() => {
         categories.getTree()
             .then(res => setCategoryTree(res.data || []))
@@ -138,22 +138,25 @@ export default function ConfiguratorPage() {
             });
     }, []);
 
-    // Загрузка существующей сборки (если редактируем)
+    // Загрузка существующей сборки ИЛИ создание новой ТОЛЬКО при старте
     useEffect(() => {
-        const buildIdFromUrl = new URLSearchParams(window.location.search).get('buildId');
+        const buildIdFromUrl = searchParams.get('buildId');
+
         if (buildIdFromUrl) {
+            // Редактируем существующую сборку
             loadBuild(buildIdFromUrl);
         } else {
-            createNewBuild();
+            // Новая сборка: не создаём на сервере, только локальное состояние
+            initializeNewBuild();
         }
-    }, []);
+    }, [searchParams]);
 
     // Загрузка товаров для текущего шага
     useEffect(() => {
-        if (currentType) {
+        if (currentType && isBuildLoaded) {
             loadProductsForType(currentType);
         }
-    }, [currentType]);
+    }, [currentType, isBuildLoaded]);
 
     // Пересчёт итоговой цены
     useEffect(() => {
@@ -226,11 +229,9 @@ export default function ConfiguratorPage() {
             const findCategoryIdForType = () => {
                 if (!typeNorm) return null;
 
-                // 1) Пробуем прямое совпадение по подстроке в названии категории
                 const direct = allCats.find(c => normalize(c.name).includes(typeNorm) || typeNorm.includes(normalize(c.name)));
                 if (direct?.id) return direct.id;
 
-                // 2) Пробуем по словарю синонимов
                 const entry = Object.entries(explicitMap).find(([k]) => normalize(k) === typeNorm)
                     || Object.entries(explicitMap).find(([, variants]) => variants.some(v => typeNorm.includes(normalize(v)) || normalize(v).includes(typeNorm)));
                 if (entry) {
@@ -248,7 +249,6 @@ export default function ConfiguratorPage() {
             if (categoryId) {
                 response = await products.getByCategory(categoryId, { size: 50 });
             } else {
-                // Фоллбек: если категорию не удалось сопоставить, хотя бы покажем релевантное поиском
                 response = await products.search(typeName || '', { size: 50 });
             }
 
@@ -261,8 +261,69 @@ export default function ConfiguratorPage() {
         }
     };
 
-    const createNewBuild = async () => {
-        if (buildCreating) return null;
+    // Инициализация новой локальной сборки (без создания на сервере)
+    const initializeNewBuild = () => {
+        console.log('Инициализация новой локальной сборки');
+        setCurrentBuildId(null);
+        setSelectedComponents({});
+        setBuildName('Моя сборка');
+        setIsPublic(false);
+        setTotalPrice(0);
+        setIsBuildLoaded(true);
+    };
+
+    // Загрузка существующей сборки с сервера
+    const loadBuild = async (buildId) => {
+        setLoading(true);
+        try {
+            const response = await pcBuilds.getMyBuild(buildId);
+            const build = response.data;
+            setBuildName(build.name);
+            setIsPublic(build.isPublic);
+            setCurrentBuildId(build.id);
+
+            const componentsRes = await pcBuilds.getComponents(buildId);
+            const components = {};
+            componentsRes.data.forEach(comp => {
+                const typeName = resolveTypeName(comp.componentType);
+                components[typeName] = {
+                    id: comp.productId,
+                    name: comp.productName,
+                    price: comp.price,
+                    quantity: comp.quantity,
+                    typeName,
+                    categoryName: comp.componentType
+                };
+            });
+
+            const withDetailsEntries = await Promise.all(
+                Object.entries(components).map(async ([typeName, component]) => {
+                    try {
+                        const detailsRes = await products.getById(component.id);
+                        return [typeName, {
+                            ...component,
+                            shortDescription: detailsRes.data?.shortDescription,
+                            fullDescription: detailsRes.data?.fullDescription
+                        }];
+                    } catch (e) {
+                        return [typeName, component];
+                    }
+                })
+            );
+            setSelectedComponents(Object.fromEntries(withDetailsEntries));
+            setIsBuildLoaded(true);
+        } catch (error) {
+            console.error('Ошибка загрузки сборки:', error);
+            initializeNewBuild();
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Создание сборки на сервере (только при первом выборе компонента или при сохранении)
+    const createBuildOnServer = async () => {
+        if (currentBuildId) return currentBuildId;
+
         setBuildCreating(true);
         try {
             const baseName = (buildName || 'Моя сборка').trim();
@@ -298,53 +359,11 @@ export default function ConfiguratorPage() {
         }
     };
 
-    const loadBuild = async (buildId) => {
-        try {
-            const response = await pcBuilds.getMyBuild(buildId);
-            const build = response.data;
-            setBuildName(build.name);
-            setIsPublic(build.isPublic);
-            setCurrentBuildId(build.id);
-
-            // Загружаем компоненты
-            const componentsRes = await pcBuilds.getComponents(buildId);
-            const components = {};
-            componentsRes.data.forEach(comp => {
-                const typeName = resolveTypeName(comp.componentType);
-                components[typeName] = {
-                    id: comp.productId,
-                    name: comp.productName,
-                    price: comp.price,
-                    quantity: comp.quantity,
-                    typeName,
-                    categoryName: comp.componentType
-                };
-            });
-
-            const withDetailsEntries = await Promise.all(
-                Object.entries(components).map(async ([typeName, component]) => {
-                    try {
-                        const detailsRes = await products.getById(component.id);
-                        return [typeName, {
-                            ...component,
-                            shortDescription: detailsRes.data?.shortDescription,
-                            fullDescription: detailsRes.data?.fullDescription
-                        }];
-                    } catch (e) {
-                        return [typeName, component];
-                    }
-                })
-            );
-            setSelectedComponents(Object.fromEntries(withDetailsEntries));
-        } catch (error) {
-            console.error('Ошибка загрузки сборки:', error);
-        }
-    };
-
     const selectComponent = async (product) => {
+        // Если это новая сборка (нет buildId), создаём её на сервере при первом выборе компонента
         let buildId = currentBuildId;
         if (!buildId) {
-            buildId = await createNewBuild();
+            buildId = await createBuildOnServer();
         }
         if (!buildId) {
             alert('Не удалось создать сборку. Проверьте авторизацию и попробуйте снова.');
@@ -398,7 +417,12 @@ export default function ConfiguratorPage() {
     };
 
     const calculateTotalPrice = async () => {
-        if (!currentBuildId) return;
+        if (!currentBuildId) {
+            // Локальный расчёт цены для несозданной сборки
+            const total = Object.values(selectedComponents).reduce((sum, comp) => sum + (comp.price * (comp.quantity || 1)), 0);
+            setTotalPrice(total);
+            return;
+        }
 
         try {
             const response = await pcBuilds.getTotalPrice(currentBuildId);
@@ -436,7 +460,7 @@ export default function ConfiguratorPage() {
     };
 
     const calculatePowerSupply = () => {
-        let estimated = 70; // база: мать + вентиляторы + периферия
+        let estimated = 70;
         Object.values(selectedComponents).forEach((comp) => {
             estimated += estimateComponentPower(comp) * (comp.quantity || 1);
         });
@@ -482,7 +506,14 @@ export default function ConfiguratorPage() {
     };
 
     const saveBuild = async () => {
-        if (!currentBuildId) return;
+        if (!currentBuildId) {
+            // Если сборка ещё не создана, создаём её перед сохранением
+            const buildId = await createBuildOnServer();
+            if (!buildId) {
+                alert('Не удалось создать сборку для сохранения');
+                return;
+            }
+        }
 
         setSaving(true);
         try {
@@ -490,13 +521,22 @@ export default function ConfiguratorPage() {
             alert('Сборка сохранена!');
             navigate('/profile');
         } catch (error) {
-            alert('Ошибка сохранения сборки');
+            alert(error.response?.data?.message || 'Ошибка сохранения сборки');
         } finally {
             setSaving(false);
         }
     };
 
     const addAllToCart = async () => {
+        if (!currentBuildId) {
+            // Если сборка не создана, создаём перед добавлением в корзину
+            const buildId = await createBuildOnServer();
+            if (!buildId) {
+                alert('Не удалось создать сборку');
+                return;
+            }
+        }
+
         for (const component of Object.values(selectedComponents)) {
             await addToCart(component.id, component.quantity);
         }
@@ -534,16 +574,26 @@ export default function ConfiguratorPage() {
     };
 
     const compareThisBuild = async () => {
-        if (!currentBuildId) return;
+        if (!currentBuildId) {
+            alert('Сначала сохраните сборку, чтобы добавить её в сравнение');
+            return;
+        }
         try {
             const comparisonName = 'Мои сборки';
-            // Бэкенд создает сравнение автоматически при первом добавлении
             await comparisons.addToComparison(comparisonName, 'PcBuild', currentBuildId);
             navigate('/comparison');
         } catch (e) {
             alert(e.response?.data?.message || 'Не удалось добавить сборку в сравнение');
         }
     };
+
+    if (!isBuildLoaded) {
+        return (
+            <div className="container" style={{ textAlign: 'center', padding: '60px' }}>
+                <h2>Загрузка конфигуратора...</h2>
+            </div>
+        );
+    }
 
     return (
         <div className="container" style={{ marginTop: '30px', marginBottom: '60px' }}>
@@ -683,7 +733,6 @@ export default function ConfiguratorPage() {
 
                 {/* Боковая панель */}
                 <div>
-                    {/* Выбранные компоненты */}
                     <div style={{
                         background: '#15181f',
                         borderRadius: '16px',
@@ -692,6 +741,13 @@ export default function ConfiguratorPage() {
                         top: '100px'
                     }}>
                         <h3 style={{ marginBottom: '16px' }}>📋 Ваша сборка</h3>
+
+                        {!currentBuildId && Object.keys(selectedComponents).length === 0 && (
+                            <div style={{ marginBottom: 12, fontSize: 12, color: '#9ca3af' }}>
+                                💡 Начните выбирать компоненты — сборка создастся автоматически
+                            </div>
+                        )}
+
                         {buildCreating && (
                             <div style={{ marginBottom: 12, fontSize: 12, color: '#9ca3af' }}>
                                 Создаём сборку...
