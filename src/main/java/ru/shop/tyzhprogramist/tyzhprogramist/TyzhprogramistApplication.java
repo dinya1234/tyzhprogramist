@@ -10,7 +10,6 @@ import java.io.InputStream;
 
 @SpringBootApplication
 public class TyzhprogramistApplication {
-//проверка для гита
     private static Process reactProcess;
 
     public static void main(String[] args) {

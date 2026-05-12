@@ -48,7 +48,6 @@ public class EntityRelation {
         this.createdAt = LocalDateTime.now();
     }
 
-    // Конструктор для совместимости (compatibility)
     public EntityRelation(String fromContentType, Long fromObjectId,
                           String toContentType, Long toObjectId,
                           Boolean isCompatible) {
