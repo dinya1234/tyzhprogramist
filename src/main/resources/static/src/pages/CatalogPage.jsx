@@ -157,16 +157,16 @@ export default function CatalogPage() {
         <div className="container" style={{ marginTop: '30px' }}>
             {!isAuthenticated && (
                 <div style={{
-                    background: 'linear-gradient(135deg, #1e1b4b, #2e1065)',
+                    background: 'linear-gradient(135deg, var(--accent-bg), var(--bg-tertiary))',
                     borderRadius: '16px',
                     padding: '16px 18px',
                     marginBottom: '18px',
-                    border: '1px solid rgba(192, 132, 252, 0.35)'
+                    border: `1px solid var(--accent)`
                 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
                         <div>
-                            <div style={{ fontWeight: 700, marginBottom: 4 }}>Чтобы смотреть каталог полностью — зарегистрируйтесь</div>
-                            <div style={{ color: '#ddd6fe', fontSize: 14 }}>
+                            <div style={{ fontWeight: 700, marginBottom: 4, color: 'var(--text-primary)' }}>Чтобы смотреть каталог полностью — зарегистрируйтесь</div>
+                            <div style={{ color: 'var(--accent)', fontSize: 14 }}>
                                 Гостям доступна только витрина на главной странице.
                             </div>
                         </div>
@@ -181,17 +181,17 @@ export default function CatalogPage() {
                 {/* Боковая панель фильтров */}
                 <aside style={{ width: '280px', flexShrink: 0 }}>
                     <div style={{
-                        background: '#15181f',
+                        background: 'var(--bg-tertiary)',
                         padding: '20px',
                         borderRadius: '16px',
                         position: 'sticky',
                         top: '100px'
                     }}>
-                        <h3 style={{ marginBottom: '16px', fontSize: '20px' }}>Фильтры</h3>
+                        <h3 style={{ marginBottom: '16px', fontSize: '20px', color: 'var(--text-primary)' }}>Фильтры</h3>
 
                         {/* Категории */}
                         <div style={{ marginBottom: '24px' }}>
-                            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>
+                            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: 'var(--text-primary)' }}>
                                 Категория
                             </label>
                             <select
@@ -201,10 +201,10 @@ export default function CatalogPage() {
                                 style={{
                                     width: '100%',
                                     padding: '10px',
-                                    background: '#0a0c10',
-                                    border: '1px solid #3f434e',
+                                    background: 'var(--bg-input)',
+                                    border: `1px solid var(--border-light)`,
                                     borderRadius: '8px',
-                                    color: 'white',
+                                    color: 'var(--text-primary)',
                                     cursor: 'pointer'
                                 }}
                             >
@@ -219,7 +219,7 @@ export default function CatalogPage() {
 
                         {/* Цена */}
                         <div style={{ marginBottom: '24px' }}>
-                            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>
+                            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: 'var(--text-primary)' }}>
                                 Цена (₽)
                             </label>
                             <div style={{ display: 'flex', gap: '8px' }}>
@@ -231,14 +231,14 @@ export default function CatalogPage() {
                                         setPriceMin(e.target.value);
                                         setPage(0);
                                     }}
-                                disabled={!isAuthenticated}
+                                    disabled={!isAuthenticated}
                                     style={{
                                         width: '50%',
                                         padding: '10px',
-                                        background: '#0a0c10',
-                                        border: '1px solid #3f434e',
+                                        background: 'var(--bg-input)',
+                                        border: `1px solid var(--border-light)`,
                                         borderRadius: '8px',
-                                        color: 'white'
+                                        color: 'var(--text-primary)'
                                     }}
                                 />
                                 <input
@@ -249,14 +249,14 @@ export default function CatalogPage() {
                                         setPriceMax(e.target.value);
                                         setPage(0);
                                     }}
-                                disabled={!isAuthenticated}
+                                    disabled={!isAuthenticated}
                                     style={{
                                         width: '50%',
                                         padding: '10px',
-                                        background: '#0a0c10',
-                                        border: '1px solid #3f434e',
+                                        background: 'var(--bg-input)',
+                                        border: `1px solid var(--border-light)`,
                                         borderRadius: '8px',
-                                        color: 'white'
+                                        color: 'var(--text-primary)'
                                     }}
                                 />
                             </div>
@@ -264,7 +264,7 @@ export default function CatalogPage() {
 
                         {/* Сортировка */}
                         <div style={{ marginBottom: '24px' }}>
-                            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>
+                            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: 'var(--text-primary)' }}>
                                 Сортировка
                             </label>
                             <select
@@ -277,10 +277,10 @@ export default function CatalogPage() {
                                 style={{
                                     width: '100%',
                                     padding: '10px',
-                                    background: '#0a0c10',
-                                    border: '1px solid #3f434e',
+                                    background: 'var(--bg-input)',
+                                    border: `1px solid var(--border-light)`,
                                     borderRadius: '8px',
-                                    color: 'white',
+                                    color: 'var(--text-primary)',
                                     cursor: 'pointer'
                                 }}
                             >
@@ -298,19 +298,21 @@ export default function CatalogPage() {
                                 width: '100%',
                                 padding: '10px',
                                 background: 'transparent',
-                                border: '1px solid #3f434e',
+                                border: `1px solid var(--border-light)`,
                                 borderRadius: '8px',
-                                color: 'white',
+                                color: 'var(--text-primary)',
                                 cursor: 'pointer',
                                 transition: 'all 0.3s'
                             }}
                             onMouseEnter={(e) => {
-                                e.target.style.background = '#ff4444';
-                                e.target.style.borderColor = '#ff4444';
+                                e.target.style.background = 'var(--danger)';
+                                e.target.style.borderColor = 'var(--danger)';
+                                e.target.style.color = 'white';
                             }}
                             onMouseLeave={(e) => {
                                 e.target.style.background = 'transparent';
-                                e.target.style.borderColor = '#3f434e';
+                                e.target.style.borderColor = 'var(--border-light)';
+                                e.target.style.color = 'var(--text-primary)';
                             }}
                         >
                             🗑️ Сбросить фильтры
@@ -329,10 +331,10 @@ export default function CatalogPage() {
                         flexWrap: 'wrap',
                         gap: '16px'
                     }}>
-                        <h2 style={{ fontSize: '28px', margin: 0 }}>Каталог товаров</h2>
+                        <h2 style={{ fontSize: '28px', margin: 0, color: 'var(--text-primary)' }}>Каталог товаров</h2>
                         <span style={{
-                            color: '#9ca3af',
-                            background: '#15181f',
+                            color: 'var(--text-secondary)',
+                            background: 'var(--bg-tertiary)',
                             padding: '8px 16px',
                             borderRadius: '20px',
                             fontSize: '14px'
@@ -349,19 +351,20 @@ export default function CatalogPage() {
                             gap: '8px',
                             marginBottom: '24px',
                             padding: '12px',
-                            background: '#15181f',
+                            background: 'var(--bg-tertiary)',
                             borderRadius: '12px'
                         }}>
-                            <span style={{ color: '#9ca3af', marginRight: '8px' }}>Активные фильтры:</span>
+                            <span style={{ color: 'var(--text-secondary)', marginRight: '8px' }}>Активные фильтры:</span>
                             {selectedCategory && (
                                 <span style={{
-                                    background: '#2a2f3a',
+                                    background: 'var(--bg-card)',
                                     padding: '4px 12px',
                                     borderRadius: '16px',
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: '8px',
-                                    fontSize: '14px'
+                                    fontSize: '14px',
+                                    color: 'var(--text-primary)'
                                 }}>
                                     Категория: {categoryList.find(c => c.id === parseInt(selectedCategory))?.name}
                                     <button
@@ -372,7 +375,7 @@ export default function CatalogPage() {
                                         style={{
                                             background: 'none',
                                             border: 'none',
-                                            color: '#ff4444',
+                                            color: 'var(--danger)',
                                             cursor: 'pointer',
                                             fontSize: '16px'
                                         }}
@@ -381,13 +384,14 @@ export default function CatalogPage() {
                             )}
                             {priceMin && (
                                 <span style={{
-                                    background: '#2a2f3a',
+                                    background: 'var(--bg-card)',
                                     padding: '4px 12px',
                                     borderRadius: '16px',
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: '8px',
-                                    fontSize: '14px'
+                                    fontSize: '14px',
+                                    color: 'var(--text-primary)'
                                 }}>
                                     От {priceMin} ₽
                                     <button
@@ -398,7 +402,7 @@ export default function CatalogPage() {
                                         style={{
                                             background: 'none',
                                             border: 'none',
-                                            color: '#ff4444',
+                                            color: 'var(--danger)',
                                             cursor: 'pointer',
                                             fontSize: '16px'
                                         }}
@@ -407,13 +411,14 @@ export default function CatalogPage() {
                             )}
                             {priceMax && (
                                 <span style={{
-                                    background: '#2a2f3a',
+                                    background: 'var(--bg-card)',
                                     padding: '4px 12px',
                                     borderRadius: '16px',
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: '8px',
-                                    fontSize: '14px'
+                                    fontSize: '14px',
+                                    color: 'var(--text-primary)'
                                 }}>
                                     До {priceMax} ₽
                                     <button
@@ -424,7 +429,7 @@ export default function CatalogPage() {
                                         style={{
                                             background: 'none',
                                             border: 'none',
-                                            color: '#ff4444',
+                                            color: 'var(--danger)',
                                             cursor: 'pointer',
                                             fontSize: '16px'
                                         }}
@@ -433,13 +438,14 @@ export default function CatalogPage() {
                             )}
                             {sortBy !== 'createdAt,desc' && (
                                 <span style={{
-                                    background: '#2a2f3a',
+                                    background: 'var(--bg-card)',
                                     padding: '4px 12px',
                                     borderRadius: '16px',
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: '8px',
-                                    fontSize: '14px'
+                                    fontSize: '14px',
+                                    color: 'var(--text-primary)'
                                 }}>
                                     Сортировка: {
                                         sortBy === 'price,asc' ? 'По возрастанию цены' :
@@ -454,7 +460,7 @@ export default function CatalogPage() {
                                         style={{
                                             background: 'none',
                                             border: 'none',
-                                            color: '#ff4444',
+                                            color: 'var(--danger)',
                                             cursor: 'pointer',
                                             fontSize: '16px'
                                         }}
@@ -469,12 +475,12 @@ export default function CatalogPage() {
                         <div style={{
                             textAlign: 'center',
                             padding: '80px 20px',
-                            background: '#15181f',
+                            background: 'var(--bg-tertiary)',
                             borderRadius: '16px'
                         }}>
                             <div style={{ fontSize: '64px', marginBottom: '16px' }}>🔍</div>
-                            <h3 style={{ marginBottom: '8px' }}>Товары не найдены</h3>
-                            <p style={{ color: '#9ca3af' }}>Попробуйте изменить параметры фильтрации</p>
+                            <h3 style={{ marginBottom: '8px', color: 'var(--text-primary)' }}>Товары не найдены</h3>
+                            <p style={{ color: 'var(--text-secondary)' }}>Попробуйте изменить параметры фильтрации</p>
                         </div>
                     ) : (
                         <>
@@ -498,10 +504,10 @@ export default function CatalogPage() {
                                         disabled={page === 0}
                                         style={{
                                             padding: '10px 20px',
-                                            background: page === 0 ? '#2a2f3a' : '#15181f',
-                                            border: '1px solid #3f434e',
+                                            background: page === 0 ? 'var(--bg-card)' : 'var(--bg-tertiary)',
+                                            border: `1px solid var(--border-light)`,
                                             borderRadius: '8px',
-                                            color: page === 0 ? '#6c757d' : 'white',
+                                            color: page === 0 ? 'var(--text-muted)' : 'var(--text-primary)',
                                             cursor: page === 0 ? 'not-allowed' : 'pointer',
                                             transition: 'all 0.3s'
                                         }}
@@ -510,10 +516,11 @@ export default function CatalogPage() {
                                     </button>
                                     <span style={{
                                         padding: '10px 20px',
-                                        background: '#15181f',
+                                        background: 'var(--bg-tertiary)',
                                         borderRadius: '8px',
                                         minWidth: '120px',
-                                        textAlign: 'center'
+                                        textAlign: 'center',
+                                        color: 'var(--text-primary)'
                                     }}>
                                         Страница {page + 1} из {totalPages}
                                     </span>
@@ -522,10 +529,10 @@ export default function CatalogPage() {
                                         disabled={page >= totalPages - 1}
                                         style={{
                                             padding: '10px 20px',
-                                            background: page >= totalPages - 1 ? '#2a2f3a' : '#15181f',
-                                            border: '1px solid #3f434e',
+                                            background: page >= totalPages - 1 ? 'var(--bg-card)' : 'var(--bg-tertiary)',
+                                            border: `1px solid var(--border-light)`,
                                             borderRadius: '8px',
-                                            color: page >= totalPages - 1 ? '#6c757d' : 'white',
+                                            color: page >= totalPages - 1 ? 'var(--text-muted)' : 'var(--text-primary)',
                                             cursor: page >= totalPages - 1 ? 'not-allowed' : 'pointer',
                                             transition: 'all 0.3s'
                                         }}

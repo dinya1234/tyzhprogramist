@@ -606,21 +606,21 @@ export default function ConfiguratorPage() {
                     justifyContent: 'space-between',
                     marginBottom: '8px',
                     fontSize: '14px',
-                    color: '#9ca3af'
+                    color: 'var(--text-secondary)'
                 }}>
                     <span>Шаг {step} из {totalSteps}</span>
                     <span>{Math.round(progressPercent)}%</span>
                 </div>
                 <div style={{
                     height: '8px',
-                    background: '#2a2d36',
+                    background: 'var(--border)',
                     borderRadius: '4px',
                     overflow: 'hidden'
                 }}>
                     <div style={{
                         width: `${progressPercent}%`,
                         height: '100%',
-                        background: 'linear-gradient(135deg, #c084fc, #60a5fa)',
+                        background: 'var(--accent-gradient)',
                         transition: 'width 0.3s'
                     }} />
                 </div>
@@ -638,18 +638,18 @@ export default function ConfiguratorPage() {
                         {/* Уже выбранный компонент */}
                         {selectedComponents[currentType?.name] && (
                             <div style={{
-                                background: '#1e2129',
+                                background: 'var(--bg-card)',
                                 padding: '16px',
                                 borderRadius: '12px',
                                 marginBottom: '20px'
                             }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <div>
-                                        <span style={{ color: '#22c55e' }}>✓ Выбрано:</span>
+                                        <span style={{ color: 'var(--success)' }}>✓ Выбрано:</span>
                                         <span style={{ fontWeight: 'bold', marginLeft: '8px' }}>
                                             {selectedComponents[currentType?.name].name}
                                         </span>
-                                        <span style={{ color: '#c084fc', marginLeft: '12px' }}>
+                                        <span style={{ color: 'var(--accent)', marginLeft: '12px' }}>
                                             {selectedComponents[currentType?.name].price?.toLocaleString()} ₽
                                         </span>
                                     </div>
@@ -667,7 +667,7 @@ export default function ConfiguratorPage() {
                         <h3 style={{ marginBottom: '12px', fontSize: '16px' }}>Доступные компоненты:</h3>
 
                         {loading ? (
-                            <div style={{ textAlign: 'center', padding: '40px' }}>Загрузка...</div>
+                            <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>Загрузка...</div>
                         ) : (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                                 {availableProducts.map(product => (
@@ -678,21 +678,21 @@ export default function ConfiguratorPage() {
                                             justifyContent: 'space-between',
                                             alignItems: 'center',
                                             padding: '16px',
-                                            background: '#15181f',
+                                            background: 'var(--bg-tertiary)',
                                             borderRadius: '12px',
                                             border: selectedComponents[currentType?.name]?.id === product.id
-                                                ? '2px solid #c084fc'
-                                                : '1px solid #2a2d36'
+                                                ? `2px solid var(--accent)`
+                                                : `1px solid var(--border)`
                                         }}
                                     >
                                         <div>
                                             <div style={{ fontWeight: 'bold' }}>{product.name}</div>
-                                            <div style={{ fontSize: '12px', color: '#9ca3af' }}>
+                                            <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
                                                 {product.categoryName}
                                             </div>
                                         </div>
                                         <div style={{ textAlign: 'right' }}>
-                                            <div style={{ color: '#c084fc', fontWeight: 'bold' }}>
+                                            <div style={{ color: 'var(--accent)', fontWeight: 'bold' }}>
                                                 {product.price?.toLocaleString()} ₽
                                             </div>
                                             <button
@@ -734,7 +734,7 @@ export default function ConfiguratorPage() {
                 {/* Боковая панель */}
                 <div>
                     <div style={{
-                        background: '#15181f',
+                        background: 'var(--bg-tertiary)',
                         borderRadius: '16px',
                         padding: '20px',
                         position: 'sticky',
@@ -743,13 +743,13 @@ export default function ConfiguratorPage() {
                         <h3 style={{ marginBottom: '16px' }}>📋 Ваша сборка</h3>
 
                         {!currentBuildId && Object.keys(selectedComponents).length === 0 && (
-                            <div style={{ marginBottom: 12, fontSize: 12, color: '#9ca3af' }}>
+                            <div style={{ marginBottom: 12, fontSize: 12, color: 'var(--text-secondary)' }}>
                                 💡 Начните выбирать компоненты — сборка создастся автоматически
                             </div>
                         )}
 
                         {buildCreating && (
-                            <div style={{ marginBottom: 12, fontSize: 12, color: '#9ca3af' }}>
+                            <div style={{ marginBottom: 12, fontSize: 12, color: 'var(--text-secondary)' }}>
                                 Создаём сборку...
                             </div>
                         )}
@@ -775,16 +775,16 @@ export default function ConfiguratorPage() {
                                 style={{
                                     width: '100%',
                                     padding: '8px 12px',
-                                    background: '#0a0c10',
-                                    border: '1px solid #3f434e',
+                                    background: 'var(--bg-input)',
+                                    border: `1px solid var(--border-light)`,
                                     borderRadius: '8px',
-                                    color: 'white'
+                                    color: 'var(--text-primary)'
                                 }}
                             />
                         </div>
 
                         <div style={{ marginBottom: '16px' }}>
-                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', color: 'var(--text-primary)' }}>
                                 <input
                                     type="checkbox"
                                     checked={isPublic}
@@ -794,7 +794,7 @@ export default function ConfiguratorPage() {
                             </label>
                         </div>
 
-                        <div style={{ borderTop: '1px solid #2a2d36', margin: '16px 0' }} />
+                        <div style={{ borderTop: `1px solid var(--border)`, margin: '16px 0' }} />
 
                         {Object.entries(selectedComponents).map(([type, component]) => (
                             <div key={type} style={{
@@ -803,20 +803,20 @@ export default function ConfiguratorPage() {
                                 marginBottom: '12px',
                                 fontSize: '14px'
                             }}>
-                                <span style={{ color: '#9ca3af' }}>{type}:</span>
+                                <span style={{ color: 'var(--text-secondary)' }}>{type}:</span>
                                 <span style={{ textAlign: 'right' }}>
                                     <div>{component.name}</div>
-                                    <div style={{ color: '#c084fc' }}>
+                                    <div style={{ color: 'var(--accent)' }}>
                                         {component.price?.toLocaleString()} ₽
                                     </div>
                                 </span>
                             </div>
                         ))}
 
-                        <div style={{ borderTop: '1px solid #2a2d36', margin: '16px 0', paddingTop: '16px' }}>
+                        <div style={{ borderTop: `1px solid var(--border)`, margin: '16px 0', paddingTop: '16px' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                                 <span>Итого:</span>
-                                <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#c084fc' }}>
+                                <span style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--accent)' }}>
                                     {totalPrice.toLocaleString()} ₽
                                 </span>
                             </div>
@@ -825,11 +825,13 @@ export default function ConfiguratorPage() {
                         {/* Предупреждения о совместимости */}
                         {compatibilityWarnings.length > 0 && (
                             <div style={{
-                                background: '#7c2d12',
+                                background: 'rgba(239, 68, 68, 0.15)',
+                                border: `1px solid var(--danger)`,
                                 padding: '12px',
                                 borderRadius: '8px',
                                 marginBottom: '16px',
-                                fontSize: '12px'
+                                fontSize: '12px',
+                                color: 'var(--danger)'
                             }}>
                                 {compatibilityWarnings.map((w, i) => (
                                     <div key={i}>{w}</div>
@@ -839,17 +841,17 @@ export default function ConfiguratorPage() {
 
                         {/* Калькулятор БП */}
                         <div style={{
-                            background: '#1e2129',
+                            background: 'var(--bg-card)',
                             padding: '12px',
                             borderRadius: '8px',
                             marginBottom: '16px',
                             fontSize: '12px'
                         }}>
-                            <div style={{ fontWeight: 'bold', marginBottom: '8px' }}>⚡ Энергопотребление</div>
-                            <div>Расчётное: ~{powerSupplyCalc.estimated}W</div>
-                            <div>Рекомендуемый БП: {powerSupplyCalc.recommended}W</div>
+                            <div style={{ fontWeight: 'bold', marginBottom: '8px', color: 'var(--text-primary)' }}>⚡ Энергопотребление</div>
+                            <div style={{ color: 'var(--text-secondary)' }}>Расчётное: ~{powerSupplyCalc.estimated}W</div>
+                            <div style={{ color: 'var(--text-secondary)' }}>Рекомендуемый БП: {powerSupplyCalc.recommended}W</div>
                             {powerSupplyCalc.warning && (
-                                <div style={{ color: '#f59e0b', marginTop: '8px' }}>
+                                <div style={{ color: 'var(--warning)', marginTop: '8px' }}>
                                     {powerSupplyCalc.warning}
                                 </div>
                             )}

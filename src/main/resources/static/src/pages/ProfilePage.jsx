@@ -2,10 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { orders, pcBuilds, feedbacks, repairRequests, auth } from '../services/api';
 
 export default function ProfilePage() {
     const { user, logout } = useAuth();
+    const { theme, toggleTheme } = useTheme();
     const [activeTab, setActiveTab] = useState('orders'); // orders, builds, feedbacks, repairs, settings
 
     // Данные
@@ -196,8 +198,8 @@ export default function ProfilePage() {
                             {user?.username?.[0]?.toUpperCase() || '👤'}
                         </div>
                         <h3>{user?.username}</h3>
-                        <p style={{ color: '#9ca3af', fontSize: '14px' }}>{user?.email}</p>
-                        <p style={{ color: '#c084fc', fontSize: '12px' }}>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>{user?.email}</p>
+                        <p style={{ color: 'var(--accent)', fontSize: '12px' }}>
                             {user?.role === 'ADMIN' ? '👑 Администратор' : user?.role === 'MODERATOR' ? '🛡️ Модератор' : '👤 Клиент'}
                         </p>
                     </div>
@@ -315,7 +317,7 @@ export default function ProfilePage() {
                                                     {build.isPublic ? (
                                                         <span style={{ color: '#22c55e', fontSize: '12px' }}>🌍 Опубликована</span>
                                                     ) : (
-                                                        <span style={{ color: '#9ca3af', fontSize: '12px' }}>🔒 Приватная</span>
+                                                        <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>🔒 Приватная</span>
                                                     )}
                                                 </div>
                                             </div>
@@ -472,6 +474,47 @@ export default function ProfilePage() {
                     {activeTab === 'settings' && (
                         <div>
                             <h2 style={{ marginBottom: '20px' }}>⚙️ Настройки профиля</h2>
+
+                            {/* ===== ПЕРЕКЛЮЧАТЕЛЬ ТЕМЫ ===== */}
+                            <div className="profile-settings-section">
+                                <h3>Внешний вид</h3>
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    padding: '16px',
+                                    background: 'var(--bg-tertiary)',
+                                    borderRadius: '12px',
+                                    marginBottom: '16px'
+                                }}>
+                                    <div>
+                                        <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>Тема оформления</div>
+                                        <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+                                            {theme === 'dark' ? '🌙 Тёмная тема' : '☀️ Светлая тема'}
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={toggleTheme}
+                                        style={{
+                                            background: 'var(--accent-gradient)',
+                                            border: 'none',
+                                            borderRadius: '40px',
+                                            padding: '10px 20px',
+                                            cursor: 'pointer',
+                                            color: 'var(--bg-primary)',
+                                            fontWeight: 'bold',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
+                                            transition: 'transform 0.2s'
+                                        }}
+                                        onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
+                                        onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                                    >
+                                        {theme === 'dark' ? '☀️ Светлая тема' : '🌙 Тёмная тема'}
+                                    </button>
+                                </div>
+                            </div>
 
                             {/* Уведомления */}
                             <div className="profile-settings-section">

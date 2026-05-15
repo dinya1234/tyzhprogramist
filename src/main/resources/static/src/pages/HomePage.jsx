@@ -33,7 +33,6 @@ export default function HomePage() {
     }, []);
 
     const handleAskExpert = async () => {
-        // Чат поддержки доступен только авторизованным пользователям (не модератор/админ)
         if (!user) {
             navigate('/login');
             return;
@@ -65,16 +64,16 @@ export default function HomePage() {
         <>
             {/* Hero секция */}
             <section style={{
-                background: 'linear-gradient(135deg, #0a0c10 0%, #1a1f2e 100%)',
+                background: 'linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%)',
                 padding: '60px 0',
                 textAlign: 'center',
-                borderBottom: '1px solid #2a2d36'
+                borderBottom: '1px solid var(--border)'
             }}>
                 <div className="container">
                     <h1 style={{ fontSize: '48px', marginBottom: '16px' }}>
                         Тыжпрограммист
                     </h1>
-                    <p style={{ fontSize: '20px', color: '#9ca3af', marginBottom: '32px' }}>
+                    <p style={{ fontSize: '20px', color: 'var(--text-secondary)', marginBottom: '32px' }}>
                         Компьютерная техника, комплектующие и уникальные сервисы
                     </p>
                     <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
@@ -98,17 +97,17 @@ export default function HomePage() {
                             key={cat.id}
                             to={`/catalog?category=${cat.id}`}
                             style={{
-                                background: '#15181f',
+                                background: 'var(--bg-tertiary)',
                                 padding: '20px',
                                 borderRadius: '16px',
                                 textAlign: 'center',
                                 textDecoration: 'none',
-                                color: '#e4e6eb',
-                                border: '1px solid #2a2d36',
+                                color: 'var(--text-primary)',
+                                border: '1px solid var(--border)',
                                 transition: 'all 0.2s'
                             }}
-                            onMouseEnter={(e) => e.currentTarget.style.borderColor = '#c084fc'}
-                            onMouseLeave={(e) => e.currentTarget.style.borderColor = '#2a2d36'}
+                            onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--accent)'}
+                            onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--border)'}
                         >
                             <div style={{ fontSize: '32px', marginBottom: '8px' }}>📁</div>
                             <div style={{ fontWeight: 500 }}>{cat.name}</div>
@@ -134,14 +133,15 @@ export default function HomePage() {
 
                 {/* Баннер сервисов */}
                 <div style={{
-                    background: 'linear-gradient(135deg, #1e1b4b, #2e1065)',
+                    background: 'linear-gradient(135deg, var(--accent-bg), var(--bg-tertiary))',
                     borderRadius: '24px',
                     padding: '40px',
                     margin: '40px 0',
-                    textAlign: 'center'
+                    textAlign: 'center',
+                    border: '1px solid var(--border)'
                 }}>
                     <h2 style={{ marginBottom: '16px' }}>Нужна помощь с выбором?</h2>
-                    <p style={{ marginBottom: '24px', color: '#c4b5fd' }}>
+                    <p style={{ marginBottom: '24px', color: 'var(--accent)' }}>
                         Наши консультанты помогут подобрать идеальный ПК под ваш бюджет
                     </p>
                     <button className="btn btn-primary btn-lg" id="openConsultantChat" onClick={handleAskExpert}>

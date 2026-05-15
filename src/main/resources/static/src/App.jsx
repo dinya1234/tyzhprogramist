@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth, AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import { ChatProvider } from './context/ChatContext';
+import { ThemeProvider } from './context/ThemeContext';
 import LoginPage from './pages/LoginPage';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -127,13 +128,15 @@ function AppContent() {
 
 function App() {
     return (
-        <AuthProvider>
-            <CartProvider>
-                <ChatProvider>
-                    <AppContent />
-                </ChatProvider>
-            </CartProvider>
-        </AuthProvider>
+        <ThemeProvider>
+            <AuthProvider>
+                <CartProvider>
+                    <ChatProvider>
+                        <AppContent />
+                    </ChatProvider>
+                </CartProvider>
+            </AuthProvider>
+        </ThemeProvider>
     );
 }
 
