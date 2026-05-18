@@ -60,6 +60,18 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/register", "/api/login", "/api/auth/refresh").permitAll()
 
+                        //УБРАТЬ ПОСЛЕ КОТЛИНА!!!! сдача 5 кт
+                        // Публичные сборки - доступны всем (даже без авторизации)
+                        .requestMatchers(HttpMethod.GET, "/api/pc-builds/public").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/pc-builds/public/**").permitAll()
+
+                        // Личные сборки - только для авторизованных пользователей
+                        .requestMatchers(HttpMethod.GET, "/api/pc-builds/my").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/pc-builds").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/pc-builds/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/pc-builds/**").authenticated()
+                        // =========================================
+
                         .requestMatchers(
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
