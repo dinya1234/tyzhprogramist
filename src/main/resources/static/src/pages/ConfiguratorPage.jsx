@@ -143,10 +143,8 @@ export default function ConfiguratorPage() {
         const buildIdFromUrl = searchParams.get('buildId');
 
         if (buildIdFromUrl) {
-            // Редактируем существующую сборку
             loadBuild(buildIdFromUrl);
         } else {
-            // Новая сборка: не создаём на сервере, только локальное состояние
             initializeNewBuild();
         }
     }, [searchParams]);
@@ -261,7 +259,6 @@ export default function ConfiguratorPage() {
         }
     };
 
-    // Инициализация новой локальной сборки (без создания на сервере)
     const initializeNewBuild = () => {
         console.log('Инициализация новой локальной сборки');
         setCurrentBuildId(null);
@@ -272,7 +269,6 @@ export default function ConfiguratorPage() {
         setIsBuildLoaded(true);
     };
 
-    // Загрузка существующей сборки с сервера
     const loadBuild = async (buildId) => {
         setLoading(true);
         try {
@@ -320,7 +316,6 @@ export default function ConfiguratorPage() {
         }
     };
 
-    // Создание сборки на сервере (только при первом выборе компонента или при сохранении)
     const createBuildOnServer = async () => {
         if (currentBuildId) return currentBuildId;
 
@@ -360,7 +355,6 @@ export default function ConfiguratorPage() {
     };
 
     const selectComponent = async (product) => {
-        // Если это новая сборка (нет buildId), создаём её на сервере при первом выборе компонента
         let buildId = currentBuildId;
         if (!buildId) {
             buildId = await createBuildOnServer();
@@ -418,7 +412,6 @@ export default function ConfiguratorPage() {
 
     const calculateTotalPrice = async () => {
         if (!currentBuildId) {
-            // Локальный расчёт цены для несозданной сборки
             const total = Object.values(selectedComponents).reduce((sum, comp) => sum + (comp.price * (comp.quantity || 1)), 0);
             setTotalPrice(total);
             return;
@@ -487,6 +480,12 @@ export default function ConfiguratorPage() {
         setPowerSupplyCalc({ estimated, recommended, warning });
     };
 
+    const goToComponentType = (type) => {
+        setCurrentType(type);
+        setStep(type.orderStep);
+        window.scrollTo(0, 0);
+    };
+
     const nextStep = () => {
         const currentIndex = componentTypesList.findIndex(t => t.id === currentType?.id);
         if (currentIndex < componentTypesList.length - 1) {
@@ -507,7 +506,6 @@ export default function ConfiguratorPage() {
 
     const saveBuild = async () => {
         if (!currentBuildId) {
-            // Если сборка ещё не создана, создаём её перед сохранением
             const buildId = await createBuildOnServer();
             if (!buildId) {
                 alert('Не удалось создать сборку для сохранения');
@@ -529,7 +527,6 @@ export default function ConfiguratorPage() {
 
     const addAllToCart = async () => {
         if (!currentBuildId) {
-            // Если сборка не создана, создаём перед добавлением в корзину
             const buildId = await createBuildOnServer();
             if (!buildId) {
                 alert('Не удалось создать сборку');
@@ -626,10 +623,70 @@ export default function ConfiguratorPage() {
                 </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '32px' }}>
-                {/* Основная область */}
+            <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr 320px', gap: '24px' }}>
+                {/* ЛЕВАЯ ПАНЕЛЬ - кнопки компонентов */}
                 <div>
-                    {/* Текущий шаг */}
+                    <div style={{
+                        background: 'var(--bg-tertiary)',
+                        borderRadius: '16px',
+                        padding: '20px',
+                        position: 'sticky',
+                        top: '100px'
+                    }}>
+                        <h3 style={{ marginBottom: '16px', fontSize: '16px' }}>📦 Компоненты</h3>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            {componentTypesList.map((type) => {
+                                const isSelected = selectedComponents[type.name];
+                                const isActive = currentType?.id === type.id;
+
+                                return (
+                                    <button
+                                        key={type.id}
+                                        onClick={() => goToComponentType(type)}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            width: '100%',
+                                            padding: '10px 12px',
+                                            background: isActive ? 'var(--accent-gradient)' : 'var(--bg-card)',
+                                            border: `1px solid ${isActive ? 'var(--accent)' : 'var(--border-light)'}`,
+                                            borderRadius: '8px',
+                                            color: isActive ? 'white' : 'var(--text-primary)',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s',
+                                            fontSize: '14px',
+                                            fontWeight: isActive ? 'bold' : 'normal'
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            if (!isActive) {
+                                                e.currentTarget.style.background = 'var(--bg-hover)';
+                                            }
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            if (!isActive) {
+                                                e.currentTarget.style.background = 'var(--bg-card)';
+                                            }
+                                        }}
+                                    >
+                                        <span>{type.name}</span>
+                                        {isSelected && (
+                                            <span style={{
+                                                fontSize: '12px',
+                                                color: isActive ? '#a5f3c3' : 'var(--success)'
+                                            }}>
+                                                ✓
+                                            </span>
+                                        )}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+
+                {/* ОСНОВНАЯ ОБЛАСТЬ */}
+                <div>
                     <div className="config-section">
                         <h2 style={{ marginBottom: '16px' }}>
                             {currentType?.name || 'Загрузка...'}
@@ -660,6 +717,30 @@ export default function ConfiguratorPage() {
                                         Заменить
                                     </button>
                                 </div>
+                            </div>
+                        )}
+
+                        {/* КНОПКИ НАВИГАЦИИ ВВЕРХУ */}
+                        {(step > 1 || step < totalSteps) && (
+                            <div style={{ marginBottom: '20px', display: 'flex', gap: '12px' }}>
+                                {step > 1 && (
+                                    <button
+                                        onClick={prevStep}
+                                        className="btn-outline"
+                                        style={{ flex: 1 }}
+                                    >
+                                        ← Назад
+                                    </button>
+                                )}
+                                {step < totalSteps && (
+                                    <button
+                                        onClick={nextStep}
+                                        className="btn-primary"
+                                        style={{ flex: 1 }}
+                                    >
+                                        Далее → {componentTypesList.find(t => t.orderStep === step + 1)?.name}
+                                    </button>
+                                )}
                             </div>
                         )}
 
@@ -711,7 +792,7 @@ export default function ConfiguratorPage() {
                             </div>
                         )}
 
-                        {/* Навигация по шагам */}
+                        {/* КНОПКИ НАВИГАЦИИ ВНИЗУ */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '32px' }}>
                             <button
                                 onClick={prevStep}
@@ -731,7 +812,7 @@ export default function ConfiguratorPage() {
                     </div>
                 </div>
 
-                {/* Боковая панель */}
+                {/* ПРАВАЯ ПАНЕЛЬ - информация о сборке */}
                 <div>
                     <div style={{
                         background: 'var(--bg-tertiary)',
