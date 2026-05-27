@@ -70,7 +70,6 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/pc-builds").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/pc-builds/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/pc-builds/**").authenticated()
-                        // =========================================
 
                         .requestMatchers(
                                 "/v3/api-docs/**",
