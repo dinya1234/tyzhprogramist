@@ -76,14 +76,13 @@ class ProductServiceTest {
         testProduct.setCategory(testCategory);
         testProduct.setRating(0.0);
 
-        // Используем HashSet, так как relatedProducts это Set<Product>
         testProduct.setRelatedProducts(new HashSet<>());
         testProduct.setFrequentlyBoughtWith(new HashSet<>());
 
         pageable = PageRequest.of(0, 10);
     }
 
-    // ==================== 1. ПОЗИТИВНЫЕ СЦЕНАРИИ ====================
+    // 1.позитивные сценарии :)
 
     @Test
     @DisplayName("Должен найти товар по id, когда он существует")
@@ -156,7 +155,7 @@ class ProductServiceTest {
         verify(productRepository).save(testProduct);
     }
 
-    // ==================== 2. НЕГАТИВНЫЕ СЦЕНАРИИ ====================
+    // 2. негативные сценарии >:(
 
     @Test
     @DisplayName("Должен выбросить NotFoundException, когда товар не найден по id")
@@ -209,7 +208,7 @@ class ProductServiceTest {
                 .hasMessage("Товар с таким slug уже существует");
     }
 
-    // ==================== 3. ПАРАМЕТРИЗОВАННЫЕ ТЕСТЫ ====================
+    // 3. параметризованные тесты (-_-)
 
     @ParameterizedTest
     @ValueSource(strings = {"", "   ", "not-exists", "very-long-slug"})
@@ -240,7 +239,7 @@ class ProductServiceTest {
         verify(productRepository).findByPriceRange(eq(min), eq(max), any(Pageable.class));
     }
 
-    // ==================== 4. VERIFY() ПРОВЕРКИ ====================
+    // 4. VERIFY() проверки ^_^
 
     @Test
     @DisplayName("Должен вызвать repository.save() при увеличении просмотров")
@@ -277,7 +276,7 @@ class ProductServiceTest {
         verify(productRepository, never()).save(any(Product.class));
     }
 
-    // ==================== 5. ARGUMENT CAPTOR ====================
+    // 5. ARGUMENT CAPTOR >:)
 
     @Test
     @DisplayName("ArgumentCaptor: должен правильно сохранить товар с нужными полями при создании")
@@ -297,7 +296,151 @@ class ProductServiceTest {
         assertThat(capturedProduct.getCategory()).isEqualTo(testCategory);
     }
 
-    // ==================== 6. ДОПОЛНИТЕЛЬНЫЕ ТЕСТЫ ДЛЯ ПОКРЫТИЯ ====================
+
+    // 6. доп тесты тк покрытие недостаточное :/
+
+
+    @Test
+    @DisplayName("Должен получить товары по slug категории")
+    void shouldGetProductsByCategorySlug() {
+
+        Page<Product> mockPage = new PageImpl<>(List.of(testProduct), pageable, 1);
+        when(productRepository.findByCategorySlug(eq("electronics"), any(Pageable.class)))
+                .thenReturn(mockPage);
+
+        Page<Product> result = productService.getProductsByCategorySlug("electronics", pageable);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getContent()).hasSize(1);
+        verify(productRepository).findByCategorySlug(eq("electronics"), any(Pageable.class));
+    }
+
+    @Test
+    @DisplayName("Должен получить товары по категории с потомками")
+    void shouldGetProductsByCategoryWithDescendants() {
+
+        Page<Product> mockPage = new PageImpl<>(List.of(testProduct), pageable, 1);
+        when(productRepository.findByCategoryWithDescendants(eq(1L), any(Pageable.class)))
+                .thenReturn(mockPage);
+
+        Page<Product> result = productService.getProductsByCategoryWithDescendants(1L, pageable);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getContent()).hasSize(1);
+        verify(productRepository).findByCategoryWithDescendants(eq(1L), any(Pageable.class));
+    }
+
+    @Test
+    @DisplayName("Должен выполнить поиск товаров по поисковому запросу")
+    void shouldSearchProducts() {
+
+        Page<Product> mockPage = new PageImpl<>(List.of(testProduct), pageable, 1);
+        when(productRepository.searchProducts(eq("test"), any(Pageable.class)))
+                .thenReturn(mockPage);
+
+        Page<Product> result = productService.searchProducts("test", pageable);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getContent()).hasSize(1);
+        verify(productRepository).searchProducts(eq("test"), any(Pageable.class));
+    }
+
+    @Test
+    @DisplayName("Должен вернуть все доступные товары с пагинацией")
+    void shouldGetAllAvailableProducts() {
+
+        Page<Product> mockPage = new PageImpl<>(List.of(testProduct), pageable, 1);
+        when(productRepository.findAllAvailable(any(Pageable.class)))
+                .thenReturn(mockPage);
+
+        Page<Product> result = productService.getAllAvailableProducts(pageable);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getContent()).hasSize(1);
+        verify(productRepository).findAllAvailable(any(Pageable.class));
+    }
+
+    @Test
+    @DisplayName("Должен получить товары с низким остатком")
+    void shouldGetLowStockProducts() {
+        int threshold = 10;
+        List<Product> lowStockProducts = List.of(testProduct);
+        when(productRepository.findLowStockProducts(threshold))
+                .thenReturn(lowStockProducts);
+
+        List<Product> result = productService.getLowStockProducts(threshold);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0)).isEqualTo(testProduct);
+        verify(productRepository).findLowStockProducts(threshold);
+    }
+
+    @Test
+    @DisplayName("Должен удалить связанный товар")
+    void shouldRemoveRelatedProduct() {
+
+        Product relatedProduct = new Product();
+        relatedProduct.setId(200L);
+        relatedProduct.setName("Related Product");
+
+        when(productRepository.findById(100L)).thenReturn(Optional.of(testProduct));
+        when(productRepository.findById(200L)).thenReturn(Optional.of(relatedProduct));
+        when(productRepository.save(any(Product.class))).thenReturn(testProduct);
+
+        productService.removeRelatedProduct(100L, 200L);
+
+        verify(productRepository).save(testProduct);
+    }
+
+    @Test
+    @DisplayName("Должен выбросить NotFoundException при обновлении товара с несуществующей категорией")
+    void shouldThrowNotFoundException_whenCategoryNotFoundOnUpdate() {
+        Product updatedProduct = new Product();
+        updatedProduct.setSku("SKU002");
+        updatedProduct.setSlug("updated-slug");
+
+        when(productRepository.findById(100L)).thenReturn(Optional.of(testProduct));
+        when(productRepository.existsBySku("SKU002")).thenReturn(false);
+        when(productRepository.existsBySlug("updated-slug")).thenReturn(false);
+        when(categoryService.getById(999L)).thenThrow(new NotFoundException("Категория не найдена с id: 999"));
+
+        assertThatThrownBy(() -> productService.updateProduct(100L, updatedProduct, 999L))
+                .isInstanceOf(NotFoundException.class)
+                .hasMessage("Категория не найдена с id: 999");
+    }
+
+    @Test
+    @DisplayName("Должен выбросить BadRequestException при обновлении с дублирующимся slug")
+    void shouldThrowBadRequestException_whenDuplicateSlugOnUpdate() {
+
+        Product updatedProduct = new Product();
+        updatedProduct.setSku("SKU002");
+        updatedProduct.setSlug("existing-slug");
+
+        when(productRepository.findById(100L)).thenReturn(Optional.of(testProduct));
+        when(productRepository.existsBySku("SKU002")).thenReturn(false);
+        when(productRepository.existsBySlug("existing-slug")).thenReturn(true);
+
+        assertThatThrownBy(() -> productService.updateProduct(100L, updatedProduct, null))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessage("Товар с таким slug уже существует");
+    }
+
+    @Test
+    @DisplayName("Должен выбросить BadRequestException при обновлении с дублирующимся sku")
+    void shouldThrowBadRequestException_whenDuplicateSkuOnUpdate() {
+        Product updatedProduct = new Product();
+        updatedProduct.setSku("existing-sku");
+        updatedProduct.setSlug("new-slug");
+
+        when(productRepository.findById(100L)).thenReturn(Optional.of(testProduct));
+        when(productRepository.existsBySku("existing-sku")).thenReturn(true);
+
+        assertThatThrownBy(() -> productService.updateProduct(100L, updatedProduct, null))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessage("Товар с таким артикулом уже существует");
+    }
+
 
     @Test
     @DisplayName("Должен мягко удалить товар (setIsActive=false)")
