@@ -30,6 +30,7 @@ public class RepairRequestService {
     private final RepairRequestRepository repairRequestRepository;
     private final UserService userService;
     private final FileAttachmentService fileAttachmentService;
+    private final MetricsService metricsService;  // ✅ Добавлено
 
     public static final String STATUS_ACCEPTED = "Принята";
     public static final String STATUS_DIAGNOSTICS = "Диагностика";
@@ -64,6 +65,10 @@ public class RepairRequestService {
 
         RepairRequest saved = repairRequestRepository.save(entity);
         log.info("Создана заявка на ремонт {} пользователем {}", saved.getId(), user.getUsername());
+
+        // ✅ Добавляем метрику созданной заявки на ремонт
+        metricsService.incrementRepairRequests();
+
         return saved;
     }
 

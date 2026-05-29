@@ -1,5 +1,6 @@
 package ru.shop.tyzhprogramist.tyzhprogramist.service;
 
+import io.micrometer.core.instrument.Timer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -27,6 +28,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final MetricsService metricsService;
 
     @Transactional(readOnly = true)
     public User getById(Long id) {
@@ -105,6 +107,9 @@ public class UserService {
         User savedUser = userRepository.save(user);
         log.info("Зарегистрирован новый пользователь: {}", savedUser.getUsername());
 
+        // ✅ ПРАВИЛЬНО: увеличиваем счетчик регистраций
+        metricsService.incrementUsersRegistered();
+
         return savedUser;
     }
 
@@ -138,6 +143,9 @@ public class UserService {
 
         User savedUser = userRepository.save(user);
         log.info("Создан новый пользователь администратором: {}", savedUser.getUsername());
+
+        // ✅ Добавляем метрику для административного создания пользователя
+        metricsService.incrementUsersRegistered();
 
         return savedUser;
     }
@@ -297,6 +305,7 @@ public class UserService {
     public List<User> getInactiveUsers(LocalDateTime date) {
         return userRepository.findInactiveUsers(date);
     }
+
     @Transactional(readOnly = true)
     public List<User> getAvailableConsultants() {
         return userRepository.findAvailableConsultants();

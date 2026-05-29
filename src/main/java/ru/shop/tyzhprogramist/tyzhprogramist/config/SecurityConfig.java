@@ -90,6 +90,10 @@ public class SecurityConfig {
                         .requestMatchers("/api/chat/me/**").authenticated()
 
                         .requestMatchers("/error").permitAll()
+
+                        .requestMatchers("/actuator/**").permitAll()
+                        .requestMatchers("/actuator/prometheus").permitAll()
+
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex

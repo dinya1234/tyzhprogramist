@@ -200,4 +200,7 @@ public interface ChatSessionRepository extends JpaRepository<ChatSession, Long> 
 
     @Query("SELECT cs FROM ChatSession cs WHERE SIZE(cs.messages) = 0")
     List<ChatSession> findEmptySessions();
+
+    @Query("SELECT COUNT(c) FROM ChatSession c WHERE c.status = 'ACTIVE'")
+    long countActiveSessions();
 }

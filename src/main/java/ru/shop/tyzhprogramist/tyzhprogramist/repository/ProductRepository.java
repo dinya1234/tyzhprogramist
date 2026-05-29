@@ -125,4 +125,14 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     @Query("SELECT p FROM Product p WHERE p.purchaseCount > 0 ORDER BY p.purchaseCount DESC")
     List<Product> findMostPurchased(Pageable pageable);
+
+
+    /**
+     * Возвращает общее количество товаров на складе
+     * Суммирует поле quantity у всех активных товаров
+     */
+    @Query("SELECT COALESCE(SUM(p.quantity), 0) FROM Product p WHERE p.isActive = true")
+    Integer getTotalStockQuantity();
+
+    
 }

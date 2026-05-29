@@ -3,14 +3,21 @@ services:
     build: .
     ports:
       - "8080:8080"
+      - "3000:3000"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/postgres
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=root
+      - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info,prometheus,metrics
+      - MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED=true
     depends_on:
-      - postgres
+      postgres:
+        condition: service_started
+      prometheus:
+        condition: service_started
     networks:
       - app-network
+    restart: unless-stopped
 
   postgres:
     image: postgres:13-alpine
@@ -24,9 +31,46 @@ services:
       - postgres-data:/var/lib/postgresql/data
     networks:
       - app-network
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3100:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_AUTH_ANONYMOUS_ENABLED=false
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+      - GF_AUTH_DISABLE_LOGIN_FORM=false
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+    volumes:
+      - grafana-storage:/var/lib/grafana
+    restart: unless-stopped
+    networks:
+      - app-network
+    depends_on:
+      - prometheus
 
 volumes:
   postgres-data:
+  prometheus-data:
+  grafana-storage:
 
 networks:
   app-network:

@@ -34,6 +34,7 @@ public class ProductFeedbackService {
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
     private final ProductService productService;
+    private final MetricsService metricsService;  // ✅ Добавлено
 
     @Transactional(readOnly = true)
     public ProductFeedback getById(Long id) {
@@ -70,6 +71,9 @@ public class ProductFeedbackService {
         log.info("Пользователь {} оставил отзыв на товар {} с рейтингом {}",
                 user.getUsername(), productId, rating);
 
+        // ✅ Добавляем метрику оставленного отзыва
+        metricsService.incrementFeedbackSubmitted();
+
         return savedFeedback;
     }
 
@@ -87,6 +91,9 @@ public class ProductFeedbackService {
 
         ProductFeedback savedFeedback = feedbackRepository.save(feedback);
         log.info("Пользователь {} задал вопрос о товаре {}", user.getUsername(), productId);
+
+        // ✅ Добавляем метрику заданного вопроса
+        metricsService.incrementFeedbackSubmitted();
 
         return savedFeedback;
     }

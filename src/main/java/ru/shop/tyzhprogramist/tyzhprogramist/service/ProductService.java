@@ -27,6 +27,7 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final CategoryService categoryService;
     private final FileAttachmentService fileAttachmentService;
+    private final MetricsService metricsService;  // ✅ Добавлено
 
     @Transactional(readOnly = true)
     public Product getById(Long id) {
@@ -77,6 +78,9 @@ public class ProductService {
                 })
                 .collect(Collectors.toList());
         response.setFrequentlyBought(frequentlyBought);
+
+        // ✅ Добавляем метрику просмотра товара
+        metricsService.incrementProductViews();
 
         return response;
     }

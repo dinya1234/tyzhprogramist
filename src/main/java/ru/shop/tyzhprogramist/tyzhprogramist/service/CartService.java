@@ -30,6 +30,7 @@ public class CartService {
     private final ProductItemRepository productItemRepository;
     private final ProductRepository productRepository;
     private final FileAttachmentService fileAttachmentService;
+    private final MetricsService metricsService;  // ✅ Добавлено
 
     @Transactional(readOnly = true)
     public Optional<Cart> findUserCart(User user) {
@@ -88,6 +89,8 @@ public class CartService {
 
         Optional<ProductItem> existingItem = productItemRepository.findCartItem(cartId, product.getId());
 
+        ProductItem result;
+
         if (existingItem.isPresent()) {
             ProductItem item = existingItem.get();
             int newQuantity = item.getQuantity() + request.getQuantity();
@@ -95,7 +98,7 @@ public class CartService {
                 throw new BadRequestException("Недостаточное количество товара на складе");
             }
             item.setQuantity(newQuantity);
-            return productItemRepository.save(item);
+            result = productItemRepository.save(item);
         } else {
             ProductItem newItem = new ProductItem(
                     cartId,
@@ -104,8 +107,13 @@ public class CartService {
                     product.getPrice()
             );
             newItem.setParentType(ParentType.CART);
-            return productItemRepository.save(newItem);
+            result = productItemRepository.save(newItem);
         }
+
+        // ✅ Добавляем метрику добавления в корзину
+        metricsService.incrementCartAdditions();
+
+        return result;
     }
 
     @Transactional

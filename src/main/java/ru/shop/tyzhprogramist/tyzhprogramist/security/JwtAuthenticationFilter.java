@@ -36,7 +36,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
 
-        if (isPublicPost(request)) {
+        // ✅ Пропускаем actuator эндпоинты без проверки токена
+        if (shouldSkipAuthentication(request)) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -75,10 +76,56 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return null;
     }
 
-    private static boolean isPublicPost(HttpServletRequest request) {
-        if (!"POST".equalsIgnoreCase(request.getMethod())) {
-            return false;
+    /**
+     * Проверяет, нужно ли пропустить запрос без аутентификации
+     */
+    private boolean shouldSkipAuthentication(HttpServletRequest request) {
+        String path = getPath(request);
+        String method = request.getMethod();
+
+        // ✅ Пропускаем все actuator эндпоинты (GET, POST и т.д.)
+        if (path.startsWith("/actuator")) {
+            return true;
         }
+
+        // ✅ Пропускаем публичные POST эндпоинты
+        if ("POST".equalsIgnoreCase(method)) {
+            return "/api/register".equals(path)
+                    || "/api/login".equals(path)
+                    || "/api/auth/refresh".equals(path);
+        }
+
+        // ✅ Пропускаем GET запросы к публичным сборкам
+        if ("GET".equalsIgnoreCase(method)) {
+            if (path.startsWith("/api/pc-builds/public")) {
+                return true;
+            }
+        }
+
+        // ✅ Пропускаем Swagger/OpenAPI
+        if (path.startsWith("/v3/api-docs") ||
+                path.startsWith("/swagger-ui") ||
+                path.equals("/swagger-ui.html")) {
+            return true;
+        }
+
+        // ✅ Пропускаем WebSocket и чат эндпоинты
+        if (path.startsWith("/ws-chat") ||
+                path.startsWith("/ws") ||
+                path.startsWith("/topic") ||
+                path.startsWith("/queue") ||
+                path.startsWith("/app") ||
+                path.startsWith("/sockjs")) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Получает путь запроса без контекста приложения
+     */
+    private String getPath(HttpServletRequest request) {
         String path = request.getServletPath();
         if (path == null || path.isEmpty()) {
             path = request.getRequestURI();
@@ -87,8 +134,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 path = path.substring(context.length());
             }
         }
-        return "/api/register".equals(path)
-                || "/api/login".equals(path)
-                || "/api/auth/refresh".equals(path);
+        return path;
     }
 }
