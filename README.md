@@ -2657,3 +2657,105 @@ npm run dev
 
 *Дата: 2026-05-26*  
 *Студент: Волохова Диана*
+
+
+
+
+# 📊 Отчет по интеграции системы мониторинга
+
+## 🎯 Цель работы
+
+Внедрение в Java-проект комплексной системы мониторинга на базе **Prometheus** и **Grafana** для сбора, хранения и визуализации метрик приложения в реальном времени.
+
+---
+
+## 🛠 Что было сделано
+
+### Добавлены зависимости в `pom.xml`
+
+| Зависимость | Назначение |
+|-------------|------------|
+| `micrometer-registry-prometheus` | Экспорт метрик в формате Prometheus |
+| `spring-boot-starter-actuator` | Endpoint `/actuator/prometheus` |
+| `spring-boot-starter-aop` | Аспекты для измерения времени выполнения |
+
+### Созданы классы для метрик
+
+| Класс | Назначение | Аналог из Python |
+|-------|------------|------------------|
+| `MetricsConfig.java` | Gauge-метрики (активные сессии, товары на складе) | `gauge.py`, `gauge1.py` |
+| `MetricsService.java` | Counter-метрики (заказы, регистрации, лайки) | `request.py`, `request1-3.py` |
+| `MetricsUpdateScheduler.java` | Периодическое обновление Gauge из БД | `gauge2.py` |
+| `MetricsAspect.java` | Timer/Histogram для HTTP запросов | `histogram.py`, `gauge3.py`, `gauge4.py` |
+
+### Настроены метрики в сервисах
+
+| Сервис | Добавленная метрика |
+|--------|---------------------|
+| `UserService` | `users_registered_total` — счетчик регистраций |
+| `OrderService` | `orders_created_total` + Timer времени создания |
+| `CartService` | `cart_additions_total` — добавления в корзину |
+| `ProductService` | `product_views_total` — просмотры товаров |
+| `ProductFeedbackService` | `feedback_submitted_total` — отзывы и вопросы |
+| `RepairRequestService` | `repair_requests_total` — заявки на ремонт |
+
+### Обновлен `application.properties`
+
+```properties
+management.endpoints.web.exposure.include=health,info,prometheus,metrics
+management.metrics.export.prometheus.enabled=true
+management.metrics.tags.application=tyzhprogramist
+```
+
+## Добавлен prometheus.yml
+
+## Обновлен docker-compose.yml
+
+### Prometheus (порт 9090) — сбор и хранение метрик
+
+### Grafana (порт 3100) — визуализация
+
+
+## 📈 Какие метрики теперь доступны
+
+### 🏷 Кастомные бизнес-метрики
+
+| Метрика | Тип | Что показывает |
+|---------|-----|----------------|
+| `users_registered_total` | Counter | Всего зарегистрированных пользователей |
+| `orders_created_total` | Counter | Всего созданных заказов |
+| `orders_today_count` | Gauge | Заказов создано сегодня |
+| `cart_additions_total` | Counter | Добавлений товаров в корзину |
+| `product_views_total` | Counter | Просмотров страниц товаров |
+| `feedback_submitted_total` | Counter | Оставленных отзывов и вопросов |
+| `repair_requests_total` | Counter | Заявок на ремонт |
+| `products_in_stock` | Gauge | Товаров на складе **(2971 шт.)** |
+| `chat_sessions_active` | Gauge | Активных чат-сессий |
+
+### 🤖 Автоматические метрики Spring Boot Actuator
+
+| Метрика | Что показывает |
+|---------|----------------|
+| `http_server_requests_seconds` | Время ответа HTTP запросов |
+| `jvm_memory_used_bytes` | Использование памяти JVM |
+| `jvm_threads_live_threads` | Количество живых потоков **(39 шт.)** |
+| `process_cpu_usage` | Загрузка CPU процессом **(1.37%)** |
+| `system_cpu_usage` | Общая загрузка CPU системы **(1.34%)** |
+| `hikaricp_connections` | Соединения с БД **(10 шт.)** |
+| `logback_events_total` | Количество логов по уровням |
+
+---
+
+## 🔗 Соответствие Python-примерам
+
+| Python файл | Что демонстрировал | Java реализация |
+|-------------|-------------------|-----------------|
+| `hello.py` | Простой HTTP сервер | Весь Spring Boot (порт `8080`) |
+| `gauge.py` | Gauge (INPROGRESS) | `chat_sessions_active`, `products_in_stock` |
+| `gauge1.py` | Gauge (LAST) | JVM метрики (память, потоки) |
+| `gauge2.py` | Gauge с `set_function` | `MetricsUpdateScheduler` |
+| `gauge3.py` | Summary времени | `MetricsAspect` + `http_server_requests_seconds` |
+| `gauge4.py` | Summary с декоратором | `@Around` аспект |
+| `request.py` | Counter | `users_registered_total`, `orders_created_total` |
+| `request1-3.py` | Counter с разными сценариями | Разные счетчики в `MetricsService` |
+| `histogram.py` | Histogram времени | `http_server_requests_seconds_bucket` |
