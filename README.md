@@ -2759,3 +2759,28 @@ management.metrics.tags.application=tyzhprogramist
 | `request.py` | Counter | `users_registered_total`, `orders_created_total` |
 | `request1-3.py` | Counter с разными сценариями | Разные счетчики в `MetricsService` |
 | `histogram.py` | Histogram времени | `http_server_requests_seconds_bucket` |
+
+
+## 📊 Loki & Alloy
+### Примеры запросов в Grafana (Loki Data Source):
+Все логи приложения
+```
+{container="tyzhprogramist-app-1"}
+```
+Поиск ошибок
+```
+{container="tyzhprogramist-app-1"} |= "error"
+```
+Количество логов в минуту (график)
+```
+count_over_time({container="tyzhprogramist-app-1"}[1m])
+```
+Логи с уровнем WARNING
+```
+{container="tyzhprogramist-app-1"} |= "WARN"
+```
+
+### Alloy открывается по^ 
+``` 
+http://localhost:12345/
+```
