@@ -88,7 +88,7 @@ class ProductControllerTest {
         mockProductResponse.setMainImage("/image1.jpg");
     }
 
-    // ==================== 1. ПОЗИТИВНЫЙ СЦЕНАРИЙ (200 OK + jsonPath) ====================
+    // 1. позитивный сценарий
 
     @Test
     @DisplayName("GET /api/products/{id} - успешный запрос (200)")
@@ -106,7 +106,7 @@ class ProductControllerTest {
                 .andExpect(jsonPath("$.images", org.hamcrest.Matchers.hasSize(2)));
     }
 
-    // ==================== 2. НЕГАТИВНЫЙ СЦЕНАРИЙ (404 Not Found) ====================
+    // негативные сценарии
 
     @Test
     @DisplayName("GET /api/products/{id} - 404 товар не найден")
@@ -120,7 +120,7 @@ class ProductControllerTest {
                 .andExpect(jsonPath("$.message").value("Товар не найден с id: 999"));
     }
 
-    // ==================== 3. ПРОВЕРКА СТРУКТУРЫ ОТВЕТА (наличие всех полей) ====================
+    // проверка структуры ответа
 
     @Test
     @DisplayName("GET /api/products/{id} - проверка наличия всех полей в ответе")
@@ -146,7 +146,7 @@ class ProductControllerTest {
                 .andExpect(jsonPath("$.mainImage").exists());
     }
 
-    // ==================== 4. ТЕСТИРОВАНИЕ ОШИБОК (ControllerAdvice) ====================
+    // тестирование ошибок
 
     @Test
     @DisplayName("ControllerAdvice - проверка ErrorResponse при 404")
@@ -162,7 +162,7 @@ class ProductControllerTest {
                 .andExpect(jsonPath("$.timestamp").exists());
     }
 
-    // ==================== 5. GET ALL PRODUCTS (проверка пагинации и структуры) ====================
+    // проверка плагинации и структуры
 
     @Test
     @DisplayName("GET /api/products - успешный запрос с пагинацией")
