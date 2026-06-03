@@ -1,6 +1,7 @@
 package ru.shop.tyzhprogramist.tyzhprogramist.controller;
 
 import jakarta.validation.Valid;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -28,6 +29,7 @@ import java.util.Map;
 @Slf4j
 @RestController
 @RequestMapping("/api/pc-builds")
+@Tag(name = "PC Builds", description = "Эндпоинты сборок ПК")
 @RequiredArgsConstructor
 public class PcBuildController {
 

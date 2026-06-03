@@ -1,5 +1,6 @@
 package ru.shop.tyzhprogramist.tyzhprogramist.controller;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -27,6 +28,7 @@ import java.util.Optional;
 @Slf4j
 @RestController
 @RequestMapping("/api/relations")
+@Tag(name = "Entity Relations", description = "Эндпоинты сравнений и правил совместимости сущностей")
 @RequiredArgsConstructor
 public class EntityRelationController {
 

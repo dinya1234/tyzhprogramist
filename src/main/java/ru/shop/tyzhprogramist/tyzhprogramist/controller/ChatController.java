@@ -2,6 +2,7 @@ package ru.shop.tyzhprogramist.tyzhprogramist.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -29,6 +30,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @RestController
 @RequestMapping("/api/chat")
+@Tag(name = "Chat", description = "Эндпоинты чатов и сессий консультаций")
 @RequiredArgsConstructor
 public class ChatController {
 

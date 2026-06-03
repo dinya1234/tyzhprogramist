@@ -1,6 +1,7 @@
 package ru.shop.tyzhprogramist.tyzhprogramist.controller;
 
 import jakarta.validation.constraints.NotBlank;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -22,6 +23,7 @@ import java.util.Map;
 @Slf4j
 @RestController
 @RequestMapping("/api/categories")
+@Tag(name = "Categories", description = "Эндпоинты категорий товаров")
 @RequiredArgsConstructor
 public class CategoryController {
 

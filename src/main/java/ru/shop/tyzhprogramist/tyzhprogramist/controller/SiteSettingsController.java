@@ -1,6 +1,7 @@
 package ru.shop.tyzhprogramist.tyzhprogramist.controller;
 
 import jakarta.validation.Valid;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +17,7 @@ import java.util.Map;
 @Slf4j
 @RestController
 @RequestMapping("/api/settings")
+@Tag(name = "Site Settings", description = "Эндпоинты публичных и административных настроек сайта")
 @RequiredArgsConstructor
 public class SiteSettingsController {
 

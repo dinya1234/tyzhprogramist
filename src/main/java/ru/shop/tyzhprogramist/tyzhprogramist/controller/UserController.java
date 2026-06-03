@@ -1,5 +1,6 @@
 package ru.shop.tyzhprogramist.tyzhprogramist.controller;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -20,6 +21,7 @@ import ru.shop.tyzhprogramist.tyzhprogramist.service.UserService;
 @Slf4j
 @RestController
 @RequestMapping("/api/users")
+@Tag(name = "Users", description = "Эндпоинты управления пользователями")
 @RequiredArgsConstructor
 public class UserController {
 

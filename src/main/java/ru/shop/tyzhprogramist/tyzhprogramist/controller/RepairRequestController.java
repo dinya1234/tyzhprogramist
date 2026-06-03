@@ -1,6 +1,7 @@
 package ru.shop.tyzhprogramist.tyzhprogramist.controller;
 
 import jakarta.validation.Valid;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -25,6 +26,7 @@ import java.math.BigDecimal;
 @Slf4j
 @RestController
 @RequestMapping("/api/repair-requests")
+@Tag(name = "Repair Requests", description = "Эндпоинты заявок на ремонт")
 @RequiredArgsConstructor
 public class RepairRequestController {
 

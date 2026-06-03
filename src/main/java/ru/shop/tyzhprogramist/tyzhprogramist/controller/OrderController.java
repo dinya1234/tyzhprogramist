@@ -1,6 +1,7 @@
 package ru.shop.tyzhprogramist.tyzhprogramist.controller;
 
 import jakarta.validation.Valid;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -23,6 +24,7 @@ import ru.shop.tyzhprogramist.tyzhprogramist.service.UserService;
 @Slf4j
 @RestController
 @RequestMapping("/api/orders")
+@Tag(name = "Orders", description = "Эндпоинты заказов")
 @RequiredArgsConstructor
 public class OrderController {
 

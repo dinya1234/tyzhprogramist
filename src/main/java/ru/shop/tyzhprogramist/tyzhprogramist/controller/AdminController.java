@@ -1,5 +1,6 @@
 package ru.shop.tyzhprogramist.tyzhprogramist.controller;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,6 +11,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin")
+@Tag(name = "Admin", description = "Административные эндпоинты")
 public class AdminController {
 
     @GetMapping("/ping")

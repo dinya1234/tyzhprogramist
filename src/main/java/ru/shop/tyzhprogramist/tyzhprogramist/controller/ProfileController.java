@@ -1,5 +1,6 @@
 package ru.shop.tyzhprogramist.tyzhprogramist.controller;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -14,6 +15,7 @@ import ru.shop.tyzhprogramist.tyzhprogramist.service.UserService;
 @Slf4j
 @RestController
 @RequestMapping("/api/profile")
+@Tag(name = "Profile", description = "Эндпоинты профиля текущего пользователя")
 @RequiredArgsConstructor
 public class ProfileController {
 
