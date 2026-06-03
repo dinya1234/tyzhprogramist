@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { products, feedbacks, cart } from '../services/api';
 import { useCart } from '../context/CartContext';
 import ProductCard from '../components/ProductCard';
+import { getProductSpecRows } from '../utils/productSpecs';
 
 export default function ProductPage() {
     const { id } = useParams();
@@ -406,26 +407,14 @@ export default function ProductPage() {
                 {activeTab === 'specs' && (
                     <div style={{ background: '#15181f', borderRadius: '16px', padding: '32px' }}>
                         <h3 style={{ marginBottom: '20px' }}>Технические характеристики</h3>
-                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                        <table className="specs-table">
                             <tbody>
-                            <tr style={{ borderBottom: '1px solid #2a2d36' }}>
-                                <td style={{ padding: '12px 0', color: '#9ca3af', width: '200px' }}>Артикул</td>
-                                <td style={{ padding: '12px 0' }}>{product.sku}</td>
-                            </tr>
-                            <tr style={{ borderBottom: '1px solid #2a2d36' }}>
-                                <td style={{ padding: '12px 0', color: '#9ca3af' }}>Категория</td>
-                                <td style={{ padding: '12px 0' }}>{product.categoryName}</td>
-                            </tr>
-                            <tr style={{ borderBottom: '1px solid #2a2d36' }}>
-                                <td style={{ padding: '12px 0', color: '#9ca3af' }}>Гарантия</td>
-                                <td style={{ padding: '12px 0' }}>{product.warrantyMonths || 12} месяцев</td>
-                            </tr>
-                            {product.weight && (
-                                <tr style={{ borderBottom: '1px solid #2a2d36' }}>
-                                    <td style={{ padding: '12px 0', color: '#9ca3af' }}>Вес</td>
-                                    <td style={{ padding: '12px 0' }}>{product.weight} кг</td>
+                            {getProductSpecRows(product).map(({ label, value }, index) => (
+                                <tr key={`${label}-${index}`}>
+                                    <td>{label}</td>
+                                    <td>{value}</td>
                                 </tr>
-                            )}
+                            ))}
                             </tbody>
                         </table>
                     </div>

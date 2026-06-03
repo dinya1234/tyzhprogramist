@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { comparisons, products, pcBuilds } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
+import { getProductSpecsMap } from '../utils/productSpecs';
 
 export default function ComparisonPage() {
     const { user } = useAuth();
@@ -174,19 +175,7 @@ export default function ComparisonPage() {
         return price?.toLocaleString() + ' ₽' || '0 ₽';
     };
 
-    // Получение характеристик для отображения в таблице
-    const getProductSpecs = (product) => {
-        return {
-            'Бренд': product.brand || '—',
-            'Модель': product.model || product.name,
-            'Категория': product.categoryName || '—',
-            'Цена': formatPrice(product.price),
-            'Наличие': product.quantity > 0 ? 'В наличии' : 'Нет в наличии',
-            'Рейтинг': product.rating ? `${product.rating} ⭐` : '—',
-            'Гарантия': `${product.warrantyMonths || 12} мес.`,
-            'Вес': product.weight ? `${product.weight} кг` : '—'
-        };
-    };
+    const getProductSpecs = (product) => getProductSpecsMap(product);
 
     const getBuildSpecs = (build) => {
         const totalPower = build.components?.reduce((sum, comp) => {
