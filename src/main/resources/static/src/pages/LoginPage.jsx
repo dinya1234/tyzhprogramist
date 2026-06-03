@@ -1,3 +1,4 @@
+// src/pages/LoginPage.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -20,10 +21,8 @@ export default function LoginPage() {
 
         let result;
         if (isLogin) {
-            // Вход: используем username (логин) и пароль
             result = await login(username, password);
         } else {
-            // Регистрация: email, password, username
             result = await register({
                 email: email,
                 password: password,
@@ -47,37 +46,43 @@ export default function LoginPage() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            background: '#0a0c10'
+            background: 'var(--bg-primary)'
         }}>
             <div style={{
-                background: '#15181f',
+                background: 'var(--bg-tertiary)',
                 padding: '40px',
                 borderRadius: '24px',
                 width: '100%',
                 maxWidth: '450px',
-                border: '1px solid #2a2d36'
+                border: '1px solid var(--border)',
+                boxShadow: 'var(--shadow)'
             }}>
-                <h1 style={{ color: '#c084fc', marginBottom: '30px', textAlign: 'center' }}>
+                <h1 style={{
+                    color: 'var(--accent)',
+                    marginBottom: '30px',
+                    textAlign: 'center',
+                    fontSize: '28px'
+                }}>
                     {isLogin ? 'Вход' : 'Регистрация'}
                 </h1>
 
                 {error && (
                     <div style={{
-                        background: '#7f1a1a',
-                        color: '#fecaca',
+                        background: 'rgba(239, 68, 68, 0.15)',
+                        color: 'var(--danger)',
                         padding: '12px',
                         borderRadius: '8px',
                         marginBottom: '20px',
-                        textAlign: 'center'
+                        textAlign: 'center',
+                        border: '1px solid var(--danger)'
                     }}>
                         {error}
                     </div>
                 )}
 
                 <form onSubmit={handleSubmit}>
-                    {/* Поле Логин — для входа И для регистрации */}
                     <div style={{ marginBottom: '20px' }}>
-                        <label style={{ display: 'block', marginBottom: '8px', color: '#9ca3af' }}>
+                        <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-secondary)' }}>
                             {isLogin ? 'Логин *' : 'Имя пользователя (логин) *'}
                         </label>
                         <input
@@ -89,18 +94,21 @@ export default function LoginPage() {
                             style={{
                                 width: '100%',
                                 padding: '12px',
-                                background: '#0a0c10',
-                                border: '1px solid #3f434e',
+                                background: 'var(--bg-input)',
+                                border: '1px solid var(--border-light)',
                                 borderRadius: '8px',
-                                color: 'white'
+                                color: 'var(--text-primary)',
+                                fontSize: '14px',
+                                transition: 'all 0.2s'
                             }}
+                            onFocus={(e) => e.target.style.borderColor = 'var(--accent)'}
+                            onBlur={(e) => e.target.style.borderColor = 'var(--border-light)'}
                         />
                     </div>
 
-                    {/* Поле Email — ТОЛЬКО при регистрации */}
                     {!isLogin && (
                         <div style={{ marginBottom: '20px' }}>
-                            <label style={{ display: 'block', marginBottom: '8px', color: '#9ca3af' }}>
+                            <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-secondary)' }}>
                                 Email *
                             </label>
                             <input
@@ -112,18 +120,21 @@ export default function LoginPage() {
                                 style={{
                                     width: '100%',
                                     padding: '12px',
-                                    background: '#0a0c10',
-                                    border: '1px solid #3f434e',
+                                    background: 'var(--bg-input)',
+                                    border: '1px solid var(--border-light)',
                                     borderRadius: '8px',
-                                    color: 'white'
+                                    color: 'var(--text-primary)',
+                                    fontSize: '14px',
+                                    transition: 'all 0.2s'
                                 }}
+                                onFocus={(e) => e.target.style.borderColor = 'var(--accent)'}
+                                onBlur={(e) => e.target.style.borderColor = 'var(--border-light)'}
                             />
                         </div>
                     )}
 
-                    {/* Поле Пароль — для входа и регистрации */}
                     <div style={{ marginBottom: '25px' }}>
-                        <label style={{ display: 'block', marginBottom: '8px', color: '#9ca3af' }}>
+                        <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-secondary)' }}>
                             Пароль *
                         </label>
                         <input
@@ -135,11 +146,15 @@ export default function LoginPage() {
                             style={{
                                 width: '100%',
                                 padding: '12px',
-                                background: '#0a0c10',
-                                border: '1px solid #3f434e',
+                                background: 'var(--bg-input)',
+                                border: '1px solid var(--border-light)',
                                 borderRadius: '8px',
-                                color: 'white'
+                                color: 'var(--text-primary)',
+                                fontSize: '14px',
+                                transition: 'all 0.2s'
                             }}
+                            onFocus={(e) => e.target.style.borderColor = 'var(--accent)'}
+                            onBlur={(e) => e.target.style.borderColor = 'var(--border-light)'}
                         />
                     </div>
 
@@ -149,14 +164,21 @@ export default function LoginPage() {
                         style={{
                             width: '100%',
                             padding: '14px',
-                            background: 'linear-gradient(135deg, #c084fc, #60a5fa)',
+                            background: 'var(--accent-gradient)',
                             border: 'none',
                             borderRadius: '12px',
-                            color: '#111317',
+                            color: 'var(--bg-primary)',
                             fontWeight: 'bold',
                             fontSize: '16px',
                             cursor: loading ? 'not-allowed' : 'pointer',
-                            opacity: loading ? 0.7 : 1
+                            opacity: loading ? 0.7 : 1,
+                            transition: 'transform 0.2s, opacity 0.2s'
+                        }}
+                        onMouseEnter={(e) => {
+                            if (!loading) e.currentTarget.style.transform = 'translateY(-2px)';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = 'translateY(0)';
                         }}
                     >
                         {loading ? 'Загрузка...' : (isLogin ? 'Войти' : 'Зарегистрироваться')}
@@ -167,17 +189,20 @@ export default function LoginPage() {
                     onClick={() => {
                         setIsLogin(!isLogin);
                         setError('');
-                        setEmail(''); // Очищаем email при переключении
+                        setEmail('');
                     }}
                     style={{
                         width: '100%',
                         marginTop: '20px',
                         background: 'transparent',
                         border: 'none',
-                        color: '#c084fc',
+                        color: 'var(--accent)',
                         cursor: 'pointer',
-                        fontSize: '14px'
+                        fontSize: '14px',
+                        transition: 'color 0.2s'
                     }}
+                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--accent-dark)'}
+                    onMouseLeave={(e) => e.currentTarget.style.color = 'var(--accent)'}
                 >
                     {isLogin ? 'Нет аккаунта? Зарегистрироваться' : 'Уже есть аккаунт? Войти'}
                 </button>

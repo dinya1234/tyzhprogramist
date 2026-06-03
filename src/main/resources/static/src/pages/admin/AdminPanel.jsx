@@ -931,39 +931,39 @@ export default function AdminPanel() {
                             }}>
                                 <div style={{
                                     width: 'min(720px, 100%)',
-                                    background: '#0f1218',
-                                    border: '1px solid #2a2d36',
+                                    background: 'var(--bg-tertiary)',
+                                    border: '1px solid var(--border)',
                                     borderRadius: 16,
                                     padding: 18
                                 }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-                                        <h2 style={{ margin: 0 }}>{categoryForm.id ? `✏️ Категория #${categoryForm.id}` : '➕ Новая категория'}</h2>
+                                        <h2 style={{ margin: 0, color: 'var(--text-primary)' }}>{categoryForm.id ? `✏️ Категория #${categoryForm.id}` : '➕ Новая категория'}</h2>
                                         <button className="btn-outline btn-sm" onClick={() => setCategoryModalOpen(false)}>Закрыть</button>
                                     </div>
 
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                                         <div>
-                                            <div style={{ marginBottom: 6, color: '#9ca3af' }}>Name</div>
+                                            <div style={{ marginBottom: 6, color: 'var(--text-secondary)' }}>Name</div>
                                             <input
                                                 value={categoryForm.name}
                                                 onChange={(e) => setCategoryForm(p => ({ ...p, name: e.target.value }))}
-                                                style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid #2a2d36', background: '#0a0c10', color: 'white' }}
+                                                style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-input)', color: 'var(--text-primary)' }}
                                             />
                                         </div>
                                         <div>
-                                            <div style={{ marginBottom: 6, color: '#9ca3af' }}>Slug</div>
+                                            <div style={{ marginBottom: 6, color: 'var(--text-secondary)' }}>Slug</div>
                                             <input
                                                 value={categoryForm.slug}
                                                 onChange={(e) => setCategoryForm(p => ({ ...p, slug: e.target.value }))}
-                                                style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid #2a2d36', background: '#0a0c10', color: 'white' }}
+                                                style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-input)', color: 'var(--text-primary)' }}
                                             />
                                         </div>
                                         <div>
-                                            <div style={{ marginBottom: 6, color: '#9ca3af' }}>Parent (опц.)</div>
+                                            <div style={{ marginBottom: 6, color: 'var(--text-secondary)' }}>Parent (опц.)</div>
                                             <select
                                                 value={categoryForm.parentId}
                                                 onChange={(e) => setCategoryForm(p => ({ ...p, parentId: e.target.value }))}
-                                                style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid #2a2d36', background: '#0a0c10', color: 'white' }}
+                                                style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-input)', color: 'var(--text-primary)' }}
                                             >
                                                 <option value="">(root)</option>
                                                 {flatCategories.map(c => (
@@ -972,12 +972,12 @@ export default function AdminPanel() {
                                             </select>
                                         </div>
                                         <div>
-                                            <div style={{ marginBottom: 6, color: '#9ca3af' }}>Order (опц.)</div>
+                                            <div style={{ marginBottom: 6, color: 'var(--text-secondary)' }}>Order (опц.)</div>
                                             <input
                                                 type="number"
                                                 value={categoryForm.order}
                                                 onChange={(e) => setCategoryForm(p => ({ ...p, order: e.target.value }))}
-                                                style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid #2a2d36', background: '#0a0c10', color: 'white' }}
+                                                style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-input)', color: 'var(--text-primary)' }}
                                             />
                                         </div>
                                     </div>

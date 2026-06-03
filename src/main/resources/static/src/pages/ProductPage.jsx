@@ -13,28 +13,21 @@ export default function ProductPage() {
 
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState('description'); // description, specs, reviews, qa
+    const [activeTab, setActiveTab] = useState('description');
 
-    // Отзывы и вопросы
     const [reviews, setReviews] = useState([]);
     const [questions, setQuestions] = useState([]);
-    const [ratingStats, setRatingStats] = useState({});
     const [averageRating, setAverageRating] = useState(0);
 
-    // Формы
     const [reviewText, setReviewText] = useState('');
     const [reviewRating, setReviewRating] = useState(5);
     const [questionText, setQuestionText] = useState('');
     const [submitting, setSubmitting] = useState(false);
 
-    // Рекомендации
     const [relatedProducts, setRelatedProducts] = useState([]);
     const [frequentlyBought, setFrequentlyBought] = useState([]);
-
-    // Количество для добавления в корзину
     const [quantity, setQuantity] = useState(1);
 
-    // Пагинация отзывов
     const [reviewsPage, setReviewsPage] = useState(0);
     const [reviewsTotalPages, setReviewsTotalPages] = useState(0);
     const [questionsPage, setQuestionsPage] = useState(0);
@@ -43,7 +36,6 @@ export default function ProductPage() {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     const isAuthenticated = !!localStorage.getItem('accessToken');
 
-    // Загрузка товара
     useEffect(() => {
         setLoading(true);
         products.getById(id)
@@ -61,7 +53,6 @@ export default function ProductPage() {
             .finally(() => setLoading(false));
     }, [id, navigate]);
 
-    // Загрузка отзывов
     useEffect(() => {
         if (!id) return;
 
@@ -80,7 +71,6 @@ export default function ProductPage() {
         });
     }, [id, reviewsPage, questionsPage]);
 
-    // Загрузка статистики рейтингов
     useEffect(() => {
         if (!id) return;
         feedbacks.getRating(id)
@@ -116,7 +106,6 @@ export default function ProductPage() {
             alert('Спасибо за отзыв! Он будет опубликован после модерации.');
             setReviewText('');
             setReviewRating(5);
-            // Обновляем отзывы
             const res = await feedbacks.getProductReviews(id, { page: 0, size: 5 });
             setReviews(res.data.content || []);
             setReviewsTotalPages(res.data.totalPages || 0);
@@ -175,7 +164,6 @@ export default function ProductPage() {
         );
     }
 
-    // Рендер звёзд рейтинга
     const renderStars = (rating, showNumber = true) => {
         const fullStars = Math.floor(rating);
         const hasHalf = rating % 1 >= 0.5;
@@ -187,7 +175,7 @@ export default function ProductPage() {
                     {hasHalf && '½'}
                     {'☆'.repeat(5 - fullStars - (hasHalf ? 1 : 0))}
                 </span>
-                {showNumber && <span style={{ color: '#9ca3af' }}>({rating.toFixed(1)})</span>}
+                {showNumber && <span style={{ color: 'var(--text-secondary)' }}>({rating.toFixed(1)})</span>}
             </span>
         );
     };
@@ -195,7 +183,7 @@ export default function ProductPage() {
     return (
         <div className="container" style={{ marginTop: '30px', marginBottom: '60px' }}>
             {/* Хлебные крошки */}
-            <div style={{ marginBottom: '24px', color: '#9ca3af', fontSize: '14px' }}>
+            <div style={{ marginBottom: '24px', color: 'var(--text-secondary)', fontSize: '14px' }}>
                 <span onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>Главная</span>
                 {' / '}
                 <span onClick={() => navigate('/catalog')} style={{ cursor: 'pointer' }}>Каталог</span>
@@ -204,19 +192,18 @@ export default function ProductPage() {
                     {product.categoryName}
                 </span>
                 {' / '}
-                <span style={{ color: '#e4e6eb' }}>{product.name}</span>
+                <span style={{ color: 'var(--text-primary)' }}>{product.name}</span>
             </div>
 
             {/* Основная информация о товаре */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '48px', marginBottom: '48px' }}>
-                {/* Изображение */}
                 <div>
                     <div style={{
-                        background: '#15181f',
+                        background: 'var(--bg-tertiary)',
                         borderRadius: '24px',
                         padding: '40px',
                         textAlign: 'center',
-                        border: '1px solid #2a2d36'
+                        border: '1px solid var(--border)'
                     }}>
                         {product.mainImage ? (
                             <img
@@ -229,16 +216,15 @@ export default function ProductPage() {
                         )}
                     </div>
 
-                    {/* Миниатюры (если есть несколько изображений) */}
                     {product.images && product.images.length > 1 && (
                         <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
                             {product.images.slice(0, 4).map((img, idx) => (
                                 <div key={idx} style={{
                                     width: '80px',
                                     height: '80px',
-                                    background: '#15181f',
+                                    background: 'var(--bg-tertiary)',
                                     borderRadius: '12px',
-                                    border: '1px solid #2a2d36',
+                                    border: '1px solid var(--border)',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
@@ -251,61 +237,56 @@ export default function ProductPage() {
                     )}
                 </div>
 
-                {/* Информация о товаре */}
                 <div>
-                    {product.isNew && <span className="badge" style={{ background: '#c084fc', marginRight: '8px' }}>🔥 Новинка</span>}
+                    {product.isNew && <span className="badge" style={{ background: 'var(--accent)', marginRight: '8px' }}>🔥 Новинка</span>}
                     {product.isBestseller && <span className="badge" style={{ background: '#f59e0b' }}>⭐ Хит продаж</span>}
 
-                    <h1 style={{ fontSize: '32px', marginTop: '16px', marginBottom: '16px' }}>{product.name}</h1>
+                    <h1 style={{ fontSize: '32px', marginTop: '16px', marginBottom: '16px', color: 'var(--text-primary)' }}>{product.name}</h1>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
                         {renderStars(averageRating)}
-                        <span style={{ color: '#9ca3af' }}>|</span>
+                        <span style={{ color: 'var(--text-secondary)' }}>|</span>
                         <span
                             onClick={() => setActiveTab('reviews')}
-                            style={{ cursor: 'pointer', color: '#c084fc' }}
+                            style={{ cursor: 'pointer', color: 'var(--accent)' }}
                         >
                             {reviews.length} отзывов
                         </span>
                     </div>
 
-                    {/* Артикул и наличие */}
-                    <div style={{ marginBottom: '16px', color: '#9ca3af' }}>
+                    <div style={{ marginBottom: '16px', color: 'var(--text-secondary)' }}>
                         Артикул: {product.sku}
                     </div>
                     <div style={{ marginBottom: '24px' }}>
                         {product.quantity > 0 ? (
-                            <span style={{ color: '#22c55e' }}>✅ В наличии ({product.quantity} шт.)</span>
+                            <span style={{ color: 'var(--success)' }}>✅ В наличии ({product.quantity} шт.)</span>
                         ) : (
-                            <span style={{ color: '#ef4444' }}>❌ Нет в наличии</span>
+                            <span style={{ color: 'var(--danger)' }}>❌ Нет в наличии</span>
                         )}
                     </div>
 
-                    {/* Краткое описание */}
-                    <p style={{ color: '#9ca3af', marginBottom: '24px', lineHeight: 1.6 }}>
+                    <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', lineHeight: 1.6 }}>
                         {product.shortDescription}
                     </p>
 
-                    {/* Цена */}
                     <div style={{ marginBottom: '24px' }}>
                         {product.oldPrice && product.oldPrice > product.price && (
                             <span style={{
                                 fontSize: '20px',
-                                color: '#9ca3af',
+                                color: 'var(--text-secondary)',
                                 textDecoration: 'line-through',
                                 marginRight: '12px'
                             }}>
                                 {product.oldPrice.toLocaleString()} ₽
                             </span>
                         )}
-                        <span style={{ fontSize: '36px', fontWeight: 'bold', color: '#c084fc' }}>
+                        <span style={{ fontSize: '36px', fontWeight: 'bold', color: 'var(--accent)' }}>
                             {product.price.toLocaleString()} ₽
                         </span>
                     </div>
 
-                    {/* Выбор количества */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
-                        <span>Количество:</span>
+                        <span style={{ color: 'var(--text-primary)' }}>Количество:</span>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <button
                                 onClick={() => setQuantity(Math.max(1, quantity - 1))}
@@ -321,10 +302,10 @@ export default function ProductPage() {
                                 style={{
                                     width: '60px',
                                     textAlign: 'center',
-                                    background: '#0a0c10',
-                                    border: '1px solid #3f434e',
+                                    background: 'var(--bg-input)',
+                                    border: '1px solid var(--border-light)',
                                     borderRadius: '8px',
-                                    color: 'white',
+                                    color: 'var(--text-primary)',
                                     padding: '8px'
                                 }}
                             />
@@ -338,7 +319,6 @@ export default function ProductPage() {
                         </div>
                     </div>
 
-                    {/* Кнопки действий */}
                     <div style={{ display: 'flex', gap: '16px' }}>
                         <button
                             onClick={handleAddToCart}
@@ -356,9 +336,8 @@ export default function ProductPage() {
                         </button>
                     </div>
 
-                    {/* Быстрая информация */}
-                    <div style={{ marginTop: '32px', paddingTop: '24px', borderTop: '1px solid #2a2d36' }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '14px' }}>
+                    <div style={{ marginTop: '32px', paddingTop: '24px', borderTop: '1px solid var(--border)' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '14px', color: 'var(--text-secondary)' }}>
                             <div>🚚 Доставка: от 500 ₽ (бесплатно от 5000 ₽)</div>
                             <div>🏪 Самовывоз: бесплатно</div>
                             <div>💳 Оплата: картой онлайн, при получении</div>
@@ -370,7 +349,7 @@ export default function ProductPage() {
 
             {/* Табы */}
             <div style={{ marginTop: '48px' }}>
-                <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid #2a2d36', marginBottom: '24px' }}>
+                <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid var(--border)', marginBottom: '24px' }}>
                     {[
                         { key: 'description', label: 'Описание' },
                         { key: 'specs', label: 'Характеристики' },
@@ -384,8 +363,8 @@ export default function ProductPage() {
                                 padding: '12px 24px',
                                 background: 'none',
                                 border: 'none',
-                                color: activeTab === tab.key ? '#c084fc' : '#9ca3af',
-                                borderBottom: activeTab === tab.key ? '2px solid #c084fc' : 'none',
+                                color: activeTab === tab.key ? 'var(--accent)' : 'var(--text-secondary)',
+                                borderBottom: activeTab === tab.key ? '2px solid var(--accent)' : 'none',
                                 cursor: 'pointer',
                                 fontWeight: activeTab === tab.key ? 'bold' : 'normal',
                                 transition: 'all 0.2s'
@@ -398,21 +377,21 @@ export default function ProductPage() {
 
                 {/* Описание */}
                 {activeTab === 'description' && (
-                    <div style={{ background: '#15181f', borderRadius: '16px', padding: '32px' }}>
+                    <div style={{ background: 'var(--bg-tertiary)', borderRadius: '16px', padding: '32px', color: 'var(--text-primary)' }}>
                         <div dangerouslySetInnerHTML={{ __html: product.fullDescription || product.shortDescription }} />
                     </div>
                 )}
 
                 {/* Характеристики */}
                 {activeTab === 'specs' && (
-                    <div style={{ background: '#15181f', borderRadius: '16px', padding: '32px' }}>
-                        <h3 style={{ marginBottom: '20px' }}>Технические характеристики</h3>
+                    <div style={{ background: 'var(--bg-tertiary)', borderRadius: '16px', padding: '32px', color: 'var(--text-primary)' }}>
+                        <h3 style={{ marginBottom: '20px', color: 'var(--text-primary)' }}>Технические характеристики</h3>
                         <table className="specs-table">
                             <tbody>
                             {getProductSpecRows(product).map(({ label, value }, index) => (
                                 <tr key={`${label}-${index}`}>
-                                    <td>{label}</td>
-                                    <td>{value}</td>
+                                    <td style={{ color: 'var(--text-secondary)' }}>{label}</td>
+                                    <td style={{ color: 'var(--text-primary)' }}>{value}</td>
                                 </tr>
                             ))}
                             </tbody>
@@ -423,13 +402,12 @@ export default function ProductPage() {
                 {/* Отзывы */}
                 {activeTab === 'reviews' && (
                     <div>
-                        {/* Форма отзыва */}
                         {isAuthenticated ? (
-                            <div style={{ background: '#15181f', borderRadius: '16px', padding: '24px', marginBottom: '32px' }}>
-                                <h3 style={{ marginBottom: '16px' }}>Оставить отзыв</h3>
+                            <div style={{ background: 'var(--bg-tertiary)', borderRadius: '16px', padding: '24px', marginBottom: '32px', color: 'var(--text-primary)' }}>
+                                <h3 style={{ marginBottom: '16px', color: 'var(--text-primary)' }}>Оставить отзыв</h3>
                                 <form onSubmit={handleSubmitReview}>
                                     <div style={{ marginBottom: '16px' }}>
-                                        <label style={{ display: 'block', marginBottom: '8px' }}>Оценка</label>
+                                        <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-primary)' }}>Оценка</label>
                                         <div style={{ display: 'flex', gap: '8px' }}>
                                             {[1, 2, 3, 4, 5].map(star => (
                                                 <button
@@ -441,7 +419,7 @@ export default function ProductPage() {
                                                         background: 'none',
                                                         border: 'none',
                                                         cursor: 'pointer',
-                                                        color: star <= reviewRating ? '#fbbf24' : '#4b5563'
+                                                        color: star <= reviewRating ? '#fbbf24' : 'var(--text-muted)'
                                                     }}
                                                 >
                                                     ★
@@ -459,10 +437,10 @@ export default function ProductPage() {
                                             style={{
                                                 width: '100%',
                                                 padding: '12px',
-                                                background: '#0a0c10',
-                                                border: '1px solid #3f434e',
+                                                background: 'var(--bg-input)',
+                                                border: '1px solid var(--border-light)',
                                                 borderRadius: '12px',
-                                                color: 'white',
+                                                color: 'var(--text-primary)',
                                                 resize: 'vertical'
                                             }}
                                         />
@@ -473,41 +451,39 @@ export default function ProductPage() {
                                 </form>
                             </div>
                         ) : (
-                            <div style={{ background: '#15181f', borderRadius: '16px', padding: '24px', marginBottom: '32px', textAlign: 'center' }}>
-                                <p>Чтобы оставить отзыв, пожалуйста, <button onClick={() => navigate('/login')} style={{ color: '#c084fc', background: 'none', border: 'none', cursor: 'pointer' }}>войдите</button> в аккаунт</p>
+                            <div style={{ background: 'var(--bg-tertiary)', borderRadius: '16px', padding: '24px', marginBottom: '32px', textAlign: 'center', color: 'var(--text-primary)' }}>
+                                <p>Чтобы оставить отзыв, пожалуйста, <button onClick={() => navigate('/login')} style={{ color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer' }}>войдите</button> в аккаунт</p>
                             </div>
                         )}
 
-                        {/* Список отзывов */}
                         {reviews.length === 0 ? (
-                            <div style={{ textAlign: 'center', padding: '40px', background: '#15181f', borderRadius: '16px' }}>
+                            <div style={{ textAlign: 'center', padding: '40px', background: 'var(--bg-tertiary)', borderRadius: '16px', color: 'var(--text-primary)' }}>
                                 <span style={{ fontSize: '48px' }}>📝</span>
-                                <p style={{ marginTop: '16px' }}>Пока нет отзывов. Будьте первым!</p>
+                                <p style={{ marginTop: '16px', color: 'var(--text-secondary)' }}>Пока нет отзывов. Будьте первым!</p>
                             </div>
                         ) : (
                             <>
                                 {reviews.map(review => (
-                                    <div key={review.id} style={{ background: '#15181f', borderRadius: '16px', padding: '20px', marginBottom: '16px' }}>
+                                    <div key={review.id} style={{ background: 'var(--bg-tertiary)', borderRadius: '16px', padding: '20px', marginBottom: '16px', color: 'var(--text-primary)' }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                                             <div>
-                                                <span style={{ fontWeight: 'bold' }}>{review.userName}</span>
+                                                <span style={{ fontWeight: 'bold', color: 'var(--text-primary)' }}>{review.userName}</span>
                                                 <div style={{ marginTop: '4px' }}>{renderStars(review.rating, false)}</div>
                                             </div>
-                                            <span style={{ color: '#9ca3af', fontSize: '12px' }}>
+                                            <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>
                                                 {new Date(review.createdAt).toLocaleDateString('ru-RU')}
                                             </span>
                                         </div>
-                                        <p style={{ lineHeight: 1.6 }}>{review.text}</p>
+                                        <p style={{ lineHeight: 1.6, color: 'var(--text-primary)' }}>{review.text}</p>
                                         {review.answer && (
-                                            <div style={{ marginTop: '16px', padding: '12px', background: '#1e2129', borderRadius: '12px' }}>
-                                                <span style={{ color: '#c084fc', fontWeight: 'bold' }}>Ответ магазина:</span>
-                                                <p style={{ marginTop: '8px' }}>{review.answer}</p>
+                                            <div style={{ marginTop: '16px', padding: '12px', background: 'var(--bg-card)', borderRadius: '12px' }}>
+                                                <span style={{ color: 'var(--accent)', fontWeight: 'bold' }}>Ответ магазина:</span>
+                                                <p style={{ marginTop: '8px', color: 'var(--text-primary)' }}>{review.answer}</p>
                                             </div>
                                         )}
                                     </div>
                                 ))}
 
-                                {/* Пагинация отзывов */}
                                 {reviewsTotalPages > 1 && (
                                     <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '24px' }}>
                                         <button
@@ -517,7 +493,7 @@ export default function ProductPage() {
                                         >
                                             ←
                                         </button>
-                                        <span style={{ padding: '8px 16px', background: '#15181f', borderRadius: '8px' }}>
+                                        <span style={{ padding: '8px 16px', background: 'var(--bg-tertiary)', borderRadius: '8px', color: 'var(--text-primary)' }}>
                                             {reviewsPage + 1} / {reviewsTotalPages}
                                         </span>
                                         <button
@@ -537,10 +513,9 @@ export default function ProductPage() {
                 {/* Вопросы-ответы */}
                 {activeTab === 'qa' && (
                     <div>
-                        {/* Форма вопроса */}
                         {isAuthenticated ? (
-                            <div style={{ background: '#15181f', borderRadius: '16px', padding: '24px', marginBottom: '32px' }}>
-                                <h3 style={{ marginBottom: '16px' }}>Задать вопрос</h3>
+                            <div style={{ background: 'var(--bg-tertiary)', borderRadius: '16px', padding: '24px', marginBottom: '32px', color: 'var(--text-primary)' }}>
+                                <h3 style={{ marginBottom: '16px', color: 'var(--text-primary)' }}>Задать вопрос</h3>
                                 <form onSubmit={handleSubmitQuestion}>
                                     <textarea
                                         value={questionText}
@@ -551,10 +526,10 @@ export default function ProductPage() {
                                         style={{
                                             width: '100%',
                                             padding: '12px',
-                                            background: '#0a0c10',
-                                            border: '1px solid #3f434e',
+                                            background: 'var(--bg-input)',
+                                            border: '1px solid var(--border-light)',
                                             borderRadius: '12px',
-                                            color: 'white',
+                                            color: 'var(--text-primary)',
                                             resize: 'vertical',
                                             marginBottom: '16px'
                                         }}
@@ -565,42 +540,40 @@ export default function ProductPage() {
                                 </form>
                             </div>
                         ) : (
-                            <div style={{ background: '#15181f', borderRadius: '16px', padding: '24px', marginBottom: '32px', textAlign: 'center' }}>
-                                <p>Чтобы задать вопрос, пожалуйста, <button onClick={() => navigate('/login')} style={{ color: '#c084fc', background: 'none', border: 'none', cursor: 'pointer' }}>войдите</button> в аккаунт</p>
+                            <div style={{ background: 'var(--bg-tertiary)', borderRadius: '16px', padding: '24px', marginBottom: '32px', textAlign: 'center', color: 'var(--text-primary)' }}>
+                                <p>Чтобы задать вопрос, пожалуйста, <button onClick={() => navigate('/login')} style={{ color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer' }}>войдите</button> в аккаунт</p>
                             </div>
                         )}
 
-                        {/* Список вопросов */}
                         {questions.length === 0 ? (
-                            <div style={{ textAlign: 'center', padding: '40px', background: '#15181f', borderRadius: '16px' }}>
+                            <div style={{ textAlign: 'center', padding: '40px', background: 'var(--bg-tertiary)', borderRadius: '16px', color: 'var(--text-primary)' }}>
                                 <span style={{ fontSize: '48px' }}>❓</span>
-                                <p style={{ marginTop: '16px' }}>Пока нет вопросов. Задайте первый!</p>
+                                <p style={{ marginTop: '16px', color: 'var(--text-secondary)' }}>Пока нет вопросов. Задайте первый!</p>
                             </div>
                         ) : (
                             <>
                                 {questions.map(question => (
-                                    <div key={question.id} style={{ background: '#15181f', borderRadius: '16px', padding: '20px', marginBottom: '16px' }}>
+                                    <div key={question.id} style={{ background: 'var(--bg-tertiary)', borderRadius: '16px', padding: '20px', marginBottom: '16px', color: 'var(--text-primary)' }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                                            <span style={{ fontWeight: 'bold' }}>{question.userName}</span>
-                                            <span style={{ color: '#9ca3af', fontSize: '12px' }}>
+                                            <span style={{ fontWeight: 'bold', color: 'var(--text-primary)' }}>{question.userName}</span>
+                                            <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>
                                                 {new Date(question.createdAt).toLocaleDateString('ru-RU')}
                                             </span>
                                         </div>
-                                        <p style={{ lineHeight: 1.6 }}>{question.text}</p>
+                                        <p style={{ lineHeight: 1.6, color: 'var(--text-primary)' }}>{question.text}</p>
                                         {question.answer ? (
-                                            <div style={{ marginTop: '16px', padding: '12px', background: '#1e2129', borderRadius: '12px' }}>
-                                                <span style={{ color: '#c084fc', fontWeight: 'bold' }}>Ответ:</span>
-                                                <p style={{ marginTop: '8px' }}>{question.answer}</p>
+                                            <div style={{ marginTop: '16px', padding: '12px', background: 'var(--bg-card)', borderRadius: '12px' }}>
+                                                <span style={{ color: 'var(--accent)', fontWeight: 'bold' }}>Ответ:</span>
+                                                <p style={{ marginTop: '8px', color: 'var(--text-primary)' }}>{question.answer}</p>
                                             </div>
                                         ) : (
-                                            <div style={{ marginTop: '16px', color: '#f59e0b', fontSize: '14px' }}>
+                                            <div style={{ marginTop: '16px', color: 'var(--warning)', fontSize: '14px' }}>
                                                 ⏳ Ожидает ответа консультанта
                                             </div>
                                         )}
                                     </div>
                                 ))}
 
-                                {/* Пагинация вопросов */}
                                 {questionsTotalPages > 1 && (
                                     <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '24px' }}>
                                         <button
@@ -610,7 +583,7 @@ export default function ProductPage() {
                                         >
                                             ←
                                         </button>
-                                        <span style={{ padding: '8px 16px', background: '#15181f', borderRadius: '8px' }}>
+                                        <span style={{ padding: '8px 16px', background: 'var(--bg-tertiary)', borderRadius: '8px', color: 'var(--text-primary)' }}>
                                             {questionsPage + 1} / {questionsTotalPages}
                                         </span>
                                         <button
