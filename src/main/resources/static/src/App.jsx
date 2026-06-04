@@ -9,6 +9,7 @@ import LoginPage from './pages/LoginPage';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import ChatWidget from './components/Chat/ChatWidget';
+import PromoBannerPopup from './components/PromoBannerPopup';
 import './index.css';
 
 // Страницы
@@ -122,6 +123,7 @@ function AppContent() {
             </main>
             <Footer />
             <ChatWidget />
+            <PromoBannerPopup />
         </BrowserRouter>
     );
 }
