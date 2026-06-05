@@ -295,3 +295,38 @@ CREATE INDEX idx_product_feedback_user ON product_feedback(user_id);
 -- PC Builds indexes
 CREATE INDEX idx_pc_builds_user ON pc_builds(user_id);
 CREATE INDEX idx_pc_builds_public ON pc_builds(is_public, views_count);
+
+-- Добавьте в конец файла v1.0.0-create-tables.sql
+
+-- =====================================================
+-- Таблица рекламных баннеров (PostgreSQL)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS banners (
+    id BIGSERIAL PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    description VARCHAR(500),
+    image_url VARCHAR(500),
+    link VARCHAR(500) NOT NULL,
+    target_blank BOOLEAN DEFAULT FALSE,
+    display_order INTEGER DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Создаем индексы
+CREATE INDEX IF NOT EXISTS idx_banners_is_active_display_order ON banners(is_active, display_order);
+CREATE INDEX IF NOT EXISTS idx_banners_display_order ON banners(display_order);
+
+-- Комментарии к колонкам
+COMMENT ON TABLE banners IS 'Таблица рекламных баннеров';
+COMMENT ON COLUMN banners.id IS 'Уникальный идентификатор баннера';
+COMMENT ON COLUMN banners.title IS 'Заголовок баннера';
+COMMENT ON COLUMN banners.description IS 'Описание баннера';
+COMMENT ON COLUMN banners.image_url IS 'URL изображения баннера';
+COMMENT ON COLUMN banners.link IS 'Ссылка при клике на баннер';
+COMMENT ON COLUMN banners.target_blank IS 'Открывать в новой вкладке';
+COMMENT ON COLUMN banners.display_order IS 'Порядок сортировки';
+COMMENT ON COLUMN banners.is_active IS 'Активен ли баннер';
+COMMENT ON COLUMN banners.created_at IS 'Дата создания';
+COMMENT ON COLUMN banners.updated_at IS 'Дата обновления';

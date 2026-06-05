@@ -14,30 +14,26 @@ export default function LoginPage() {
 
     const { login, register } = useAuth();
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = (e) => {
         e.preventDefault();
-        setError('');
-        setLoading(true);
-
-        let result;
-        if (isLogin) {
-            result = await login(username, password);
-        } else {
-            result = await register({
-                email: email,
-                password: password,
-                username: username
-            });
+        const newErrors = validate();
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            return;
         }
 
-        setLoading(false);
+        const bannerToSave = {
+            title: formData.title,
+            description: formData.description,
+            imageUrl: formData.imageUrl,
+            link: formData.link,
+            targetBlank: formData.targetBlank,
+            displayOrder: formData.displayOrder || 0,
+            isActive: true
+        };
 
-        if (result.success) {
-            console.log('Успех, редирект на главную');
-            navigate('/');
-        } else {
-            setError(result.error);
-        }
+        console.log('Отправка баннера:', bannerToSave);
+        onSave(bannerToSave);
     };
 
     return (

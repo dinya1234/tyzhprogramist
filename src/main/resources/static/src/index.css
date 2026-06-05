@@ -2942,3 +2942,21 @@ body {
         width: 100%;
     }
 }
+/* Стили для скроллбара баннеров */
+.horizontal-scroller::-webkit-scrollbar {
+    height: 6px;
+}
+
+.horizontal-scroller::-webkit-scrollbar-track {
+    background: var(--border);
+    border-radius: 3px;
+}
+
+.horizontal-scroller::-webkit-scrollbar-thumb {
+    background: var(--accent);
+    border-radius: 3px;
+}
+
+.horizontal-scroller::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-dark);
+}

@@ -1,10 +1,11 @@
 // src/pages/HomePage.jsx
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { products, categories } from '../services/api';
+import { products, categories, banners } from '../services/api';
 import ProductCard from '../components/ProductCard';
 import { useAuth } from '../context/AuthContext';
 import { useChat } from '../context/ChatContext';
+import HorizontalBannerScroller from '../components/HorizontalBannerScroller';
 
 export default function HomePage() {
     const navigate = useNavigate();
@@ -15,6 +16,34 @@ export default function HomePage() {
     const [bestsellers, setBestsellers] = useState([]);
     const [categoryTree, setCategoryTree] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [bannersList, setBannersList] = useState([]);
+
+    // Загрузка баннеров из API (для всех пользователей)
+    const loadBanners = async () => {
+        try {
+            const response = await banners.getAll();
+            setBannersList(response.data || []);
+            console.log('Баннеры загружены из API:', response.data);
+        } catch (error) {
+            console.error('Ошибка загрузки баннеров из API:', error);
+            // Fallback на localStorage если API не готов
+            const savedBanners = localStorage.getItem('advertisingBanners');
+            if (savedBanners) {
+                try {
+                    const parsed = JSON.parse(savedBanners);
+                    setBannersList(parsed);
+                    console.log('Баннеры загружены из localStorage:', parsed);
+                } catch (e) {
+                    console.error('Ошибка парсинга localStorage:', e);
+                }
+            }
+        }
+    };
+
+    // ВАЖНО: Вызовите loadBanners при монтировании компонента
+    useEffect(() => {
+        loadBanners();
+    }, []);
 
     useEffect(() => {
         Promise.all([
@@ -114,6 +143,12 @@ export default function HomePage() {
                         </Link>
                     ))}
                 </div>
+
+                {/* Рекламные баннеры */}
+                <HorizontalBannerScroller
+                    banners={bannersList}
+                    isAdmin={false}
+                />
 
                 {/* Новинки */}
                 <h2 className="section-title">🔥 Новинки</h2>

@@ -35,4 +35,7 @@
 
     <!-- 6. Связи между товарами -->
     <include file="v1.0.0/v1.0.0-insert-data/18-product-relations.sql" relativeToChangelogFile="true"/>
+
+    <!-- 7. Рекламные баннеры -->
+    <include file="v1.0.0/v1.0.0-insert-data/19-banners.sql" relativeToChangelogFile="true"/>
 </databaseChangeLog>

@@ -10,12 +10,14 @@ import {
     repairRequests,
     settings,
     componentTypes,
-    pcBuilds
+    pcBuilds,
+    banners as apiBanners
 } from '../../services/api';
+import AddBannerForm from '../../components/AddBannerForm';
 
 export default function AdminPanel() {
     const { user } = useAuth();
-    const [activeTab, setActiveTab] = useState('dashboard'); // dashboard, products, categories, orders, users, feedbacks, repairs, settings
+    const [activeTab, setActiveTab] = useState('dashboard');
 
     // Данные для дашборда
     const [stats, setStats] = useState({
@@ -45,9 +47,12 @@ export default function AdminPanel() {
     const [feedbacksList, setFeedbacksList] = useState([]);
     const [repairsList, setRepairsList] = useState([]);
 
+    // Состояния для рекламных баннеров - переименовано в bannersList
+    const [bannersList, setBannersList] = useState([]);
+    const [showAddBannerForm, setShowAddBannerForm] = useState(false);
+    const [editingBanner, setEditingBanner] = useState(null);
+
     // Формы
-    const [editingProduct, setEditingProduct] = useState(null);
-    const [editingCategory, setEditingCategory] = useState(null);
     const [productModalOpen, setProductModalOpen] = useState(false);
     const [productForm, setProductForm] = useState({
         id: null,
@@ -88,26 +93,18 @@ export default function AdminPanel() {
         loadUsers();
         loadFeedbacks();
         loadRepairs();
+        loadBanners();
     }, []);
 
     const loadDashboardData = async () => {
         try {
-            // Статистика пользователей
             const usersRes = await users.getAll({ page: 0, size: 1 });
             const usersStatsRes = await users.getStatistics().catch(() => ({ data: null }));
-            // Статистика заказов
             const ordersRes = await orders.getAll({ page: 0, size: 5 });
             setRecentOrders(ordersRes.data.content || []);
-
-            // Статистика товаров
             const productsRes = await products.getAll({ page: 0, size: 1 });
-
-            // Отзывы на модерации
             const feedbacksRes = await feedbacks.getPendingModeration();
-
-            // Заявки на ремонт
             const repairsRes = await repairRequests.getAll({ page: 0, size: 1 });
-
             const userStats = usersStatsRes?.data || {};
 
             setStats({
@@ -124,7 +121,6 @@ export default function AdminPanel() {
                 byRole: userStats.byRole || []
             });
 
-            // Топ товаров
             setTopProducts([
                 { id: 1, name: 'Intel Core i9-13900K', sales: 45, revenue: 2249550 },
                 { id: 2, name: 'RTX 4080', sales: 32, revenue: 3199680 },
@@ -204,6 +200,156 @@ export default function AdminPanel() {
         }
     };
 
+    // Загрузка баннеров из API
+    const loadBanners = async () => {
+        try {
+            const response = await apiBanners.getAllAdmin();
+            setBannersList(response.data || []);
+            console.log('Баннеры загружены из API:', response.data?.length || 0);
+        } catch (error) {
+            console.error('Ошибка загрузки баннеров из API:', error);
+            // Fallback на localStorage
+            const savedBanners = localStorage.getItem('advertisingBanners');
+            if (savedBanners) {
+                try {
+                    setBannersList(JSON.parse(savedBanners));
+                    console.log('Баннеры загружены из localStorage (fallback)');
+                } catch (e) {
+                    console.error('Ошибка парсинга localStorage:', e);
+                    setDefaultBanners();
+                }
+            } else {
+                setDefaultBanners();
+            }
+        }
+    };
+
+    const setDefaultBanners = () => {
+        const defaultBanners = [
+            { id: 1, title: '🔥 Черная пятница', description: 'Скидки до 50% на всю технику', imageUrl: '', link: '/catalog', targetBlank: false, order: 1, createdAt: new Date().toISOString() },
+            { id: 2, title: '🖥️ Собери свой ПК', description: 'Конфигуратор ПК с проверкой совместимости', imageUrl: '', link: '/configurator', targetBlank: false, order: 2, createdAt: new Date().toISOString() },
+            { id: 3, title: '🔧 Сервисный центр', description: 'Профессиональный ремонт техники', imageUrl: '', link: '/service', targetBlank: false, order: 3, createdAt: new Date().toISOString() },
+            { id: 4, title: '💬 Помощь эксперта', description: 'Консультация по выбору комплектующих', imageUrl: '', link: '#', targetBlank: false, order: 4, createdAt: new Date().toISOString() },
+            { id: 5, title: '🎮 Игровые ПК', description: 'Готовые решения для максимального FPS', imageUrl: '', link: '/catalog?category=gaming', targetBlank: false, order: 5, createdAt: new Date().toISOString() },
+            { id: 6, title: '📦 Бесплатная доставка', description: 'При заказе от 5000 ₽', imageUrl: '', link: '/cart', targetBlank: false, order: 6, createdAt: new Date().toISOString() },
+            { id: 7, title: '🔄 Рассрочка 0%', description: 'Покупайте сейчас, платите потом', imageUrl: '', link: '/catalog', targetBlank: false, order: 7, createdAt: new Date().toISOString() },
+            { id: 8, title: '🎁 Подарочные карты', description: 'Отличный подарок для технаря', imageUrl: '', link: '/catalog', targetBlank: false, order: 8, createdAt: new Date().toISOString() }
+        ];
+        setBannersList(defaultBanners);
+        localStorage.setItem('advertisingBanners', JSON.stringify(defaultBanners));
+    };
+
+    // Добавление баннера
+    const handleAddBanner = async (newBanner) => {
+        console.log('Добавление баннера:', newBanner);
+
+        // Преобразуем order в displayOrder для API
+        const apiData = {
+            title: newBanner.title,
+            description: newBanner.description,
+            imageUrl: newBanner.imageUrl,
+            link: newBanner.link,
+            targetBlank: newBanner.targetBlank,
+            displayOrder: newBanner.order || newBanner.displayOrder || 0
+        };
+
+        try {
+            const response = await apiBanners.create(apiData);
+            console.log('Баннер создан:', response.data);
+            setBannersList(prev => [...prev, response.data]);
+            setShowAddBannerForm(false);
+            alert('Баннер успешно создан!');
+        } catch (error) {
+            console.error('Ошибка создания баннера через API:', error);
+            // Fallback на localStorage
+            const newId = Date.now();
+            const bannerWithId = {
+                ...apiData,
+                id: newId,
+                displayOrder: apiData.displayOrder,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                isActive: true
+            };
+            const updatedBanners = [...bannersList, bannerWithId];
+            setBannersList(updatedBanners);
+            localStorage.setItem('advertisingBanners', JSON.stringify(updatedBanners));
+            setShowAddBannerForm(false);
+            alert('Баннер сохранен в localStorage (API недоступно)');
+        }
+    };
+
+    // Редактирование баннера
+    const handleEditBanner = async (updatedBanner) => {
+        console.log('Редактирование баннера:', updatedBanner);
+        console.log('ID баннера:', updatedBanner.id);
+
+        if (!updatedBanner.id) {
+            console.error('Нет ID у баннера!');
+            alert('Ошибка: ID баннера не найден');
+            return;
+        }
+
+        // Преобразуем данные для API
+        const apiData = {
+            title: updatedBanner.title,
+            description: updatedBanner.description,
+            imageUrl: updatedBanner.imageUrl,
+            link: updatedBanner.link,
+            targetBlank: updatedBanner.targetBlank,
+            displayOrder: parseInt(updatedBanner.order) || parseInt(updatedBanner.displayOrder) || 0
+        };
+
+        console.log('Отправка в API:', { id: updatedBanner.id, data: apiData });
+
+        try {
+            const response = await apiBanners.update(updatedBanner.id, apiData);
+            console.log('Баннер обновлен:', response.data);
+            setBannersList(prev => prev.map(b => b.id === updatedBanner.id ? response.data : b));
+            setEditingBanner(null);
+            alert('Баннер обновлен!');
+        } catch (error) {
+            console.error('Ошибка обновления баннера через API:', error);
+            console.error('Детали ошибки:', error.response?.data);
+
+            // Fallback на localStorage
+            const updatedBanners = bannersList.map(b =>
+                b.id === updatedBanner.id ? {
+                    ...b,
+                    title: apiData.title,
+                    description: apiData.description,
+                    imageUrl: apiData.imageUrl,
+                    link: apiData.link,
+                    targetBlank: apiData.targetBlank,
+                    displayOrder: apiData.displayOrder,
+                    updatedAt: new Date().toISOString()
+                } : b
+            );
+            setBannersList(updatedBanners);
+            localStorage.setItem('advertisingBanners', JSON.stringify(updatedBanners));
+            setEditingBanner(null);
+            alert('Баннер обновлен в localStorage (API недоступно)');
+        }
+    };
+
+    // Удаление баннера
+    const handleDeleteBanner = async (bannerId) => {
+        if (window.confirm('Удалить рекламный баннер?')) {
+            try {
+                await apiBanners.delete(bannerId);
+                setBannersList(prev => prev.filter(b => b.id !== bannerId));
+                alert('Баннер удален!');
+            } catch (error) {
+                console.error('Ошибка удаления баннера через API:', error);
+                const updatedBanners = bannersList.filter(b => b.id !== bannerId);
+                setBannersList(updatedBanners);
+                localStorage.setItem('advertisingBanners', JSON.stringify(updatedBanners));
+                alert('Баннер удален из localStorage (API недоступно)');
+            }
+        }
+    };
+
+    // Остальные функции без изменений...
     const handleProductDelete = async (id) => {
         if (window.confirm('Удалить товар?')) {
             try {
@@ -529,6 +675,9 @@ export default function AdminPanel() {
                     <button className={`admin-nav-item ${activeTab === 'repairs' ? 'active' : ''}`} onClick={() => setActiveTab('repairs')}>
                         🔧 Ремонт
                     </button>
+                    <button className={`admin-nav-item ${activeTab === 'advertising' ? 'active' : ''}`} onClick={() => setActiveTab('advertising')}>
+                        📢 Реклама
+                    </button>
                     <button className={`admin-nav-item ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}>
                         ⚙️ Настройки
                     </button>
@@ -542,7 +691,6 @@ export default function AdminPanel() {
                     <div>
                         <h1>📊 Дашборд</h1>
 
-                        {/* Статистика */}
                         <div className="admin-stats-grid">
                             <div className="admin-stat-card">
                                 <div className="admin-stat-icon">👥</div>
@@ -609,7 +757,6 @@ export default function AdminPanel() {
                             </div>
                         </div>
 
-                        {/* Роли */}
                         {Array.isArray(stats.byRole) && stats.byRole.length > 0 && (
                             <div className="admin-section">
                                 <h2>👥 Пользователи по ролям</h2>
@@ -632,7 +779,6 @@ export default function AdminPanel() {
                             </div>
                         )}
 
-                        {/* Последние заказы */}
                         <div className="admin-section">
                             <h2>🆕 Последние заказы</h2>
                             <table className="admin-table">
@@ -659,7 +805,6 @@ export default function AdminPanel() {
                             </table>
                         </div>
 
-                        {/* Топ товаров */}
                         <div className="admin-section">
                             <h2>🏆 Топ товаров по продажам</h2>
                             <table className="admin-table">
@@ -732,7 +877,6 @@ export default function AdminPanel() {
                             </tbody>
                         </table>
 
-                        {/* Модалка товара */}
                         {productModalOpen && (
                             <div style={{
                                 position: 'fixed',
@@ -1173,6 +1317,95 @@ export default function AdminPanel() {
                             ))}
                             </tbody>
                         </table>
+                    </div>
+                )}
+
+                {/* РЕКЛАМА */}
+                {activeTab === 'advertising' && (
+                    <div>
+                        <div className="admin-header">
+                            <h1>📢 Управление рекламными баннерами</h1>
+                            <button
+                                className="btn-primary"
+                                onClick={() => {
+                                    setShowAddBannerForm(true);
+                                    setEditingBanner(null);
+                                }}
+                            >
+                                ➕ Добавить баннер
+                            </button>
+                        </div>
+
+                        <div className="admin-section">
+                            <table className="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Изображение</th>
+                                        <th>Заголовок</th>
+                                        <th>Описание</th>
+                                        <th>Ссылка</th>
+                                        <th>Порядок</th>
+                                        <th>Новая вкладка</th>
+                                        <th>Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {bannersList.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0)).map(banner => (
+                                        <tr key={banner.id}>
+                                            <td>{banner.id}</td>
+                                            <td>
+                                                {banner.imageUrl ? (
+                                                    <img src={banner.imageUrl} alt="" style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '4px' }} />
+                                                ) : (
+                                                    <span style={{ fontSize: '24px' }}>📢</span>
+                                                )}
+                                            </td>
+                                            <td>{banner.title}</td>
+                                            <td>{banner.description || '—'}</td>
+                                            <td>{banner.link}</td>
+                                            <td>{banner.displayOrder || 0}</td>
+                                            <td>{banner.targetBlank ? '✅ Да' : '❌ Нет'}</td>
+                                            <td className="admin-actions">
+                                                <button
+                                                    className="admin-btn-edit"
+                                                    onClick={() => {
+                                                        console.log('Редактирование баннера:', banner);
+                                                        setEditingBanner(banner);
+                                                        setShowAddBannerForm(true);
+                                                    }}
+                                                >
+                                                    ✏️
+                                                </button>
+                                                <button
+                                                    className="admin-btn-delete"
+                                                    onClick={() => handleDeleteBanner(banner.id)}
+                                                >
+                                                    🗑️
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {(showAddBannerForm || editingBanner) && (
+                            <AddBannerForm
+                                banner={editingBanner}
+                                onSave={(bannerData) => {
+                                    if (editingBanner) {
+                                        handleEditBanner({ ...bannerData, id: editingBanner.id });
+                                    } else {
+                                        handleAddBanner(bannerData);
+                                    }
+                                }}
+                                onClose={() => {
+                                    setShowAddBannerForm(false);
+                                    setEditingBanner(null);
+                                }}
+                            />
+                        )}
                     </div>
                 )}
 

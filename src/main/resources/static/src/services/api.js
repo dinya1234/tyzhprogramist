@@ -357,6 +357,29 @@ class ChatWebSocket {
     }
 }
 
+// ========== БАННЕРЫ ==========
+export const banners = {
+    // Получение всех активных баннеров (для всех пользователей)
+    getAll: () => api.get('/banners'),
+
+    // Получение всех баннеров (только для админа)
+    getAllAdmin: () => api.get('/banners/admin'),
+
+    // Получение баннера по ID
+    getById: (id) => api.get(`/banners/${id}`),
+
+    // Создание баннера (только админ)
+    create: (data) => api.post('/banners', data),
+
+    // Обновление баннера (только админ)
+    update: (id, data) => api.put(`/banners/${id}`, data),
+
+    // Удаление баннера (только админ)
+    delete: (id) => api.delete(`/banners/${id}`),
+
+    // Включение/выключение баннера (только админ)
+    toggleActive: (id) => api.patch(`/banners/${id}/toggle`)
+};
 export const chatWS = new ChatWebSocket();
 
 export default api;
