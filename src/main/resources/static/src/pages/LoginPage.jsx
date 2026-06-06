@@ -14,26 +14,26 @@ export default function LoginPage() {
 
     const { login, register } = useAuth();
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        const newErrors = validate();
-        if (Object.keys(newErrors).length > 0) {
-            setErrors(newErrors);
-            return;
+        setError('');
+        setLoading(true);
+
+        try {
+            if (isLogin) {
+                // Вход
+                await login(username, password);
+                navigate('/');
+            } else {
+                // Регистрация
+                await register(username, email, password);
+                navigate('/');
+            }
+        } catch (err) {
+            setError(err.response?.data?.message || 'Ошибка авторизации');
+        } finally {
+            setLoading(false);
         }
-
-        const bannerToSave = {
-            title: formData.title,
-            description: formData.description,
-            imageUrl: formData.imageUrl,
-            link: formData.link,
-            targetBlank: formData.targetBlank,
-            displayOrder: formData.displayOrder || 0,
-            isActive: true
-        };
-
-        console.log('Отправка баннера:', bannerToSave);
-        onSave(bannerToSave);
     };
 
     return (
@@ -94,11 +94,8 @@ export default function LoginPage() {
                                 border: '1px solid var(--border-light)',
                                 borderRadius: '8px',
                                 color: 'var(--text-primary)',
-                                fontSize: '14px',
-                                transition: 'all 0.2s'
+                                fontSize: '14px'
                             }}
-                            onFocus={(e) => e.target.style.borderColor = 'var(--accent)'}
-                            onBlur={(e) => e.target.style.borderColor = 'var(--border-light)'}
                         />
                     </div>
 
@@ -120,11 +117,8 @@ export default function LoginPage() {
                                     border: '1px solid var(--border-light)',
                                     borderRadius: '8px',
                                     color: 'var(--text-primary)',
-                                    fontSize: '14px',
-                                    transition: 'all 0.2s'
+                                    fontSize: '14px'
                                 }}
-                                onFocus={(e) => e.target.style.borderColor = 'var(--accent)'}
-                                onBlur={(e) => e.target.style.borderColor = 'var(--border-light)'}
                             />
                         </div>
                     )}
@@ -146,11 +140,8 @@ export default function LoginPage() {
                                 border: '1px solid var(--border-light)',
                                 borderRadius: '8px',
                                 color: 'var(--text-primary)',
-                                fontSize: '14px',
-                                transition: 'all 0.2s'
+                                fontSize: '14px'
                             }}
-                            onFocus={(e) => e.target.style.borderColor = 'var(--accent)'}
-                            onBlur={(e) => e.target.style.borderColor = 'var(--border-light)'}
                         />
                     </div>
 
@@ -168,13 +159,7 @@ export default function LoginPage() {
                             fontSize: '16px',
                             cursor: loading ? 'not-allowed' : 'pointer',
                             opacity: loading ? 0.7 : 1,
-                            transition: 'transform 0.2s, opacity 0.2s'
-                        }}
-                        onMouseEnter={(e) => {
-                            if (!loading) e.currentTarget.style.transform = 'translateY(-2px)';
-                        }}
-                        onMouseLeave={(e) => {
-                            e.currentTarget.style.transform = 'translateY(0)';
+                            transition: 'transform 0.2s'
                         }}
                     >
                         {loading ? 'Загрузка...' : (isLogin ? 'Войти' : 'Зарегистрироваться')}
@@ -194,11 +179,8 @@ export default function LoginPage() {
                         border: 'none',
                         color: 'var(--accent)',
                         cursor: 'pointer',
-                        fontSize: '14px',
-                        transition: 'color 0.2s'
+                        fontSize: '14px'
                     }}
-                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--accent-dark)'}
-                    onMouseLeave={(e) => e.currentTarget.style.color = 'var(--accent)'}
                 >
                     {isLogin ? 'Нет аккаунта? Зарегистрироваться' : 'Уже есть аккаунт? Войти'}
                 </button>
